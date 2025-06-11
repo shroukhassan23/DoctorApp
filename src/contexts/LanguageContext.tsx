@@ -1,0 +1,500 @@
+import React, { createContext, useContext, useState, useEffect } from 'react';
+
+type Language = 'en' | 'ar';
+
+interface LanguageContextType {
+  language: Language;
+  setLanguage: (language: Language) => void;
+  t: (key: string) => string;
+}
+
+const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
+
+const translations = {
+  en: {
+    // Navigation
+    'nav.patients': 'Patients',
+    'nav.medicines': 'Medicines',
+    'nav.labTests': 'Lab Tests',
+    'nav.imagingStudies': 'Imaging Studies',
+    'nav.reports': 'Reports',
+    'nav.profile': 'Doctor Profile',
+    'nav.prescriptions': 'Prescriptions',
+    
+    // Common
+    'common.search': 'Search',
+    'common.add': 'Add',
+    'common.edit': 'Edit',
+    'common.delete': 'Delete',
+    'common.save': 'Save',
+    'common.cancel': 'Cancel',
+    'common.view': 'View',
+    'common.download': 'Download',
+    'common.upload': 'Upload',
+    'common.print': 'Print',
+    'common.actions': 'Actions',
+    'common.loading': 'Loading',
+    'common.noData': 'No data available',
+    'common.confirm': 'Confirm',
+    'common.close': 'Close',
+    'common.name': 'Name',
+    'common.description': 'Description',
+    'common.created': 'Created',
+    'common.areYouSure': 'Are you sure?',
+    'common.cannotUndo': 'This action cannot be undone.',
+    'common.today': 'Today',
+    
+    // Patients
+    'patients.title': 'Patient Management',
+    'patients.addNew': 'Add New Patient',
+    'patients.searchPlaceholder': 'Search patients by name or phone...',
+    'patients.name': 'Name',
+    'patients.age': 'Age',
+    'patients.gender': 'Gender',
+    'patients.dateOfBirth': 'Date of Birth',
+    'patients.phone': 'Phone',
+    'patients.address': 'Address',
+    'patients.viewDetails': 'View Details',
+    'patients.noPatients': 'No patients found. Add your first patient to get started.',
+    'patients.deleteConfirm': 'Are you sure?',
+    'patients.deleteDescription': 'This action cannot be undone. This will permanently delete the patient and all associated records including visits, prescriptions, and files.',
+    'patients.addedSuccess': 'Patient added successfully',
+    
+    // Medicines
+    'medicines.title': 'Medicine Management',
+    'medicines.addNew': 'Add New Medicine',
+    'medicines.searchPlaceholder': 'Search medicines by name or manufacturer...',
+    'medicines.dosage': 'Dosage',
+    'medicines.form': 'Form',
+    'medicines.manufacturer': 'Manufacturer',
+    'medicines.price': 'Price',
+    'medicines.medicineName': 'Medicine Name',
+    'medicines.enterName': 'Enter medicine name',
+    'medicines.enterDosage': 'e.g., 500mg, 10ml',
+    'medicines.enterForm': 'e.g., Tablet, Syrup, Injection',
+    'medicines.enterManufacturer': 'Enter manufacturer name',
+    'medicines.enterPrice': 'Enter price',
+    'medicines.nameRequired': 'Medicine name is required',
+    'medicines.addMedicine': 'Add Medicine',
+    'medicines.updateMedicine': 'Update Medicine',
+    'medicines.editMedicine': 'Edit Medicine',
+    'medicines.deleteConfirm': 'This will permanently delete the medicine "{name}" from your records.',
+    'medicines.noMedicines': 'No medicines found. Add your first medicine to get started.',
+    'medicines.addedSuccess': 'Medicine added successfully',
+    'medicines.updatedSuccess': 'Medicine updated successfully',
+    'medicines.deletedSuccess': 'Medicine deleted successfully',
+    'medicines.errorSaving': 'Error saving medicine',
+    'medicines.errorDeleting': 'Error deleting medicine',
+    
+    // Lab Tests
+    'labTests.title': 'Laboratory Tests Management',
+    'labTests.addNew': 'Add New Lab Test',
+    'labTests.searchPlaceholder': 'Search lab tests by name...',
+    'labTests.testName': 'Lab Test Name',
+    'labTests.enterName': 'Enter lab test name',
+    'labTests.enterDescription': 'Enter lab test description',
+    'labTests.nameRequired': 'Lab test name is required',
+    'labTests.addTest': 'Add Lab Test',
+    'labTests.updateTest': 'Update Lab Test',
+    'labTests.editTest': 'Edit Lab Test',
+    'labTests.deleteConfirm': 'This will permanently delete the lab test "{name}".',
+    'labTests.noTests': 'No lab tests found. Add your first lab test to get started.',
+    'labTests.addedSuccess': 'Lab test added successfully',
+    'labTests.updatedSuccess': 'Lab test updated successfully',
+    'labTests.deletedSuccess': 'Lab test deleted successfully',
+    'labTests.errorSaving': 'Error saving lab test',
+    'labTests.errorDeleting': 'Error deleting lab test',
+    
+    // Imaging Studies
+    'imaging.title': 'Imaging Studies Management',
+    'imaging.addNew': 'Add New Imaging Study',
+    'imaging.searchPlaceholder': 'Search imaging studies by name...',
+    'imaging.studyName': 'Imaging Study Name',
+    'imaging.enterName': 'Enter imaging study name',
+    'imaging.enterDescription': 'Enter imaging study description',
+    'imaging.nameRequired': 'Imaging study name is required',
+    'imaging.addStudy': 'Add Imaging Study',
+    'imaging.updateStudy': 'Update Imaging Study',
+    'imaging.editStudy': 'Edit Imaging Study',
+    'imaging.deleteConfirm': 'This will permanently delete the imaging study "{name}".',
+    'imaging.noStudies': 'No imaging studies found. Add your first imaging study to get started.',
+    'imaging.addedSuccess': 'Imaging study added successfully',
+    'imaging.updatedSuccess': 'Imaging study updated successfully',
+    'imaging.deletedSuccess': 'Imaging study deleted successfully',
+    'imaging.errorSaving': 'Error saving imaging study',
+    'imaging.errorDeleting': 'Error deleting imaging study',
+    
+    // Reports
+    'reports.title': 'Daily Reports',
+    'reports.selectDate': 'Select Date',
+    'reports.reportDate': 'Report Date',
+    'reports.totalVisits': 'Total Visits',
+    'reports.primaryConsultations': 'Primary Consultations',
+    'reports.followUps': 'Follow-ups',
+    'reports.waitingVisits': 'Waiting Visits',
+    'reports.searchPlaceholder': 'Search visits by patient name, complaint, or diagnosis...',
+    'reports.searchPatientsPlaceholder': 'Search patients by name or phone number...',
+    'reports.searchAll': 'Search all visits (not just selected date)',
+    'reports.searchVisits': 'Search Visits',
+    'reports.searchPatients': 'Search Patients & Add Visits',
+    'reports.noVisitsDate': 'No visits found for this date.',
+    'reports.noVisitsSearch': 'No visits match your search criteria.',
+    'reports.noPatientFound': 'No patient found with this search term.',
+    'reports.addNewPatient': 'Add New Patient',
+    'reports.addVisitToPatient': 'Add Visit to Patient',
+    'reports.loadingVisits': 'Loading visit data...',
+    'reports.visitDeleted': 'Visit deleted successfully',
+    'reports.visitUpdated': 'Visit updated successfully',
+    'reports.errorDeleting': 'Error deleting visit',
+    'reports.errorUpdating': 'Error updating visit',
+    'reports.deleteConfirm': 'This action cannot be undone. This will permanently delete this visit record and all associated data.',
+    'reports.editVisit': 'Edit Visit',
+    'reports.viewDetails': 'Visit Details',
+    
+    // Doctor Profile
+    'profile.doctorProfile': 'Doctor Profile',
+    'profile.createProfile': 'Create Profile',
+    'profile.editProfile': 'Edit Profile',
+    'profile.updateProfile': 'Update Profile',
+    'profile.doctorInformation': 'Doctor Information',
+    'profile.fullName': 'Full Name',
+    'profile.doctorTitle': 'Title',
+    'profile.qualification': 'Qualification',
+    'profile.specialization': 'Specialization',
+    'profile.clinicName': 'Clinic Name',
+    'profile.clinicAddress': 'Clinic Address',
+    'profile.phone': 'Phone',
+    'profile.email': 'Email',
+    'profile.enterFullName': 'Enter your full name',
+    'profile.enterTitle': 'e.g., Dr., Prof.',
+    'profile.enterQualification': 'e.g., MBBS, MD',
+    'profile.enterSpecialization': 'e.g., Cardiology, Pediatrics',
+    'profile.enterClinicName': 'Enter clinic name',
+    'profile.enterClinicAddress': 'Enter clinic address',
+    'profile.enterPhone': 'Enter phone number',
+    'profile.enterEmail': 'Enter email address',
+    'profile.nameRequired': 'Name is required',
+    'profile.titleRequired': 'Title is required',
+    'profile.noProfile': 'No profile created',
+    'profile.noProfileDescription': 'Create your doctor profile to appear on prescriptions',
+    'profile.createdSuccess': 'Profile created successfully',
+    'profile.updatedSuccess': 'Profile updated successfully',
+    'profile.errorSaving': 'Error saving profile',
+    'profile.loadingProfile': 'Loading profile...',
+    
+    // Visit Details
+    'visit.information': 'Visit Information',
+    'visit.date': 'Date',
+    'visit.type': 'Type',
+    'visit.status': 'Status',
+    'visit.selectStatus': 'Select Status',
+    'visit.selectType': 'Select Type',
+    'visit.chiefComplaint': 'Chief Complaint',
+    'visit.enterChiefComplaint': 'Enter chief complaint',
+    'visit.diagnosis': 'Diagnosis',
+    'visit.enterDiagnosis': 'Enter diagnosis',
+    'visit.notes': 'Notes',
+    'visit.enterNotes': 'Enter notes',
+    'visit.files': 'Visit Files',
+    'visit.uploaded': 'Uploaded',
+    'visit.addFile': 'Add File',
+    'visit.prescription': 'Prescription Details',
+    'visit.printPrescription': 'Print Prescription',
+    'visit.details': 'Visit Details',
+    'visit.primaryConsultation': 'Primary',
+    'visit.followUp': 'Follow-up',
+    'visit.waiting': 'Waiting',
+    'visit.completed': 'Completed',
+    'visit.cancelled': 'Cancelled',
+    'visit.allStatuses': 'All Statuses',
+    'visit.changeStatus': 'Change Status',
+    'visit.statusUpdated': 'Visit status updated successfully',
+    'visit.noAdditionalDetails': 'No additional visit details recorded.',
+    'visit.loadingDetails': 'Loading additional visit details...',
+    'visit.noPrescriptionFiles': 'No prescription or files were added to this visit.',
+    'visit.addedSuccess': 'Visit added successfully',
+    
+    // Prescription
+    'prescription.medicines': 'Prescribed Medicines',
+    'prescription.labTests': 'Prescribed Lab Tests',
+    'prescription.imagingStudies': 'Prescribed Imaging Studies',
+    'prescription.notes': 'Prescription Notes',
+    
+    // Forms
+    'form.required': 'This field is required',
+    'form.selectFile': 'Select File',
+    'form.noFileSelected': 'No file selected',
+    'form.tryAgain': 'Please try again.',
+    
+    // Messages
+    'message.success': 'Operation completed successfully',
+    'message.error': 'An error occurred. Please try again.',
+    'message.fileDownloaded': 'File downloaded successfully',
+    'message.fileUploadError': 'Error uploading file',
+    'message.patientDeleted': 'Patient deleted successfully',
+    'message.patientDeleteError': 'Error deleting patient',
+  },
+  ar: {
+    // Navigation
+    'nav.patients': 'المرضى',
+    'nav.medicines': 'الأدوية',
+    'nav.labTests': 'التحاليل المخبرية',
+    'nav.imagingStudies': 'الأشعة',
+    'nav.reports': 'التقارير',
+    'nav.profile': 'ملف الطبيب',
+    'nav.prescriptions': 'الوصفات الطبية',
+    
+    // Common
+    'common.search': 'بحث',
+    'common.add': 'إضافة',
+    'common.edit': 'تعديل',
+    'common.delete': 'حذف',
+    'common.save': 'حفظ',
+    'common.cancel': 'إلغاء',
+    'common.view': 'عرض',
+    'common.download': 'تنزيل',
+    'common.upload': 'رفع',
+    'common.print': 'طباعة',
+    'common.actions': 'الإجراءات',
+    'common.loading': 'جاري التحميل',
+    'common.noData': 'لا توجد بيانات متاحة',
+    'common.confirm': 'تأكيد',
+    'common.close': 'إغلاق',
+    'common.name': 'الاسم',
+    'common.description': 'الوصف',
+    'common.created': 'تاريخ الإنشاء',
+    'common.areYouSure': 'هل أنت متأكد؟',
+    'common.cannotUndo': 'لا يمكن التراجع عن هذا الإجراء.',
+    'common.today': 'اليوم',
+    
+    // Patients
+    'patients.title': 'إدارة المرضى',
+    'patients.addNew': 'إضافة مريض جديد',
+    'patients.searchPlaceholder': 'البحث عن المرضى بالاسم أو الهاتف...',
+    'patients.name': 'الاسم',
+    'patients.age': 'العمر',
+    'patients.gender': 'الجنس',
+    'patients.dateOfBirth': 'تاريخ الميلاد',
+    'patients.phone': 'الهاتف',
+    'patients.address': 'العنوان',
+    'patients.viewDetails': 'عرض التفاصيل',
+    'patients.noPatients': 'لم يتم العثور على مرضى. أضف أول مريض للبدء.',
+    'patients.deleteConfirm': 'هل أنت متأكد؟',
+    'patients.deleteDescription': 'لا يمكن التراجع عن هذا الإجراء. سيؤدي هذا إلى حذف المريض نهائياً وجميع السجلات المرتبطة به بما في ذلك الزيارات والوصفات الطبية والملفات.',
+    'patients.addedSuccess': 'تم إضافة المريض بنجاح',
+    
+    // Medicines
+    'medicines.title': 'إدارة الأدوية',
+    'medicines.addNew': 'إضافة دواء جديد',
+    'medicines.searchPlaceholder': 'البحث عن الأدوية بالاسم أو الشركة المصنعة...',
+    'medicines.dosage': 'الجرعة',
+    'medicines.form': 'الشكل الدوائي',
+    'medicines.manufacturer': 'الشركة المصنعة',
+    'medicines.price': 'السعر',
+    'medicines.medicineName': 'اسم الدواء',
+    'medicines.enterName': 'أدخل اسم الدواء',
+    'medicines.enterDosage': 'مثل: 500 ملغ، 10 مل',
+    'medicines.enterForm': 'مثل: قرص، شراب، حقنة',
+    'medicines.enterManufacturer': 'أدخل اسم الشركة المصنعة',
+    'medicines.enterPrice': 'أدخل السعر',
+    'medicines.nameRequired': 'اسم الدواء مطلوب',
+    'medicines.addMedicine': 'إضافة دواء',
+    'medicines.updateMedicine': 'تحديث الدواء',
+    'medicines.editMedicine': 'تعديل الدواء',
+    'medicines.deleteConfirm': 'سيؤدي هذا إلى حذف الدواء "{name}" نهائياً من سجلاتك.',
+    'medicines.noMedicines': 'لم يتم العثور على أدوية. أضف أول دواء للبدء.',
+    'medicines.addedSuccess': 'تم إضافة الدواء بنجاح',
+    'medicines.updatedSuccess': 'تم تحديث الدواء بنجاح',
+    'medicines.deletedSuccess': 'تم حذف الدواء بنجاح',
+    'medicines.errorSaving': 'خطأ في حفظ الدواء',
+    'medicines.errorDeleting': 'خطأ في حذف الدواء',
+    
+    // Lab Tests
+    'labTests.title': 'إدارة التحاليل المخبرية',
+    'labTests.addNew': 'إضافة تحليل جديد',
+    'labTests.searchPlaceholder': 'البحث عن التحاليل بالاسم...',
+    'labTests.testName': 'اسم التحليل المخبري',
+    'labTests.enterName': 'أدخل اسم التحليل المخبري',
+    'labTests.enterDescription': 'أدخل وصف التحليل المخبري',
+    'labTests.nameRequired': 'اسم التحليل المخبري مطلوب',
+    'labTests.addTest': 'إضافة تحليل مخبري',
+    'labTests.updateTest': 'تحديث التحليل المخبري',
+    'labTests.editTest': 'تعديل التحليل المخبري',
+    'labTests.deleteConfirm': 'سيؤدي هذا إلى حذف التحليل المخبري "{name}" نهائياً.',
+    'labTests.noTests': 'لم يتم العثور على تحاليل مخبرية. أضف أول تحليل للبدء.',
+    'labTests.addedSuccess': 'تم إضافة التحليل المخبري بنجاح',
+    'labTests.updatedSuccess': 'تم تحديث التحليل المخبري بنجاح',
+    'labTests.deletedSuccess': 'تم حذف التحليل المخبري بنجاح',
+    'labTests.errorSaving': 'خطأ في حفظ التحليل المخبري',
+    'labTests.errorDeleting': 'خطأ في حذف التحليل المخبري',
+    
+    // Imaging Studies
+    'imaging.title': 'إدارة الأشعة',
+    'imaging.addNew': 'إضافة أشعة جديدة',
+    'imaging.searchPlaceholder': 'البحث عن الأشعة بالاسم...',
+    'imaging.studyName': 'اسم الأشعة',
+    'imaging.enterName': 'أدخل اسم الأشعة',
+    'imaging.enterDescription': 'أدخل وصف الأشعة',
+    'imaging.nameRequired': 'اسم الأشعة مطلوب',
+    'imaging.addStudy': 'إضافة أشعة',
+    'imaging.updateStudy': 'تحديث الأشعة',
+    'imaging.editStudy': 'تعديل الأشعة',
+    'imaging.deleteConfirm': 'سيؤدي هذا إلى حذف الأشعة "{name}" نهائياً.',
+    'imaging.noStudies': 'لم يتم العثور على أشعة. أضف أول أشعة للبدء.',
+    'imaging.addedSuccess': 'تم إضافة الأشعة بنجاح',
+    'imaging.updatedSuccess': 'تم تحديث الأشعة بنجاح',
+    'imaging.deletedSuccess': 'تم حذف الأشعة بنجاح',
+    'imaging.errorSaving': 'خطأ في حفظ الأشعة',
+    'imaging.errorDeleting': 'خطأ في حذف الأشعة',
+    
+    // Reports
+    'reports.title': 'التقارير اليومية',
+    'reports.selectDate': 'اختيار التاريخ',
+    'reports.reportDate': 'تاريخ التقرير',
+    'reports.totalVisits': 'إجمالي الزيارات',
+    'reports.primaryConsultations': 'الاستشارات الأولية',
+    'reports.followUps': 'المتابعات',
+    'reports.waitingVisits': 'الزيارات في الانتظار',
+    'reports.searchPlaceholder': 'البحث في الزيارات بالاسم أو الشكوى أو التشخيص...',
+    'reports.searchPatientsPlaceholder': 'البحث عن المرضى بالاسم أو رقم الهاتف...',
+    'reports.searchAll': 'البحث في جميع الزيارات (وليس فقط التاريخ المحدد)',
+    'reports.searchVisits': 'البحث في الزيارات',
+    'reports.searchPatients': 'البحث عن المرضى وإضافة زيارات',
+    'reports.noVisitsDate': 'لا توجد زيارات في هذا التاريخ.',
+    'reports.noVisitsSearch': 'لا توجد زيارات تطابق معايير البحث.',
+    'reports.noPatientFound': 'لم يتم العثور على مريض بهذا المصطلح.',
+    'reports.addNewPatient': 'إضافة مريض جديد',
+    'reports.addVisitToPatient': 'إضافة زيارة للمريض',
+    'reports.loadingVisits': 'جاري تحميل بيانات الزيارات...',
+    'reports.visitDeleted': 'تم حذف الزيارة بنجاح',
+    'reports.visitUpdated': 'تم تحديث الزيارة بنجاح',
+    'reports.errorDeleting': 'خطأ في حذف الزيارة',
+    'reports.errorUpdating': 'خطأ في تحديث الزيارة',
+    'reports.deleteConfirm': 'لا يمكن التراجع عن هذا الإجراء. سيؤدي هذا إلى حذف سجل الزيارة نهائياً وجميع البيانات المرتبطة بها.',
+    'reports.editVisit': 'تعديل الزيارة',
+    'reports.viewDetails': 'تفاصيل الزيارة',
+    
+    // Doctor Profile
+    'profile.doctorProfile': 'ملف الطبيب',
+    'profile.createProfile': 'إنشاء ملف شخصي',
+    'profile.editProfile': 'تعديل الملف الشخصي',
+    'profile.updateProfile': 'تحديث الملف الشخصي',
+    'profile.doctorInformation': 'معلومات الطبيب',
+    'profile.fullName': 'الاسم الكامل',
+    'profile.doctorTitle': 'اللقب',
+    'profile.qualification': 'المؤهل',
+    'profile.specialization': 'التخصص',
+    'profile.clinicName': 'اسم العيادة',
+    'profile.clinicAddress': 'عنوان العيادة',
+    'profile.phone': 'الهاتف',
+    'profile.email': 'البريد الإلكتروني',
+    'profile.enterFullName': 'أدخل اسمك الكامل',
+    'profile.enterTitle': 'مثل: د.، أ.د.',
+    'profile.enterQualification': 'مثل: بكالوريوس طب، ماجستير',
+    'profile.enterSpecialization': 'مثل: أمراض القلب، طب الأطفال',
+    'profile.enterClinicName': 'أدخل اسم العيادة',
+    'profile.enterClinicAddress': 'أدخل عنوان العيادة',
+    'profile.enterPhone': 'أدخل رقم الهاتف',
+    'profile.enterEmail': 'أدخل عنوان البريد الإلكتروني',
+    'profile.nameRequired': 'الاسم مطلوب',
+    'profile.titleRequired': 'اللقب مطلوب',
+    'profile.noProfile': 'لم يتم إنشاء ملف شخصي',
+    'profile.noProfileDescription': 'أنشئ ملفك الشخصي للظهور في الوصفات الطبية',
+    'profile.createdSuccess': 'تم إنشاء الملف الشخصي بنجاح',
+    'profile.updatedSuccess': 'تم تحديث الملف الشخصي بنجاح',
+    'profile.errorSaving': 'خطأ في حفظ الملف الشخصي',
+    'profile.loadingProfile': 'جاري تحميل الملف الشخصي...',
+    
+    // Visit Details
+    'visit.information': 'معلومات الزيارة',
+    'visit.date': 'التاريخ',
+    'visit.type': 'النوع',
+    'visit.status': 'الحالة',
+    'visit.selectStatus': 'اختر الحالة',
+    'visit.selectType': 'اختر النوع',
+    'visit.chiefComplaint': 'الشكوى الرئيسية',
+    'visit.enterChiefComplaint': 'أدخل الشكوى الرئيسية',
+    'visit.diagnosis': 'التشخيص',
+    'visit.enterDiagnosis': 'أدخل التشخيص',
+    'visit.notes': 'الملاحظات',
+    'visit.enterNotes': 'أدخل الملاحظات',
+    'visit.files': 'ملفات الزيارة',
+    'visit.uploaded': 'تم الرفع',
+    'visit.addFile': 'إضافة ملف',
+    'visit.prescription': 'تفاصيل الوصفة الطبية',
+    'visit.printPrescription': 'طباعة الوصفة الطبية',
+    'visit.details': 'تفاصيل الزيارة',
+    'visit.primaryConsultation': 'استشارة أولية',
+    'visit.followUp': 'متابعة',
+    'visit.waiting': 'في الانتظار',
+    'visit.completed': 'مكتملة',
+    'visit.cancelled': 'ملغية',
+    'visit.allStatuses': 'جميع الحالات',
+    'visit.changeStatus': 'تغيير الحالة',
+    'visit.statusUpdated': 'تم تحديث حالة الزيارة بنجاح',
+    'visit.noAdditionalDetails': 'لم يتم تسجيل تفاصيل إضافية للزيارة.',
+    'visit.loadingDetails': 'جاري تحميل تفاصيل الزيارة الإضافية...',
+    'visit.noPrescriptionFiles': 'لم يتم إضافة وصفة طبية أو ملفات لهذه الزيارة.',
+    'visit.addedSuccess': 'تم إضافة الزيارة بنجاح',
+    
+    // Prescription
+    'prescription.medicines': 'الأدوية الموصوفة',
+    'prescription.labTests': 'التحاليل المخبرية الموصوفة',
+    'prescription.imagingStudies': 'الأشعة الموصوفة',
+    'prescription.notes': 'ملاحظات الوصفة الطبية',
+    
+    // Forms
+    'form.required': 'هذا الحقل مطلوب',
+    'form.selectFile': 'اختر ملف',
+    'form.noFileSelected': 'لم يتم اختيار ملف',
+    'form.tryAgain': 'يرجى المحاولة مرة أخرى.',
+    
+    // Messages
+    'message.success': 'تمت العملية بنجاح',
+    'message.error': 'حدث خطأ. يرجى المحاولة مرة أخرى.',
+    'message.fileDownloaded': 'تم تنزيل الملف بنجاح',
+    'message.fileUploadError': 'خطأ في رفع الملف',
+    'message.patientDeleted': 'تم حذف المريض بنجاح',
+    'message.patientDeleteError': 'خطأ في حذف المريض',
+  },
+};
+
+export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [language, setLanguageState] = useState<Language>(() => {
+    const saved = localStorage.getItem('language');
+    return (saved as Language) || 'en';
+  });
+
+  const setLanguage = (newLanguage: Language) => {
+    setLanguageState(newLanguage);
+    localStorage.setItem('language', newLanguage);
+    
+    // Update document direction for RTL support
+    document.documentElement.dir = newLanguage === 'ar' ? 'rtl' : 'ltr';
+    document.documentElement.lang = newLanguage;
+  };
+
+  const t = (key: string): string => {
+    return translations[language][key] || key;
+  };
+
+  useEffect(() => {
+    // Set initial direction and language
+    document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
+    document.documentElement.lang = language;
+  }, [language]);
+
+  return (
+    <LanguageContext.Provider value={{ language, setLanguage, t }}>
+      {children}
+    </LanguageContext.Provider>
+  );
+};
+
+export const useLanguage = () => {
+  const context = useContext(LanguageContext);
+  if (context === undefined) {
+    throw new Error('useLanguage must be used within a LanguageProvider');
+  }
+  return context;
+};
