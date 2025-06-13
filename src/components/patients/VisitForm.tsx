@@ -13,7 +13,8 @@ import { updateExistingPrescription, loadExistingPrescription } from './visit-fo
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
-
+import { addVisitUrl } from '@/components/constants.js';
+import { PatientForm } from './PatientForm';
 interface VisitFormProps {
   patientId: string;
   visit?: any;
@@ -25,21 +26,6 @@ export const VisitForm = ({ patientId, visit, onSave }: VisitFormProps) => {
   const [showPrintDialog, setShowPrintDialog] = useState(false);
   const [currentPrescriptionData, setCurrentPrescriptionData] = useState<any>(null);
   const { t, language } = useLanguage();
-
-
- /* async function fetchStatusData() {
- const response = await fetch(visitStatusPatientUrl);
-           if (!response.ok) throw new Error('Failed to fetch status');
-         const visitStatus =await response.json();
-         console.log(visitStatus);
-}
-  async function fetchTypesData() {
- const response = await fetch(visitTypesPatientUrl);
-           if (!response.ok) throw new Error('Failed to fetch types');
-         const visitTypes =await response.json();
-         console.log(visitTypes);
-}*/
-
   const {
     prescriptionData,
     isPrescriptionSaved,
@@ -173,17 +159,23 @@ export const VisitForm = ({ patientId, visit, onSave }: VisitFormProps) => {
         toast({ title: 'Visit updated successfully' });
       } else {
         // Create new visit
-        const { data: visitData, error: visitError } = await supabase
-          .from('patient_visits')
-          .insert([{
-            ...data,
-            patient_id: patientId
-          }])
-          .select()
-          .single();
-        
-        if (visitError) throw visitError;
-        visitId = visitData.id;
+        console.log('start creating visit',patientId);
+           console.log(data);
+        data.patient_id=patientId;
+        data.type_id=data.visit_type;
+        data.status_id=data.status;
+
+          const response = await fetch(addVisitUrl, {
+                  method: "POST",
+                  headers: {
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify(data)
+                });
+             
+const result= await response.json();
+       console.log(result);
+        visitId = result?.visitId;
 
         // Save prescription if exists and is saved
         if (prescriptionData && isPrescriptionSaved) {

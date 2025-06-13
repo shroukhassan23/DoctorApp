@@ -99,8 +99,8 @@ export const MedicineSection = ({ medicines, setMedicines }: MedicineSectionProp
                     <SelectContent>
                       {medicineOptions?.map((med) => (
                      <SelectItem key={med.id} value={String(med.id)}>
-  {med.name}
-</SelectItem>
+                       {med.name}
+                     </SelectItem>
 
                       ))}
                     </SelectContent>

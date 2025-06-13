@@ -47,7 +47,7 @@ app.get('/Visit/imagingstudies', async (req, res) => {
 }
 });
 
-app.post('/visits', async (req, res) => {
+app.post('/Visit/add', async (req, res) => {
   const {
     patient_id,
     visit_date,
@@ -57,7 +57,7 @@ app.post('/visits', async (req, res) => {
     notes,
     status_id
   } = req.body;
-
+console.log(patient_id);
 
   try {
     const [result] = await db.query(
@@ -68,6 +68,29 @@ app.post('/visits', async (req, res) => {
     );
 
     res.status(201).json({ message: 'Visit added successfully', visitId: result.insertId });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+app.post('/prescription/add', async (req, res) => {
+  const {
+    patient_id,
+    visit_id,
+    diagnosis,
+    notes,
+    prescription_date,
+  } = req.body;
+console.log(patient_id);
+
+  try {
+    const [result] = await db.query(
+      `INSERT INTO prescription 
+       (patient_id, visit_id, diagnosis, notes,prescription_date)
+       VALUES (?, ?, ?, ?,?)`,
+      [patient_id, visit_id, diagnosis, notes,prescription_date]
+    );
+
+    res.status(201).json({ message: 'Prescription added successfully', prescriptionId: result.insertId });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

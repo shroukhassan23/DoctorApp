@@ -5,6 +5,10 @@ export const  visitStatusPatientUrl='http://localhost:3002/Visitstatus';
 export const  visitMedicinePatientUrl='http://localhost:3002/Visit/medicine';
 export const  visitLabTestsPatientUrl='http://localhost:3002/Visit/labtests';
 export const  visitImagingStudiesPatientUrl='http://localhost:3002/Visit/imagingstudies';
+export const  addVisitUrl='http://localhost:3002/Visit/add';
+export const  addprescriptionUrl='http://localhost:3002/prescription/add';
+
+
 
 
 

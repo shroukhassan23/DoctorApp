@@ -228,7 +228,7 @@ export const PrescriptionForm = ({
           </div>
 
           <div className="flex justify-end">
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="button" disabled={isSubmitting} onClick={handleSubmit(onSubmit) }>
               {isSubmitting ? 'Saving...' : prescription ? 'Update Prescription' : 'Save Prescription'}
             </Button>
           </div>

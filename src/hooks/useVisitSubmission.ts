@@ -2,31 +2,35 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-
+import { addprescriptionUrl } from '@/components/constants.js';
 export const useVisitSubmission = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
   const savePrescriptionToDatabase = async (prescriptionData: any, patientId: string, visitId: string) => {
-    const { data: newPrescription, error: prescriptionError } = await supabase
-      .from('prescriptions')
-      .insert([{
+      const response = await fetch(addprescriptionUrl, {
+                      method: "POST",
+                      headers: {
+                        'Content-Type': 'application/json'
+                      },
+                      body: JSON.stringify({
         patient_id: patientId,
         prescription_date: prescriptionData.prescription_date || new Date().toISOString().split('T')[0],
         notes: prescriptionData.notes || '',
         visit_id: visitId
-      }])
-      .select()
-      .single();
-
-    if (prescriptionError) throw prescriptionError;
+      })
+                    });
+                 
+    const result= await response.json();
+           console.log(result);
+           const  prescriptionId = result?.prescriptionId;
 
     // Add prescription items (medicines, lab tests, imaging studies)
     if (prescriptionData.medicines?.length > 0) {
       const medicineItems = prescriptionData.medicines
         .filter((med: any) => med.medicine_id)
         .map((med: any) => ({
-          prescription_id: newPrescription.id,
+          prescription_id: prescriptionId,
           medicine_id: med.medicine_id,
           dosage: med.dosage || '',
           frequency: '',
@@ -45,7 +49,7 @@ export const useVisitSubmission = () => {
     // Add lab tests if any
     if (prescriptionData.selectedLabTests?.length > 0) {
       const labTestItems = prescriptionData.selectedLabTests.map((test: any) => ({
-        prescription_id: newPrescription.id,
+        prescription_id: prescriptionId,
         lab_test_id: test.testId
       }));
 
@@ -58,7 +62,7 @@ export const useVisitSubmission = () => {
     // Add imaging studies if any
     if (prescriptionData.selectedImagingStudies?.length > 0) {
       const imagingStudyItems = prescriptionData.selectedImagingStudies.map((study: any) => ({
-        prescription_id: newPrescription.id,
+        prescription_id: prescriptionId,
         imaging_study_id: study.studyId,
         notes: study.notes || null
       }));
