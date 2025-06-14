@@ -1,12 +1,12 @@
-
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { supabase } from '@/integrations/supabase/client';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { X, Upload } from 'lucide-react';
+import { uploadPatientFileUrl } from '@/components/constants.js';
 
 interface FileUploadProps {
   patientId: string;
@@ -16,23 +16,21 @@ interface FileUploadProps {
 }
 
 export const FileUpload = ({ patientId, visitId, onUpload, isEmbedded = false }: FileUploadProps) => {
-  const { handleSubmit, reset } = useForm();
+  const { register, handleSubmit, reset, watch } = useForm();
   
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
 
+  const description = watch('description');
+
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    console.log('File selected:', file?.name);
     setSelectedFile(file || null);
   };
 
-  const onSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
-    
+  const onSubmit = async (data: any) => {
     if (!selectedFile) {
       toast({ 
         title: 'No file selected', 
@@ -48,18 +46,17 @@ export const FileUpload = ({ patientId, visitId, onUpload, isEmbedded = false }:
       // In embedded mode, just prepare the file data
       const fileData = {
         file: selectedFile,
-        description: ''
+        description: data.description || ''
       };
       
-      console.log('Adding file to embedded list:', fileData);
       setUploadedFiles(prev => {
         const updated = [...prev, fileData];
-        console.log('Updated file list:', updated);
         return updated;
       });
       
       onUpload(fileData);
       setSelectedFile(null);
+      reset();
       
       // Reset the file input
       const fileInput = document.getElementById('file') as HTMLInputElement;
@@ -73,55 +70,24 @@ export const FileUpload = ({ patientId, visitId, onUpload, isEmbedded = false }:
     }
 
     try {
-      // Check if storage bucket exists, if not create it
-      const { data: buckets } = await supabase.storage.listBuckets();
-      const bucketExists = buckets?.some(bucket => bucket.name === 'patient-files');
-      
-      if (!bucketExists) {
-        console.log('Creating patient-files bucket...');
-        const { error: bucketError } = await supabase.storage.createBucket('patient-files', {
-          public: true,
-          allowedMimeTypes: ['image/*', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'],
-          fileSizeLimit: 10485760 // 10MB
-        });
-        
-        if (bucketError) {
-          console.error('Error creating bucket:', bucketError);
-          throw bucketError;
-        }
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      formData.append('description', data.description || '');
+      if (visitId) {
+        formData.append('visitId', visitId);
       }
 
-      const fileExt = selectedFile.name.split('.').pop();
-      const fileName = `${Date.now()}.${fileExt}`;
-      const filePath = `${patientId}/${fileName}`;
+      const response = await fetch(uploadPatientFileUrl(patientId), {
+        method: 'POST',
+        body: formData
+      });
 
-      console.log('Uploading file to path:', filePath);
-
-      const { error: uploadError } = await supabase.storage
-        .from('patient-files')
-        .upload(filePath, selectedFile);
-
-      if (uploadError) {
-        console.error('Upload error:', uploadError);
-        throw uploadError;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Upload failed');
       }
 
-      const { error: dbError } = await supabase
-        .from('patient_files')
-        .insert([{
-          patient_id: patientId,
-          visit_id: visitId || null,
-          file_name: selectedFile.name,
-          file_type: selectedFile.type,
-          file_size: selectedFile.size,
-          file_path: filePath,
-          description: ''
-        }]);
-
-      if (dbError) {
-        console.error('Database error:', dbError);
-        throw dbError;
-      }
+      const result = await response.json();
 
       toast({ title: 'File uploaded successfully' });
       reset();
@@ -147,17 +113,15 @@ export const FileUpload = ({ patientId, visitId, onUpload, isEmbedded = false }:
   };
 
   const removeFile = (index: number) => {
-    console.log('Removing file at index:', index);
     setUploadedFiles(prev => {
       const updated = prev.filter((_, i) => i !== index);
-      console.log('Updated file list after removal:', updated);
       return updated;
     });
   };
 
   return (
     <div className="space-y-4">
-      <form onSubmit={onSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
           <Label htmlFor="file">Select File *</Label>
           <Input
@@ -171,6 +135,16 @@ export const FileUpload = ({ patientId, visitId, onUpload, isEmbedded = false }:
               Selected: {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)
             </p>
           )}
+        </div>
+
+        <div>
+          <Label htmlFor="description">Description (Optional)</Label>
+          <Textarea
+            id="description"
+            {...register('description')}
+            placeholder="Enter file description..."
+            rows={2}
+          />
         </div>
 
         <div className="flex justify-end space-x-2">
@@ -196,6 +170,9 @@ export const FileUpload = ({ patientId, visitId, onUpload, isEmbedded = false }:
                   <p className="text-xs text-gray-500">
                     {fileItem.file.type} • {(fileItem.file.size / 1024).toFixed(1)} KB
                   </p>
+                  {fileItem.description && (
+                    <p className="text-xs text-gray-600 mt-1">{fileItem.description}</p>
+                  )}
                 </div>
                 <Button
                   type="button"

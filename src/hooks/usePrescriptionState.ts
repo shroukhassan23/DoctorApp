@@ -10,7 +10,6 @@ export const usePrescriptionState = (visit?: any) => {
   const isEditing = !!visit;
 
   const updatePrescriptionData = (data: any) => {
-    console.log('Updating prescription data and marking as saved:', data);
     setPrescriptionData(data);
     setIsPrescriptionSaved(true);
   };
@@ -20,19 +19,16 @@ export const usePrescriptionState = (visit?: any) => {
   };
 
   const setExistingPrescriptionData = (prescription: any) => {
-    console.log('Setting existing prescription data and marking as saved:', prescription);
     setExistingPrescription(prescription);
     setIsPrescriptionSaved(true);
     resetPrescriptionKey();
   };
 
   const markPrescriptionAsSaved = () => {
-    console.log('Explicitly marking prescription as saved');
     setIsPrescriptionSaved(true);
   };
 
   const clearPrescriptionSavedState = () => {
-    console.log('Clearing prescription saved state');
     setIsPrescriptionSaved(false);
   };
 

@@ -1,14 +1,13 @@
-
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
+import { managementImagingStudiesUrl, updateImagingStudyUrl } from '@/components/constants.js';
 
 interface ImagingStudyFormProps {
   imagingStudy?: any;
@@ -28,23 +27,23 @@ export const ImagingStudyForm = ({ imagingStudy, onSave }: ImagingStudyFormProps
 
   const onSubmit = async (data: any) => {
     try {
-      if (imagingStudy) {
-        const { error } = await supabase
-          .from('imaging_studies')
-          .update(data)
-          .eq('id', imagingStudy.id);
-        
-        if (error) throw error;
-        toast({ title: t('imaging.updatedSuccess') });
-      } else {
-        const { error } = await supabase
-          .from('imaging_studies')
-          .insert([data]);
-        
-        if (error) throw error;
-        toast({ title: t('imaging.addedSuccess') });
-      }
+      const url = imagingStudy ? updateImagingStudyUrl(imagingStudy.id) : managementImagingStudiesUrl;
+      const method = imagingStudy ? 'PUT' : 'POST';
       
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to save imaging study');
+      }
+
+      toast({ title: imagingStudy ? t('imaging.updatedSuccess') : t('imaging.addedSuccess') });
       onSave();
     } catch (error) {
       console.error('Error saving imaging study:', error);

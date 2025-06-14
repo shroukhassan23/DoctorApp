@@ -1,13 +1,12 @@
-
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
+import { managementMedicinesUrl, updateMedicineUrl } from '@/components/constants.js';
 
 interface MedicineFormProps {
   medicine?: any;
@@ -35,23 +34,23 @@ export const MedicineForm = ({ medicine, onSave }: MedicineFormProps) => {
         price: data.price ? parseFloat(data.price) : null
       };
 
-      if (medicine) {
-        const { error } = await supabase
-          .from('medicines')
-          .update(medicineData)
-          .eq('id', medicine.id);
-        
-        if (error) throw error;
-        toast({ title: t('medicines.updatedSuccess') });
-      } else {
-        const { error } = await supabase
-          .from('medicines')
-          .insert([medicineData]);
-        
-        if (error) throw error;
-        toast({ title: t('medicines.addedSuccess') });
-      }
+      const url = medicine ? updateMedicineUrl(medicine.id) : managementMedicinesUrl;
+      const method = medicine ? 'PUT' : 'POST';
       
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(medicineData)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to save medicine');
+      }
+
+      toast({ title: medicine ? t('medicines.updatedSuccess') : t('medicines.addedSuccess') });
       onSave();
     } catch (error) {
       console.error('Error saving medicine:', error);

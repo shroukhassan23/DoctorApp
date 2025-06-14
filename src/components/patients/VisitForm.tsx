@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Separator } from '@/components/ui/separator';
@@ -12,9 +11,15 @@ import { useVisitSubmission } from '@/hooks/useVisitSubmission';
 import { updateExistingPrescription, loadExistingPrescription } from './visit-form/PrescriptionUpdateHandler';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
-import { supabase } from '@/integrations/supabase/client';
-import { addVisitUrl } from '@/components/constants.js';
+import {
+  addVisitUrl,
+  getVisitPrescriptionUrl,
+  visitTypesPatientUrl,
+  visitStatusPatientUrl,
+  updateVisitUrl
+} from '@/components/constants.js';
 import { PatientForm } from './PatientForm';
+
 interface VisitFormProps {
   patientId: string;
   visit?: any;
@@ -25,7 +30,10 @@ export const VisitForm = ({ patientId, visit, onSave }: VisitFormProps) => {
   const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
   const [showPrintDialog, setShowPrintDialog] = useState(false);
   const [currentPrescriptionData, setCurrentPrescriptionData] = useState<any>(null);
+  const [visitTypes, setVisitTypes] = useState<any[]>([]);
+  const [visitStatuses, setVisitStatuses] = useState<any[]>([]);
   const { t, language } = useLanguage();
+
   const {
     prescriptionData,
     isPrescriptionSaved,
@@ -44,64 +52,107 @@ export const VisitForm = ({ patientId, visit, onSave }: VisitFormProps) => {
     uploadFiles,
     toast
   } = useVisitSubmission();
-  
+
   const { register, handleSubmit, setValue, watch, formState: { errors }, reset } = useForm({
-    defaultValues: visit || {
+    defaultValues: {
       visit_date: new Date().toISOString().split('T')[0],
-      visit_type: 'primary',
+      visit_type: '',
       chief_complaint: '',
       diagnosis: '',
       notes: '',
-      status: 'waiting'
+      status: ''
     }
   });
 
+  // Fetch visit types and statuses
+  useEffect(() => {
+    const fetchVisitData = async () => {
+      try {
+        const [typesResponse, statusesResponse] = await Promise.all([
+          fetch(visitTypesPatientUrl),
+          fetch(visitStatusPatientUrl)
+        ]);
+
+        if (typesResponse.ok) {
+          const types = await typesResponse.json();
+          setVisitTypes(types);
+        }
+
+        if (statusesResponse.ok) {
+          const statuses = await statusesResponse.json();
+          setVisitStatuses(statuses);
+        }
+      } catch (error) {
+        console.error('Error fetching visit data:', error);
+      }
+    };
+
+    fetchVisitData();
+  }, []);
+
   // Populate form when editing
   useEffect(() => {
-    if (visit) {
-      reset({
-        visit_date: visit.visit_date,
-        visit_type: visit.visit_type,
+    if (visit && visitTypes.length > 0 && visitStatuses.length > 0) {
+
+      // Format date properly for input[type="date"]
+      let formattedDate = visit.visit_date;
+      if (formattedDate) {
+        const date = new Date(formattedDate);
+        const localDate = new Date(date.getTime() + (date.getTimezoneOffset() * 60000));
+        formattedDate = localDate.toISOString().split('T')[0];
+      }
+
+      const formData = {
+        visit_date: formattedDate || new Date().toISOString().split('T')[0],
+        visit_type: String(visit.type_id || visit.visit_type || ''),
         chief_complaint: visit.chief_complaint || '',
         diagnosis: visit.diagnosis || '',
         notes: visit.notes || '',
-        status: visit.status || 'waiting'
-      });
+        status: String(visit.status_id || visit.status || '')
+      };
+      reset(formData);
 
       // Load existing prescription if editing
       loadExistingPrescriptionData();
     }
-  }, [visit, reset]);
+  }, [visit, reset, visitTypes, visitStatuses]);
 
   const loadExistingPrescriptionData = async () => {
     if (!visit?.id) return;
 
-    const prescription = await loadExistingPrescription(visit.id);
-    if (prescription) {
-      setExistingPrescriptionData(prescription);
-      setCurrentPrescriptionData(prescription);
+    try {
+      const response = await fetch(getVisitPrescriptionUrl(visit.id));
+      if (response.ok) {
+        const prescription = await response.json();
+        setExistingPrescriptionData(prescription);
+        setCurrentPrescriptionData(prescription);
+      } else if (response.status !== 404) {
+        // Only log error if it's not a 404 (no prescription found)
+        console.error('Error loading prescription:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Error loading prescription:', error);
     }
   };
 
   const handlePrescriptionSaved = async (prescriptionData: any) => {
-    console.log('Prescription saved with data:', prescriptionData);
-    
+
     try {
       if (isEditing && existingPrescription) {
         await updateExistingPrescription(prescriptionData, existingPrescription);
         toast({ title: 'Prescription updated successfully' });
-        
+
         // Reload the prescription data to get the latest state
-        const updatedPrescription = await loadExistingPrescription(visit.id);
-        if (updatedPrescription) {
+        const response = await fetch(getVisitPrescriptionUrl(visit.id));
+        if (response.ok) {
+          const updatedPrescription = await response.json();
           setExistingPrescriptionData(updatedPrescription);
           setCurrentPrescriptionData(updatedPrescription);
         }
-        
+
         // Mark as saved
         markPrescriptionAsSaved();
-        
-        console.log('Prescription updated, state marked as saved');
+
       } else {
         // For new prescriptions
         updatePrescriptionData(prescriptionData);
@@ -110,17 +161,16 @@ export const VisitForm = ({ patientId, visit, onSave }: VisitFormProps) => {
       }
     } catch (error) {
       console.error('Error saving prescription:', error);
-      toast({ 
-        title: 'Error saving prescription', 
+      toast({
+        title: 'Error saving prescription',
         description: 'Please try again.',
-        variant: 'destructive' 
+        variant: 'destructive'
       });
       return;
     }
   };
 
   const handleFileUploaded = (fileData: any) => {
-    console.log('File uploaded:', fileData);
     setUploadedFiles(prev => [...prev, fileData]);
     toast({ title: 'File prepared for upload' });
   };
@@ -136,10 +186,10 @@ export const VisitForm = ({ patientId, visit, onSave }: VisitFormProps) => {
     );
 
     if (!isEditing && hasAnyPrescriptionContent && !isPrescriptionSaved) {
-      toast({ 
-        title: 'Prescription not saved', 
+      toast({
+        title: 'Prescription not saved',
         description: 'Please save the prescription before saving the visit.',
-        variant: 'destructive' 
+        variant: 'destructive'
       });
       return;
     }
@@ -150,31 +200,56 @@ export const VisitForm = ({ patientId, visit, onSave }: VisitFormProps) => {
 
       if (isEditing) {
         // Update existing visit
-        const { error: visitError } = await supabase
-          .from('patient_visits')
-          .update(data)
-          .eq('id', visit.id);
-        
-        if (visitError) throw visitError;
+        const updateData = {
+          visit_date: data.visit_date,
+          type_id: parseInt(data.visit_type),
+          chief_complaint: data.chief_complaint,
+          diagnosis: data.diagnosis,
+          notes: data.notes,
+          status_id: parseInt(data.status)
+        };
+
+        const response = await fetch(updateVisitUrl(visit.id), {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(updateData)
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Failed to update visit');
+        }
+
         toast({ title: 'Visit updated successfully' });
       } else {
         // Create new visit
-        console.log('start creating visit',patientId);
-           console.log(data);
-        data.patient_id=patientId;
-        data.type_id=data.visit_type;
-        data.status_id=data.status;
 
-          const response = await fetch(addVisitUrl, {
-                  method: "POST",
-                  headers: {
-                    'Content-Type': 'application/json'
-                  },
-                  body: JSON.stringify(data)
-                });
-             
-const result= await response.json();
-       console.log(result);
+        const visitData = {
+          patient_id: patientId,
+          visit_date: data.visit_date,
+          type_id: parseInt(data.visit_type),
+          chief_complaint: data.chief_complaint,
+          diagnosis: data.diagnosis,
+          notes: data.notes,
+          status_id: parseInt(data.status)
+        };
+
+        const response = await fetch(addVisitUrl, {
+          method: "POST",
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(visitData)
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Failed to create visit');
+        }
+
+        const result = await response.json();
         visitId = result?.visitId;
 
         // Save prescription if exists and is saved
@@ -187,14 +262,14 @@ const result= await response.json();
 
         toast({ title: 'Visit recorded successfully' });
       }
-      
+
       onSave();
     } catch (error) {
       console.error('Error saving visit:', error);
-      toast({ 
-        title: 'Error saving visit', 
-        description: 'Please try again.',
-        variant: 'destructive' 
+      toast({
+        title: 'Error saving visit',
+        description: error.message || 'Please try again.',
+        variant: 'destructive'
       });
     } finally {
       setIsSubmitting(false);
@@ -208,14 +283,14 @@ const result= await response.json();
   const getPrintablePrescription = () => {
     // Use the most current prescription data
     const prescriptionToPrint = currentPrescriptionData || existingPrescription || prescriptionData;
-    
+
     if (!prescriptionToPrint) return null;
-    
+
     // If it's already in the correct format, return it
     if (prescriptionToPrint.prescription_items || prescriptionToPrint.prescription_lab_tests || prescriptionToPrint.prescription_imaging_studies) {
       return prescriptionToPrint;
     }
-    
+
     // For new prescriptions, format the data properly for printing
     return {
       ...prescriptionToPrint,
@@ -242,14 +317,6 @@ const result= await response.json();
   const shouldShowPrintButton = isPrescriptionSaved || !!existingPrescription || !!currentPrescriptionData;
   const hasPrescriptionContent = prescriptionData !== null || existingPrescription !== null || currentPrescriptionData !== null;
 
-  console.log('Print button state:', {
-    isPrescriptionSaved,
-    existingPrescription: !!existingPrescription,
-    currentPrescriptionData: !!currentPrescriptionData,
-    shouldShowPrintButton,
-    hasPrescriptionContent,
-    isEditing
-  });
 
   return (
     <div className={cn(language === 'ar' && 'rtl')}>
@@ -260,6 +327,8 @@ const result= await response.json();
           errors={errors}
           setValue={setValue}
           watch={watch}
+          visitTypes={visitTypes}
+          visitStatuses={visitStatuses}
         />
 
         {/* Prescription Section */}
@@ -281,7 +350,7 @@ const result= await response.json();
             {/* File Upload Section */}
             <div>
               <h3 className="text-lg font-medium mb-4">{t('visit.uploadFiles') || 'Upload Files (Optional)'}</h3>
-              <FileUpload 
+              <FileUpload
                 patientId={patientId}
                 onUpload={handleFileUploaded}
                 isEmbedded={true}
@@ -293,8 +362,8 @@ const result= await response.json();
         <Separator />
 
         {/* Save Button with Print Option */}
-        <VisitFormActions 
-          isSubmitting={isSubmitting} 
+        <VisitFormActions
+          isSubmitting={isSubmitting}
           isPrescriptionSaved={shouldShowPrintButton}
           hasPrescriptionContent={hasPrescriptionContent}
           isEditing={isEditing}

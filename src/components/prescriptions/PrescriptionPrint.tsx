@@ -1,11 +1,10 @@
-
 import React, { useRef } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Printer } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
+import { doctorProfileUrl, getPatientByIdUrl } from '@/components/constants.js';
 
 interface PrescriptionPrintProps {
   prescription: any;
@@ -19,13 +18,14 @@ export const PrescriptionPrint = ({ prescription, open, onOpenChange }: Prescrip
   const { data: doctorProfile } = useQuery({
     queryKey: ['doctor-profile'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('doctor_profile')
-        .select('*')
-        .single();
-      
-      if (error && error.code !== 'PGRST116') throw error;
-      return data;
+      const response = await fetch(doctorProfileUrl);
+      if (!response.ok) {
+        if (response.status === 404) {
+          return null; // No profile created yet
+        }
+        throw new Error('Failed to fetch doctor profile');
+      }
+      return await response.json();
     }
   });
 
@@ -34,14 +34,9 @@ export const PrescriptionPrint = ({ prescription, open, onOpenChange }: Prescrip
     queryFn: async () => {
       if (!prescription?.patient_id) return null;
       
-      const { data, error } = await supabase
-        .from('patients')
-        .select('*')
-        .eq('id', prescription.patient_id)
-        .single();
-      
-      if (error) throw error;
-      return data;
+      const response = await fetch(getPatientByIdUrl(prescription.patient_id));
+      if (!response.ok) throw new Error('Failed to fetch patient');
+      return await response.json();
     },
     enabled: !!prescription?.patient_id
   });
@@ -73,131 +68,403 @@ export const PrescriptionPrint = ({ prescription, open, onOpenChange }: Prescrip
       printWindow.document.write(`
         <html>
           <head>
-            <title>Prescription - ${patient?.name || 'Patient'}</title>
+            <title>Medical Prescription - ${patient?.name || 'Patient'}</title>
             <style>
-              * { box-sizing: border-box; margin: 0; padding: 0; }
+              @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+              
+              * { 
+                box-sizing: border-box; 
+                margin: 0; 
+                padding: 0; 
+              }
+              
               body { 
-                font-family: Arial, sans-serif; 
-                line-height: 1.4; 
-                color: #333;
-                background: white;
-              }
-              .prescription { 
-                max-width: 800px; 
-                margin: 20px auto; 
-                padding: 30px;
-                background: white;
-              }
-              .doctor-info { 
-                text-align: center; 
-                margin-bottom: 30px; 
-                padding-bottom: 20px; 
-                border-bottom: 2px solid #333; 
-              }
-              .doctor-name { 
-                font-size: 28px; 
-                font-weight: bold; 
-                margin-bottom: 8px;
-                color: #2563eb;
-              }
-              .doctor-title { 
-                font-size: 18px; 
-                margin-bottom: 5px;
-                font-weight: 600;
-              }
-              .doctor-details { 
-                font-size: 14px; 
-                line-height: 1.6;
-              }
-              .patient-info { 
-                display: flex; 
-                justify-content: space-between; 
-                margin-bottom: 30px;
-                padding: 15px;
-                background: #f8f9fa;
-                border: 1px solid #dee2e6;
-                border-radius: 8px;
-              }
-              .patient-data, .prescription-date { 
-                flex: 1;
-              }
-              .patient-data p, .prescription-date p {
-                margin-bottom: 5px;
+                font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                line-height: 1.5; 
+                color: #1f2937;
+                background: #ffffff;
                 font-size: 14px;
               }
-              .section-title { 
-                font-size: 20px; 
-                font-weight: bold; 
-                margin: 25px 0 15px; 
-                border-bottom: 2px solid #2563eb; 
-                padding-bottom: 8px;
-                color: #2563eb;
+              
+              .prescription { 
+                max-width: 21cm;
+                min-height: 29.7cm;
+                margin: 0 auto; 
+                padding: 2cm;
+                background: #ffffff;
+                position: relative;
+                box-shadow: 0 0 20px rgba(0,0,0,0.1);
               }
-              .medicine-item { 
-                margin-bottom: 20px; 
-                padding: 15px;
-                border: 1px solid #e5e7eb;
-                border-radius: 8px;
-                background: #fafafa;
+              
+              /* Header with elegant design */
+              .header {
+                position: relative;
+                margin-bottom: 40px;
+                padding-bottom: 30px;
               }
-              .medicine-name { 
-                font-weight: bold; 
-                font-size: 16px;
-                color: #1f2937;
+              
+              .header::after {
+                content: '';
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: 3px;
+                background: linear-gradient(90deg, #2563eb 0%, #1d4ed8 50%, #2563eb 100%);
+                border-radius: 2px;
+              }
+              
+              .clinic-name {
+                font-size: 32px;
+                font-weight: 700;
+                color: #1e40af;
                 margin-bottom: 8px;
+                letter-spacing: -0.5px;
               }
-              .medicine-details { 
-                margin-left: 0;
+              
+              .doctor-info {
+                text-align: center;
+              }
+              
+              .doctor-name {
+                font-size: 24px;
+                font-weight: 600;
+                color: #374151;
+                margin-bottom: 4px;
+              }
+              
+              .doctor-title {
+                font-size: 16px;
+                color: #6b7280;
+                margin-bottom: 16px;
+                font-weight: 500;
+              }
+              
+              .contact-info {
+                display: flex;
+                justify-content: center;
+                gap: 30px;
+                flex-wrap: wrap;
+                font-size: 13px;
+                color: #6b7280;
+              }
+              
+              .contact-item {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+              }
+              
+              /* Patient Info Card */
+              .patient-card {
+                background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+                border: 1px solid #e2e8f0;
+                border-radius: 12px;
+                padding: 24px;
+                margin-bottom: 32px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+              }
+              
+              .patient-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                margin-bottom: 16px;
+              }
+              
+              .patient-name {
+                font-size: 20px;
+                font-weight: 600;
+                color: #1f2937;
+                margin-bottom: 4px;
+              }
+              
+              .prescription-id {
+                font-size: 12px;
+                color: #6b7280;
+                background: #ffffff;
+                padding: 4px 12px;
+                border-radius: 20px;
+                border: 1px solid #d1d5db;
+                font-weight: 500;
+              }
+              
+              .patient-details {
                 display: grid;
                 grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                gap: 8px;
+                gap: 16px;
               }
-              .medicine-details p {
+              
+              .detail-item {
+                display: flex;
+                flex-direction: column;
+                gap: 2px;
+              }
+              
+              .detail-label {
+                font-size: 12px;
+                color: #6b7280;
+                font-weight: 500;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+              }
+              
+              .detail-value {
                 font-size: 14px;
-                padding: 4px 0;
+                color: #374151;
+                font-weight: 600;
               }
-              .lab-tests, .imaging-studies { 
-                margin-top: 20px; 
+              
+              /* Section Headers */
+              .section {
+                margin-bottom: 32px;
               }
-              .lab-tests ul, .imaging-studies ul {
-                list-style: none;
-                padding: 0;
+              
+              .section-header {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                margin-bottom: 20px;
+                padding-bottom: 12px;
+                border-bottom: 2px solid #e5e7eb;
               }
-              .test-item, .study-item { 
-                margin-bottom: 12px;
-                padding: 10px 15px;
-                background: #f0f9ff;
-                border-left: 4px solid #0ea5e9;
-                border-radius: 0 4px 4px 0;
+              
+              .section-icon {
+                width: 24px;
+                height: 24px;
+                background: #2563eb;
+                border-radius: 6px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 14px;
+                color: white;
+                font-weight: 600;
               }
-              .notes { 
-                margin-top: 25px;
-                padding: 20px;
-                background: #fffbeb;
+              
+              .section-title {
+                font-size: 18px;
+                font-weight: 600;
+                color: #374151;
+                margin: 0;
+              }
+              
+              /* Diagnosis Section */
+              .diagnosis-content {
+                background: #fefce8;
                 border: 1px solid #fbbf24;
                 border-radius: 8px;
-              }
-              .notes p {
+                padding: 20px;
+                font-size: 15px;
                 line-height: 1.6;
+                color: #92400e;
+              }
+              
+              /* Medications */
+              .medication-list {
+                display: flex;
+                flex-direction: column;
+                gap: 16px;
+              }
+              
+              .medication-item {
+                background: #ffffff;
+                border: 1px solid #e5e7eb;
+                border-radius: 12px;
+                padding: 20px;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+                transition: all 0.2s ease;
+              }
+              
+              .medication-item:hover {
+                box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+              }
+              
+              .medication-header {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                margin-bottom: 12px;
+              }
+              
+              .medication-number {
+                background: #2563eb;
+                color: white;
+                width: 28px;
+                height: 28px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
                 font-size: 14px;
-              }
-              .signature { 
-                margin-top: 60px; 
-                display: flex; 
-                justify-content: flex-end; 
-              }
-              .signature-line { 
-                width: 250px; 
-                border-top: 2px solid #333; 
-                text-align: center; 
-                padding-top: 10px;
                 font-weight: 600;
-                font-size: 14px;
               }
+              
+              .medication-name {
+                font-size: 18px;
+                font-weight: 600;
+                color: #1f2937;
+                flex: 1;
+              }
+              
+              .medication-details {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                gap: 12px;
+                margin-top: 12px;
+              }
+              
+              .detail-pill {
+                background: #f8fafc;
+                border: 1px solid #e2e8f0;
+                border-radius: 8px;
+                padding: 8px 12px;
+                font-size: 13px;
+              }
+              
+              .detail-pill strong {
+                color: #374151;
+                font-weight: 600;
+              }
+              
+              /* Tests and Studies */
+              .test-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                gap: 12px;
+              }
+              
+              .test-item {
+                background: #f0f9ff;
+                border: 1px solid #0ea5e9;
+                border-left: 4px solid #0ea5e9;
+                border-radius: 8px;
+                padding: 16px;
+                font-size: 14px;
+                font-weight: 500;
+                color: #0c4a6e;
+              }
+              
+              .imaging-item {
+                background: #f0fdf4;
+                border: 1px solid #22c55e;
+                border-left: 4px solid #22c55e;
+                border-radius: 8px;
+                padding: 16px;
+                font-size: 14px;
+                font-weight: 500;
+                color: #14532d;
+              }
+              
+              /* Notes Section */
+              .notes-content {
+                background: #fefefe;
+                border: 2px dashed #d1d5db;
+                border-radius: 12px;
+                padding: 24px;
+                font-size: 15px;
+                line-height: 1.7;
+                color: #374151;
+                font-style: italic;
+              }
+              
+              /* Footer */
+              .footer {
+                margin-top: 50px;
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-end;
+              }
+              
+              .date-issued {
+                font-size: 13px;
+                color: #6b7280;
+              }
+              
+              .signature-section {
+                text-align: center;
+                min-width: 200px;
+              }
+              
+              .signature-line {
+                width: 200px;
+                height: 60px;
+                border-bottom: 2px solid #374151;
+                margin-bottom: 8px;
+                position: relative;
+              }
+              
+              .signature-label {
+                font-size: 13px;
+                color: #374151;
+                font-weight: 600;
+              }
+              
+              .doctor-stamp {
+                margin-top: 8px;
+                font-size: 12px;
+                color: #6b7280;
+              }
+              
+              /* Watermark */
+              .watermark {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%) rotate(-45deg);
+                font-size: 120px;
+                color: rgba(37, 99, 235, 0.03);
+                font-weight: 900;
+                z-index: 0;
+                pointer-events: none;
+                letter-spacing: 10px;
+              }
+              
+              .content {
+                position: relative;
+                z-index: 1;
+              }
+              
+              /* Print Styles */
               @media print {
-                body { margin: 0; }
-                .prescription { margin: 0; padding: 20px; }
-                .no-print { display: none; }
+                body { 
+                  margin: 0; 
+                  background: white;
+                  -webkit-print-color-adjust: exact;
+                  print-color-adjust: exact;
+                }
+                .prescription { 
+                  margin: 0; 
+                  padding: 1.5cm;
+                  box-shadow: none;
+                  min-height: auto;
+                }
+                .no-print { 
+                  display: none !important; 
+                }
+                .medication-item {
+                  break-inside: avoid;
+                }
+                .section {
+                  break-inside: avoid;
+                }
+              }
+              
+              /* Responsive */
+              @media (max-width: 768px) {
+                .prescription {
+                  padding: 1cm;
+                }
+                .contact-info {
+                  flex-direction: column;
+                  gap: 8px;
+                }
+                .patient-details {
+                  grid-template-columns: 1fr;
+                }
+                .medication-details {
+                  grid-template-columns: 1fr;
+                }
               }
             </style>
           </head>
@@ -214,7 +481,7 @@ export const PrescriptionPrint = ({ prescription, open, onOpenChange }: Prescrip
         printWindow.focus();
         printWindow.print();
         printWindow.close();
-      }, 100);
+      }, 250);
       
     } catch (error) {
       console.error('Error during print:', error);
@@ -226,111 +493,214 @@ export const PrescriptionPrint = ({ prescription, open, onOpenChange }: Prescrip
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Prescription Preview</DialogTitle>
+          <DialogTitle>Medical Prescription Preview</DialogTitle>
+          <DialogDescription>
+            Review the prescription details before printing. Click print to generate a professional copy.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="flex justify-end mb-4 no-print">
-          <Button onClick={handlePrint}>
-            <Printer className="w-4 h-4 mr-2" />
-            Print
+          <Button onClick={handlePrint} size="lg" className="bg-blue-600 hover:bg-blue-700">
+            <Printer className="w-5 h-5 mr-2" />
+            Print Prescription
           </Button>
         </div>
 
-        <div ref={printRef} className="p-6 border rounded-lg bg-white">
+        <div ref={printRef} className="border rounded-lg bg-white overflow-hidden">
           <div className="prescription">
-            {/* Doctor Information */}
-            <div className="doctor-info">
-              <h2 className="doctor-name">{doctorProfile?.name || 'Dr. [Name]'}</h2>
-              <p className="doctor-title">
-                {doctorProfile?.title && `${doctorProfile.title} `}
-                {doctorProfile?.specialization || 'Medical Practitioner'}
-              </p>
-              <div className="doctor-details">
-                {doctorProfile?.qualification && <div>{doctorProfile.qualification}</div>}
-                {doctorProfile?.clinic_name && <div><strong>Clinic:</strong> {doctorProfile.clinic_name}</div>}
-                {doctorProfile?.clinic_address && <div><strong>Address:</strong> {doctorProfile.clinic_address}</div>}
-                {doctorProfile?.phone && <div><strong>Phone:</strong> {doctorProfile.phone}</div>}
-                {doctorProfile?.email && <div><strong>Email:</strong> {doctorProfile.email}</div>}
-              </div>
-            </div>
-
-            {/* Patient Information */}
-            <div className="patient-info">
-              <div className="patient-data">
-                <p><strong>Patient Name:</strong> {patient?.name || 'N/A'}</p>
-                <p><strong>Age:</strong> {patient?.age || 'N/A'} years</p>
-                <p><strong>Gender:</strong> {patient?.gender || 'N/A'}</p>
-                {patient?.phone && <p><strong>Phone:</strong> {patient.phone}</p>}
-              </div>
-              <div className="prescription-date">
-                <p><strong>Prescription Date:</strong> {formatDate(prescription.prescription_date)}</p>
-                <p><strong>Prescription ID:</strong> {prescription.id.slice(-8).toUpperCase()}</p>
-              </div>
-            </div>
-
-            {/* Medications */}
-            {prescription.prescription_items?.length > 0 && (
-              <div>
-                <h3 className="section-title">℞ Medications</h3>
-                {prescription.prescription_items.map((item: any, index: number) => (
-                  <div key={index} className="medicine-item">
-                    <div className="medicine-name">
-                      {index + 1}. {item.medicines?.name || 'Medicine Name'}
-                    </div>
-                    <div className="medicine-details">
-                      {item.dosage && <p><strong>Dosage:</strong> {item.dosage}</p>}
-                      {item.duration && <p><strong>Duration:</strong> {item.duration}</p>}
-                      {item.frequency && <p><strong>Frequency:</strong> {item.frequency}</p>}
-                      {item.instructions && <p><strong>Instructions:</strong> {item.instructions}</p>}
-                    </div>
+            <div className="watermark">RX</div>
+            
+            <div className="content">
+              {/* Header */}
+              <div className="header">
+                <div className="doctor-info">
+                  <h1 className="clinic-name">
+                    {doctorProfile?.clinic_name || 'Medical Clinic'}
+                  </h1>
+                  <h2 className="doctor-name">
+                    {doctorProfile?.name || 'Dr. [Doctor Name]'}
+                  </h2>
+                  <p className="doctor-title">
+                    {doctorProfile?.title && `${doctorProfile.title} • `}
+                    {doctorProfile?.specialization || 'Medical Practitioner'}
+                    {doctorProfile?.qualification && ` • ${doctorProfile.qualification}`}
+                  </p>
+                  
+                  <div className="contact-info">
+                    {doctorProfile?.clinic_address && (
+                      <div className="contact-item">
+                        <span>📍</span>
+                        <span>{doctorProfile.clinic_address}</span>
+                      </div>
+                    )}
+                    {doctorProfile?.phone && (
+                      <div className="contact-item">
+                        <span>📞</span>
+                        <span>{doctorProfile.phone}</span>
+                      </div>
+                    )}
+                    {doctorProfile?.email && (
+                      <div className="contact-item">
+                        <span>✉️</span>
+                        <span>{doctorProfile.email}</span>
+                      </div>
+                    )}
                   </div>
-                ))}
+                </div>
               </div>
-            )}
 
-            {/* Lab Tests */}
-            {prescription.prescription_lab_tests?.length > 0 && (
-              <div className="lab-tests">
-                <h3 className="section-title">🔬 Laboratory Tests</h3>
-                <ul>
-                  {prescription.prescription_lab_tests.map((test: any, index: number) => (
-                    <li key={index} className="test-item">
-                      • {test.lab_tests?.name || 'Lab Test'}
-                    </li>
-                  ))}
-                </ul>
+              {/* Patient Information */}
+              <div className="patient-card">
+                <div className="patient-header">
+                  <div>
+                    <h3 className="patient-name">{patient?.name || 'Patient Name'}</h3>
+                  </div>
+                  <div className="prescription-id">
+                    Rx #{prescription.id ? prescription.id.toString().padStart(6, '0') : 'DRAFT'}
+                  </div>
+                </div>
+                
+                <div className="patient-details">
+                  <div className="detail-item">
+                    <span className="detail-label">Age</span>
+                    <span className="detail-value">{patient?.age || 'N/A'} years</span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="detail-label">Gender</span>
+                    <span className="detail-value">{patient?.gender || 'N/A'}</span>
+                  </div>
+                  {patient?.phone && (
+                    <div className="detail-item">
+                      <span className="detail-label">Phone</span>
+                      <span className="detail-value">{patient.phone}</span>
+                    </div>
+                  )}
+                  <div className="detail-item">
+                    <span className="detail-label">Date</span>
+                    <span className="detail-value">{formatDate(prescription.prescription_date)}</span>
+                  </div>
+                </div>
               </div>
-            )}
 
-            {/* Imaging Studies */}
-            {prescription.prescription_imaging_studies?.length > 0 && (
-              <div className="imaging-studies">
-                <h3 className="section-title">📸 Imaging Studies</h3>
-                <ul>
-                  {prescription.prescription_imaging_studies.map((study: any, index: number) => (
-                    <li key={index} className="study-item">
-                      • {study.imaging_studies?.name || 'Imaging Study'}
-                      {study.notes && <span> - {study.notes}</span>}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+              {/* Diagnosis */}
+              {prescription.diagnosis && (
+                <div className="section">
+                  <div className="section-header">
+                    <div className="section-icon">📋</div>
+                    <h3 className="section-title">Diagnosis</h3>
+                  </div>
+                  <div className="diagnosis-content">
+                    {prescription.diagnosis}
+                  </div>
+                </div>
+              )}
 
-            {/* Notes */}
-            {prescription.notes && (
-              <div className="notes">
-                <h3 className="section-title">📝 Additional Notes</h3>
-                <p>{prescription.notes}</p>
-              </div>
-            )}
+              {/* Medications */}
+              {prescription.prescription_items?.length > 0 && (
+                <div className="section">
+                  <div className="section-header">
+                    <div className="section-icon">💊</div>
+                    <h3 className="section-title">Prescribed Medications</h3>
+                  </div>
+                  <div className="medication-list">
+                    {prescription.prescription_items.map((item: any, index: number) => (
+                      <div key={index} className="medication-item">
+                        <div className="medication-header">
+                          <div className="medication-number">{index + 1}</div>
+                          <div className="medication-name">
+                            {item.medicines?.name || item.medicine_name || 'Medicine Name'}
+                          </div>
+                        </div>
+                        <div className="medication-details">
+                          {item.dosage && (
+                            <div className="detail-pill">
+                              <strong>Dosage:</strong> {item.dosage}
+                            </div>
+                          )}
+                          {item.frequency && (
+                            <div className="detail-pill">
+                              <strong>Frequency:</strong> {item.frequency}
+                            </div>
+                          )}
+                          {item.duration && (
+                            <div className="detail-pill">
+                              <strong>Duration:</strong> {item.duration}
+                            </div>
+                          )}
+                          {item.instructions && (
+                            <div className="detail-pill" style={{ gridColumn: '1 / -1' }}>
+                              <strong>Instructions:</strong> {item.instructions}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-            {/* Signature */}
-            <div className="signature">
-              <div className="signature-line">
-                Doctor's Signature
+              {/* Lab Tests */}
+              {prescription.prescription_lab_tests?.length > 0 && (
+                <div className="section">
+                  <div className="section-header">
+                    <div className="section-icon">🔬</div>
+                    <h3 className="section-title">Laboratory Tests</h3>
+                  </div>
+                  <div className="test-grid">
+                    {prescription.prescription_lab_tests.map((test: any, index: number) => (
+                      <div key={index} className="test-item">
+                        {test.lab_tests?.name || test.test_name || 'Lab Test'}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Imaging Studies */}
+              {prescription.prescription_imaging_studies?.length > 0 && (
+                <div className="section">
+                  <div className="section-header">
+                    <div className="section-icon">📸</div>
+                    <h3 className="section-title">Imaging Studies</h3>
+                  </div>
+                  <div className="test-grid">
+                    {prescription.prescription_imaging_studies.map((study: any, index: number) => (
+                      <div key={index} className="imaging-item">
+                        {study.imaging_studies?.name || study.study_name || 'Imaging Study'}
+                        {study.notes && <div style={{ marginTop: '8px', fontSize: '13px' }}>Note: {study.notes}</div>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Additional Notes */}
+              {prescription.notes && (
+                <div className="section">
+                  <div className="section-header">
+                    <div className="section-icon">📝</div>
+                    <h3 className="section-title">Additional Notes</h3>
+                  </div>
+                  <div className="notes-content">
+                    {prescription.notes}
+                  </div>
+                </div>
+              )}
+
+              {/* Footer */}
+              <div className="footer">
+                <div className="date-issued">
+                  Date Issued: {formatDate(prescription.prescription_date)}
+                </div>
+                <div className="signature-section">
+                  <div className="signature-line"></div>
+                  <div className="signature-label">Doctor's Signature</div>
+                  <div className="doctor-stamp">
+                    {doctorProfile?.name || 'Dr. [Name]'}
+                  </div>
+                </div>
               </div>
             </div>
           </div>

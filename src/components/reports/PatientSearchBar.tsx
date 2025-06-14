@@ -1,13 +1,12 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Search, Plus, User } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
+import { patientUrl } from '@/components/constants.js';
 
 interface PatientSearchBarProps {
   onPatientSelected: (patient: any) => void;
@@ -24,14 +23,9 @@ export const PatientSearchBar = ({ onPatientSelected, onAddNewPatient }: Patient
     queryFn: async () => {
       if (!searchTerm.trim()) return [];
       
-      const { data, error } = await supabase
-        .from('patients')
-        .select('id, name, phone, age, gender')
-        .or(`name.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%`)
-        .order('name');
-      
-      if (error) throw error;
-      return data;
+      const response = await fetch(`${patientUrl}/search?q=${encodeURIComponent(searchTerm)}`);
+      if (!response.ok) throw new Error('Failed to search patients');
+      return await response.json();
     },
     enabled: searchTerm.length > 0
   });

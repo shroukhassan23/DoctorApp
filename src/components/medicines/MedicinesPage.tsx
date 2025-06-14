@@ -1,10 +1,8 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Plus, Search, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { supabase } from '@/integrations/supabase/client';
 import { MedicineForm } from './MedicineForm';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
@@ -12,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
+import { managementMedicinesUrl, deleteMedicineUrl } from '@/components/constants.js';
 
 export const MedicinesPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -23,13 +22,9 @@ export const MedicinesPage = () => {
   const { data: medicines, isLoading, refetch } = useQuery({
     queryKey: ['medicines'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('medicines')
-        .select('*')
-        .order('name');
-      
-      if (error) throw error;
-      return data;
+      const response = await fetch(managementMedicinesUrl);
+      if (!response.ok) throw new Error('Failed to fetch medicines');
+      return await response.json();
     },
   });
 
@@ -46,12 +41,14 @@ export const MedicinesPage = () => {
 
   const handleDelete = async (medicineId: string) => {
     try {
-      const { error } = await supabase
-        .from('medicines')
-        .delete()
-        .eq('id', medicineId);
-      
-      if (error) throw error;
+      const response = await fetch(deleteMedicineUrl(medicineId), {
+        method: 'DELETE'
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Delete failed');
+      }
       
       toast({ title: t('medicines.deletedSuccess') });
       refetch();

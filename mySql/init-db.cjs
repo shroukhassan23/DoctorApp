@@ -4,9 +4,9 @@ async function init() {
   try {
     // الاتصال بالسيرفر بدون تحديد قاعدة بيانات
     const connection = await mysql.createConnection({
-      host: 'localhost',
-      user: 'root',
-      password: 'MyPassword123',
+      host: '147.182.180.167',
+      user: 'sa',
+      password: 'P@ssw0rd',
     });
 
     // إنشاء قاعدة البيانات doctor

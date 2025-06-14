@@ -22,13 +22,10 @@ function createWindow() {
   } else {
     // Fix: Ensure correct path to dist folder
     const indexPath = path.join(__dirname, 'dist', 'index.html');
-    console.log('Loading file from:', indexPath);
-    console.log('__dirname is:', __dirname);
     
     // Check if file exists before loading
     const fs = require('fs');
     if (fs.existsSync(indexPath)) {
-      console.log('index.html found, loading...');
       win.loadFile(indexPath).catch(err => {
         console.error('Failed to load file:', err);
       });

@@ -1,15 +1,14 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Plus, Search, FileText, Eye, Printer, Trash2, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { supabase } from '@/integrations/supabase/client';
 import { PrescriptionForm } from './PrescriptionForm';
 import { PrescriptionDetail } from './PrescriptionDetail';
 import { PrescriptionPrint } from './PrescriptionPrint';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { formatDateToDDMMYYYY } from '@/lib/dateUtils';
 
@@ -25,33 +24,15 @@ export const PrescriptionsPage = () => {
   const { data: prescriptions, isLoading, refetch } = useQuery({
     queryKey: ['prescriptions'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('prescriptions')
-        .select(`
-          *,
-          patients (name, age, gender),
-          prescription_items (
-            *,
-            medicines (name)
-          ),
-          prescription_lab_tests (
-            *,
-            lab_tests (name)
-          ),
-          prescription_imaging_studies (
-            *,
-            imaging_studies (name)
-          )
-        `)
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      return data;
+      // Get all prescriptions with patient and related data
+      const response = await fetch('http://localhost:3002/prescriptions/all');
+      if (!response.ok) throw new Error('Failed to fetch prescriptions');
+      return await response.json();
     },
   });
 
   const filteredPrescriptions = prescriptions?.filter(prescription =>
-    prescription.patients?.name.toLowerCase().includes(searchTerm.toLowerCase())
+    prescription.patient_name?.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 
   const handlePrescriptionSaved = () => {
@@ -66,17 +47,15 @@ export const PrescriptionsPage = () => {
   };
 
   const handleDeletePrescription = async (prescriptionId: string) => {
-    if (!confirm('Are you sure you want to delete this prescription?')) {
-      return;
-    }
-
     try {
-      const { error } = await supabase
-        .from('prescriptions')
-        .delete()
-        .eq('id', prescriptionId);
+      const response = await fetch(`http://localhost:3002/prescriptions/${prescriptionId}`, {
+        method: 'DELETE'
+      });
 
-      if (error) throw error;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Delete failed');
+      }
 
       toast({ title: 'Prescription deleted successfully' });
       refetch();
@@ -152,12 +131,12 @@ export const PrescriptionsPage = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-2 text-sm text-gray-600">
-                <p><span className="font-medium">Patient:</span> {prescription.patients?.name}</p>
+                <p><span className="font-medium">Patient:</span> {prescription.patient_name}</p>
                 <p><span className="font-medium">Date:</span> {formatDateToDDMMYYYY(prescription.prescription_date)}</p>
-                <p><span className="font-medium">Age:</span> {prescription.patients?.age} years</p>
-                <p><span className="font-medium">Gender:</span> {prescription.patients?.gender}</p>
+                <p><span className="font-medium">Age:</span> {prescription.patient_age} years</p>
+                <p><span className="font-medium">Gender:</span> {prescription.patient_gender}</p>
               </div>
-              <div className="mt-4 flex space-x-2">
+              <div className="mt-4 flex flex-wrap gap-2">
                 <Dialog>
                   <DialogTrigger asChild>
                     <Button 
@@ -192,14 +171,31 @@ export const PrescriptionsPage = () => {
                   <Printer className="w-4 h-4 mr-2" />
                   Print
                 </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => handleDeletePrescription(prescription.id)}
-                >
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Delete
-                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete the prescription.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => handleDeletePrescription(prescription.id)}>
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             </CardContent>
           </Card>

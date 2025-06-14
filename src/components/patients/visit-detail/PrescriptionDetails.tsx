@@ -19,11 +19,8 @@ export const PrescriptionDetails = ({ prescription }: PrescriptionDetailsProps) 
   const { t, language } = useLanguage();
 
   if (!prescription) {
-    console.log('PrescriptionDetails - no prescription data');
     return null;
   }
-
-  console.log('PrescriptionDetails - rendering with prescription:', prescription);
 
   const hasMedicines = prescription.prescription_items && prescription.prescription_items.length > 0;
   const hasLabTests = prescription.prescription_lab_tests && prescription.prescription_lab_tests.length > 0;
@@ -32,7 +29,6 @@ export const PrescriptionDetails = ({ prescription }: PrescriptionDetailsProps) 
 
   // Don't render if no prescription content
   if (!hasMedicines && !hasLabTests && !hasImagingStudies && !hasNotes) {
-    console.log('PrescriptionDetails - no prescription content to show');
     return null;
   }
 

@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Edit, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { PatientForm } from '../PatientForm';
 import { VisitForm } from '../VisitForm';
 
@@ -42,6 +42,9 @@ export const PatientInformation = ({ patient, onUpdate, onVisitSaved }: PatientI
             <DialogContent className="max-w-2xl">
               <DialogHeader>
                 <DialogTitle>Edit Patient Information</DialogTitle>
+                <DialogDescription>
+                  Update patient details and medical information.
+                </DialogDescription>
               </DialogHeader>
               <PatientForm patient={patient} onSave={handlePatientUpdate} />
             </DialogContent>
@@ -57,6 +60,9 @@ export const PatientInformation = ({ patient, onUpdate, onVisitSaved }: PatientI
             <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Record New Visit for {patient.name}</DialogTitle>
+                <DialogDescription>
+                  Add a new visit record with diagnosis, treatment, and notes.
+                </DialogDescription>
               </DialogHeader>
               <VisitForm patientId={patient.id} onSave={handleVisitSaved} />
             </DialogContent>

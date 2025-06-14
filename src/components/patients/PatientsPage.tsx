@@ -4,17 +4,16 @@ import { useQuery } from '@tanstack/react-query';
 import { Plus, Search, Eye, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { supabase } from '@/integrations/supabase/client';
 import { PatientForm } from './PatientForm';
 import { PatientDetail } from './PatientDetail';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 import { formatDateToDDMMYYYY } from '@/lib/dateUtils';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
-import {patientUrl} from '@/components/constants.js'
+import { patientUrl } from '@/components/constants.js'
 export const PatientsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPatient, setSelectedPatient] = useState(null);
@@ -25,9 +24,9 @@ export const PatientsPage = () => {
   const { data: patients, isLoading, refetch } = useQuery({
     queryKey: ['patients'],
     queryFn: async () => {
-    const response= await fetch(patientUrl);
-           if (!response.ok) throw new Error('Failed to fetch patients'); 
-         return await response.json();  
+      const response = await fetch(patientUrl);
+      if (!response.ok) throw new Error('Failed to fetch patients');
+      return await response.json();
     },
   });
 
@@ -43,26 +42,26 @@ export const PatientsPage = () => {
 
   const handleDelete = async (patientId: string) => {
     try {
-    const response = await fetch(`http://localhost:3001/Patients/${patientId}`, {
-          method: "DELETE",
-       
-        });
+      const response = await fetch(`http://localhost:3001/Patients/${patientId}`, {
+        method: "DELETE",
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'deletefailed');
-        }
+      });
 
-       // const result = await response.json();
-      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'deletefailed');
+      }
+
+      // const result = await response.json();
+
       toast({ title: t('message.patientDeleted') });
       refetch();
     } catch (error) {
       console.error('Error deleting patient:', error);
-      toast({ 
-        title: t('message.patientDeleteError'), 
+      toast({
+        title: t('message.patientDeleteError'),
         description: t('message.error'),
-        variant: 'destructive' 
+        variant: 'destructive'
       });
     }
   };
@@ -72,7 +71,7 @@ export const PatientsPage = () => {
   }
 
   return (
-      <div className={cn("p-6", language === 'ar' && "rtl")}>
+    <div className={cn("p-6", language === 'ar' && "rtl")}>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-900">{t('patients.title')}</h1>
         <Button
@@ -90,6 +89,9 @@ export const PatientsPage = () => {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>{t('patients.addNew')}</DialogTitle>
+            <DialogDescription>
+              Fill in the patient information below.
+            </DialogDescription>
           </DialogHeader>
           <PatientForm patient={selectedPatient} onSave={handlePatientSaved} />
         </DialogContent>
@@ -136,8 +138,8 @@ export const PatientsPage = () => {
                   <div className={cn("flex space-x-2", language === 'ar' ? 'justify-start flex-row-reverse space-x-reverse' : 'justify-end')}>
                     <Dialog>
                       <DialogTrigger asChild>
-                        <Button 
-                          variant="outline" 
+                        <Button
+                          variant="outline"
                           size="sm"
                           onClick={() => setSelectedPatient(patient)}
                         >
@@ -148,11 +150,14 @@ export const PatientsPage = () => {
                       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                         <DialogHeader>
                           <DialogTitle>{t('patients.viewDetails')} - {patient.name}</DialogTitle>
+                          <DialogDescription>
+                            View and manage patient information, visits, and medical records.
+                          </DialogDescription>
                         </DialogHeader>
                         <PatientDetail patient={patient} onUpdate={refetch} />
                       </DialogContent>
                     </Dialog>
-                    
+
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button variant="outline" size="sm">
@@ -181,7 +186,7 @@ export const PatientsPage = () => {
             ))}
           </TableBody>
         </Table>
-        
+
         {filteredPatients.length === 0 && (
           <div className="text-center py-12">
             <p className="text-gray-500">{t('patients.noPatients')}</p>

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Calendar, Edit, Trash2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -6,9 +5,9 @@ import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { VisitForm } from '../VisitForm';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import { deleteVisitUrl } from '@/components/constants.js';
 
 interface VisitHistoryProps {
   visits: any[];
@@ -22,12 +21,14 @@ export const VisitHistory = ({ visits, onVisitClick, onVisitUpdated }: VisitHist
 
   const handleDeleteVisit = async (visitId: string) => {
     try {
-      const { error } = await supabase
-        .from('patient_visits')
-        .delete()
-        .eq('id', visitId);
-      
-      if (error) throw error;
+      const response = await fetch(deleteVisitUrl(visitId), {
+        method: 'DELETE'
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Delete failed');
+      }
       
       toast({ title: 'Visit deleted successfully' });
       onVisitUpdated();
@@ -68,11 +69,11 @@ export const VisitHistory = ({ visits, onVisitClick, onVisitUpdated }: VisitHist
                     {formatDate(visit.visit_date)}
                   </div>
                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    visit.visit_type === 'primary' 
+                    visit.type_id === 1 || visit.visit_type === 'primary'
                       ? 'bg-green-100 text-green-700' 
                       : 'bg-orange-100 text-orange-700'
                   }`}>
-                    {visit.visit_type === 'primary' ? 'Primary' : 'Follow-up'}
+                    {visit.type_name || (visit.type_id === 1 ? 'Primary' : 'Follow-up')}
                   </span>
                 </div>
                 

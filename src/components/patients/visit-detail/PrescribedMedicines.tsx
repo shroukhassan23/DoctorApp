@@ -13,11 +13,9 @@ export const PrescribedMedicines = ({ prescriptionItems }: PrescribedMedicinesPr
   const { t, language } = useLanguage();
   
   if (!prescriptionItems?.length) {
-    console.log('PrescribedMedicines - no prescription items');
     return null;
   }
 
-  console.log('PrescribedMedicines - rendering items:', prescriptionItems);
 
   return (
     <Card className={cn(language === 'ar' && "rtl")}>

@@ -1,11 +1,10 @@
-
 import React, { useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { VisitCard } from './VisitCard';
 import { StatusChangeConfirmDialog } from './StatusChangeConfirmDialog';
+import { updateVisitUrl } from '@/components/constants.js';
 
 interface VisitListProps {
   visits: any[];
@@ -66,12 +65,20 @@ export const VisitList = ({
     if (!statusChangeConfirm) return;
 
     try {
-      const { error } = await supabase
-        .from('patient_visits')
-        .update({ status: statusChangeConfirm.newStatus })
-        .eq('id', statusChangeConfirm.visitId);
+      const response = await fetch(updateVisitUrl(statusChangeConfirm.visitId), {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          status_id: getStatusId(statusChangeConfirm.newStatus)
+        })
+      });
 
-      if (error) throw error;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update visit status');
+      }
 
       toast({ title: t('visit.statusUpdated') });
       if (onVisitUpdated) {
@@ -87,6 +94,16 @@ export const VisitList = ({
     } finally {
       setStatusChangeConfirm(null);
     }
+  };
+
+  const getStatusId = (status: string) => {
+    // Map status names to IDs based on your database
+    const statusMap: Record<string, number> = {
+      'waiting': 1,
+      'completed': 2,
+      'cancelled': 3
+    };
+    return statusMap[status] || 1;
   };
 
   const handleViewPatientDetails = (patient: any) => {

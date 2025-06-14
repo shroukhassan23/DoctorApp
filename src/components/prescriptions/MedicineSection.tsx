@@ -6,7 +6,6 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, Trash2 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { useAutocompleteHistory } from '@/hooks/useAutocompleteHistory';
 import { InlineHistorySearch } from './InlineHistorySearch';
 import {visitMedicinePatientUrl } from '@/components/constants.js';

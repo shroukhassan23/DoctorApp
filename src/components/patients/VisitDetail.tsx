@@ -17,13 +17,8 @@ export const VisitDetail = ({ visit, patient }: VisitDetailProps) => {
   const { t, language } = useLanguage();
   
   // Debug logging to see what data we have
-  console.log('VisitDetail - visit data:', visit);
-  console.log('VisitDetail - patient data:', patient);
 
   const { prescription, files, isLoadingPrescription, isLoadingFiles } = useVisitData(visit.id);
-
-  console.log('VisitDetail - prescription data:', prescription);
-  console.log('VisitDetail - files data:', files);
 
   return (
     <div className={cn("space-y-6", language === 'ar' && "rtl")}>

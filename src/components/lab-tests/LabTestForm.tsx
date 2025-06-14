@@ -1,14 +1,13 @@
-
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
+import { managementLabTestsUrl, updateLabTestUrl } from '@/components/constants.js';
 
 interface LabTestFormProps {
   labTest?: any;
@@ -28,23 +27,23 @@ export const LabTestForm = ({ labTest, onSave }: LabTestFormProps) => {
 
   const onSubmit = async (data: any) => {
     try {
-      if (labTest) {
-        const { error } = await supabase
-          .from('lab_tests')
-          .update(data)
-          .eq('id', labTest.id);
-        
-        if (error) throw error;
-        toast({ title: t('labTests.updatedSuccess') });
-      } else {
-        const { error } = await supabase
-          .from('lab_tests')
-          .insert([data]);
-        
-        if (error) throw error;
-        toast({ title: t('labTests.addedSuccess') });
-      }
+      const url = labTest ? updateLabTestUrl(labTest.id) : managementLabTestsUrl;
+      const method = labTest ? 'PUT' : 'POST';
       
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to save lab test');
+      }
+
+      toast({ title: labTest ? t('labTests.updatedSuccess') : t('labTests.addedSuccess') });
       onSave();
     } catch (error) {
       console.error('Error saving lab test:', error);

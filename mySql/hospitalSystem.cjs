@@ -3,9 +3,9 @@ const mysql = require('mysql2/promise');
 
 // اتصال بـ MySQL
 const db = mysql.createPool({
-  host: 'localhost',
-  user: 'root',
-  password: 'MyPassword123',
+  host: '147.182.180.167',
+  user: 'sa',
+  password: 'P@ssw0rd',
   database: 'doctor',
   waitForConnections: true,
   connectionLimit: 10,

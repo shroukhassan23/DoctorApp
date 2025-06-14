@@ -22,13 +22,6 @@ export const VisitFormActions = ({
 }: VisitFormActionsProps) => {
   const { t, language } = useLanguage();
 
-  console.log('VisitFormActions render:', {
-    isPrescriptionSaved,
-    hasPrescriptionContent,
-    isEditing,
-    shouldShowPrintButton: isPrescriptionSaved && onPrintPrescription
-  });
-
   return (
     <div className={cn("flex justify-end items-center space-x-2", language === 'ar' && 'flex-row-reverse space-x-reverse')}>
       {!isEditing && hasPrescriptionContent && !isPrescriptionSaved && (

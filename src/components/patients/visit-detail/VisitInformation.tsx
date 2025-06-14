@@ -13,8 +13,6 @@ interface VisitInformationProps {
 export const VisitInformation = ({ visit }: VisitInformationProps) => {
   const { t, language } = useLanguage();
   
-  console.log('VisitInformation - rendering with visit data:', visit);
-
   return (
     <Card className={cn(language === 'ar' && "rtl")}>
       <CardHeader>

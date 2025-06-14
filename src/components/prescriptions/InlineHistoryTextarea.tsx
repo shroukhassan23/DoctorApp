@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from '@/components/ui/command';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -28,35 +27,37 @@ export const InlineHistoryTextarea = ({
   id,
   historyType
 }: InlineHistoryTextareaProps) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [filteredItems, setFilteredItems] = useState<string[]>([]);
+  const [showDropdown, setShowDropdown] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (value.trim() && items) {
-      const filtered = items.filter(item => searchText(value, item));
-      setFilteredItems(filtered);
-      setIsOpen(filtered.length > 0);
-    } else {
-      setFilteredItems([]);
-      setIsOpen(false);
+  // Use useMemo to prevent re-calculation on every render
+  const filteredItems = useMemo(() => {
+    if (!value.trim() || !items || items.length === 0) {
+      return [];
     }
+    return items.filter(item => searchText(value, item));
   }, [value, items]);
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    onChange(e.target.value);
+  };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  const handleFocus = () => {
+    if (filteredItems.length > 0) {
+      setShowDropdown(true);
+    }
+  };
+
+  const handleBlur = (e: React.FocusEvent) => {
+    // Check if the new focus target is within our container
+    if (containerRef.current && !containerRef.current.contains(e.relatedTarget as Node)) {
+      setShowDropdown(false);
+    }
+  };
 
   const handleSelect = (selectedValue: string) => {
-    onSelect(selectedValue);
-    setIsOpen(false);
+    onChange(selectedValue);
+    setShowDropdown(false);
   };
 
   const handleDelete = (e: React.MouseEvent, itemToDelete: string) => {
@@ -66,37 +67,26 @@ export const InlineHistoryTextarea = ({
     }
   };
 
-  const handleInputChange = (newValue: string) => {
-    onChange(newValue);
-  };
-
-  const handleInputFocus = () => {
-    if (value.trim() && filteredItems.length > 0) {
-      setIsOpen(true);
-    }
-  };
-
   return (
     <div ref={containerRef} className={cn("relative", className)}>
       <textarea
         id={id}
         value={value}
-        onChange={(e) => handleInputChange(e.target.value)}
-        onFocus={handleInputFocus}
+        onChange={handleInputChange}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
         placeholder={placeholder}
         className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
       />
       
-      {isOpen && filteredItems.length > 0 && (
+      {showDropdown && filteredItems.length > 0 && (
         <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-popover border border-border rounded-md shadow-lg">
           <Command shouldFilter={false}>
             <CommandList className="max-h-60">
-              <CommandEmpty>No entries found.</CommandEmpty>
               <CommandGroup>
                 {filteredItems.map((item, index) => (
                   <CommandItem
-                    key={index}
-                    value={item}
+                    key={`${item}-${index}`}
                     onSelect={() => handleSelect(item)}
                     className="cursor-pointer flex items-center gap-2 group"
                   >

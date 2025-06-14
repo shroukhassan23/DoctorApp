@@ -74,8 +74,6 @@ useEffect(() => {
 
   const onSubmit = async (data: any) => {
     try {
-      console.log('Submitting patient data:', data);
-
       const formData = {
         name: data.name?.trim(),
         age: parseInt(data.age) || 0,
@@ -128,7 +126,6 @@ useEffect(() => {
         }
 
         const result = await response.json();
-        console.log('Update result:', result);
         toast({ title: 'تم تحديث بيانات المريض بنجاح' });
 
       } else {

@@ -1,14 +1,13 @@
-
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
+import { patientUrl } from '@/components/constants.js';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { MedicineSection } from './MedicineSection';
 import { LabTestsSection } from './LabTestsSection';
@@ -50,12 +49,9 @@ export const PrescriptionForm = ({
   const { data: patients } = useQuery({
     queryKey: ['patients'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('patients')
-        .select('id, name')
-        .order('name');
-      if (error) throw error;
-      return data;
+      const response = await fetch(patientUrl);
+      if (!response.ok) throw new Error('Failed to fetch patients');
+      return await response.json();
     },
     enabled: !isEmbedded && !patientId
   });
@@ -63,8 +59,6 @@ export const PrescriptionForm = ({
   // Load existing prescription data when editing
   useEffect(() => {
     if (prescription) {
-      console.log('Loading prescription for editing:', prescription);
-      
       reset({
         prescription_date: prescription.prescription_date,
         notes: prescription.notes || '',
@@ -110,8 +104,6 @@ export const PrescriptionForm = ({
   }, [prescription, reset]);
 
   const onSubmit = async (data: any) => {
-    console.log('Submitting prescription with data:', data);
-    
     // For embedded mode or when editing, use the provided patientId or prescription's patient_id
     const targetPatientId = patientId || prescription?.patient_id || selectedPatientId;
     
@@ -136,7 +128,6 @@ export const PrescriptionForm = ({
         visit_id: visitId
       };
 
-      console.log('Final prescription data:', prescriptionData);
       onSave(prescriptionData);
     } catch (error) {
       console.error('Error saving prescription:', error);
@@ -150,6 +141,86 @@ export const PrescriptionForm = ({
     }
   };
 
+  const FormContent = () => (
+    <>
+      {/* Only show patient selection if not embedded and no patientId provided and not editing */}
+      {!isEmbedded && !patientId && !prescription && (
+        <div>
+          <Label htmlFor="patient">Patient *</Label>
+          <Select
+            value={selectedPatientId}
+            onValueChange={(value) => setSelectedPatientId(value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select patient" />
+            </SelectTrigger>
+            <SelectContent>
+              {patients?.map((patient) => (
+                <SelectItem key={patient.id} value={patient.id}>
+                  {patient.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
+      <div>
+        <Label htmlFor="prescription_date">Prescription Date</Label>
+        <Input
+          id="prescription_date"
+          type="date"
+          {...register('prescription_date', { required: 'Date is required' })}
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="diagnosis">Diagnosis</Label>
+        <SimpleHistoryTextarea
+          id="diagnosis"
+          placeholder="Enter diagnosis..."
+          value={watch('diagnosis')}
+          onChange={(value) => setValue('diagnosis', value)}
+          historyType="diagnosis"
+        />
+      </div>
+
+      <MedicineSection 
+        medicines={medicines} 
+        setMedicines={setMedicines} 
+      />
+
+      <LabTestsSection 
+        selectedLabTests={selectedLabTests}
+        setSelectedLabTests={setSelectedLabTests}
+      />
+
+      <ImagingStudiesSection 
+        selectedImagingStudies={selectedImagingStudies}
+        setSelectedImagingStudies={setSelectedImagingStudies}
+      />
+
+      <div>
+        <Label htmlFor="notes">Notes</Label>
+        <Textarea
+          id="notes"
+          placeholder="Enter prescription notes..."
+          {...register('notes')}
+        />
+      </div>
+
+      <div className="flex justify-end">
+        <Button 
+          type={isEmbedded ? "button" : "submit"} 
+          disabled={isSubmitting} 
+          onClick={isEmbedded ? handleSubmit(onSubmit) : undefined}
+        >
+          {isSubmitting ? 'Saving...' : prescription ? 'Update Prescription' : 'Save Prescription'}
+        </Button>
+      </div>
+    </>
+  );
+
   return (
     <Card className={isEmbedded ? 'border-0 shadow-none' : ''}>
       {!isEmbedded && (
@@ -158,81 +229,15 @@ export const PrescriptionForm = ({
         </CardHeader>
       )}
       <CardContent className={isEmbedded ? 'p-0' : ''}>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {/* Only show patient selection if not embedded and no patientId provided and not editing */}
-          {!isEmbedded && !patientId && !prescription && (
-            <div>
-              <Label htmlFor="patient">Patient *</Label>
-              <Select
-                value={selectedPatientId}
-                onValueChange={(value) => setSelectedPatientId(value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select patient" />
-                </SelectTrigger>
-                <SelectContent>
-                  {patients?.map((patient) => (
-                    <SelectItem key={patient.id} value={patient.id}>
-                      {patient.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
-          <div>
-            <Label htmlFor="prescription_date">Prescription Date</Label>
-            <Input
-              id="prescription_date"
-              type="date"
-              {...register('prescription_date', { required: 'Date is required' })}
-            />
+        {isEmbedded ? (
+          <div className="space-y-6">
+            <FormContent />
           </div>
-
-          <div>
-            <Label htmlFor="diagnosis">Diagnosis</Label>
-            <SimpleHistoryTextarea
-              id="diagnosis"
-              placeholder="Enter diagnosis..."
-              value={watch('diagnosis')}
-              onChange={(value) => setValue('diagnosis', value)}
-              historyType="diagnosis"
-            />
-          </div>
-
-          <MedicineSection 
-            medicines={medicines} 
-            setMedicines={setMedicines} 
-          />
-
-          <LabTestsSection 
-            selectedLabTests={selectedLabTests}
-            setSelectedLabTests={setSelectedLabTests}
-          />
-
-          <ImagingStudiesSection 
-            selectedImagingStudies={selectedImagingStudies}
-            setSelectedImagingStudies={setSelectedImagingStudies}
-          />
-
-          <div>
-            <Label htmlFor="notes">Notes</Label>
-            <SimpleHistoryTextarea
-              id="notes"
-              placeholder="Enter prescription notes..."
-              value={watch('notes')}
-              onChange={(value) => setValue('notes', value)}
-              historyType="notes"
-            />
-          </div>
-
-          <div className="flex justify-end">
-            <Button type="button" disabled={isSubmitting} onClick={handleSubmit(onSubmit) }>
-              {isSubmitting ? 'Saving...' : prescription ? 'Update Prescription' : 'Save Prescription'}
-            </Button>
-          </div>
-        </form>
+        ) : (
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            <FormContent />
+          </form>
+        )}
       </CardContent>
     </Card>
   );

@@ -1,13 +1,12 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { supabase } from '@/integrations/supabase/client';
 import { VisitDetail } from './VisitDetail';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { PatientInformation } from './patient-detail/PatientInformation';
 import { VisitHistory } from './patient-detail/VisitHistory';
 import { PatientFiles } from './patient-detail/PatientFiles';
+import { getPatientVisitsUrl, getPatientFilesUrl } from '@/components/constants.js';
 
 interface PatientDetailProps {
   patient: any;
@@ -17,20 +16,12 @@ interface PatientDetailProps {
 export const PatientDetail = ({ patient, onUpdate }: PatientDetailProps) => {
   const [selectedVisit, setSelectedVisit] = useState<any>(null);
 
-  console.log('PatientDetail - patient data:', patient);
-
   const { data: visits, refetch: refetchVisits } = useQuery({
     queryKey: ['patient-visits', patient.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('patient_visits')
-        .select('*')
-        .eq('patient_id', patient.id)
-        .order('visit_date', { ascending: false })
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      console.log('Fetched visits:', data);
+      const response = await fetch(getPatientVisitsUrl(patient.id));
+      if (!response.ok) throw new Error('Failed to fetch visits');
+      const data = await response.json();
       return data;
     },
   });
@@ -38,20 +29,14 @@ export const PatientDetail = ({ patient, onUpdate }: PatientDetailProps) => {
   const { data: files, refetch: refetchFiles } = useQuery({
     queryKey: ['patient-files', patient.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('patient_files')
-        .select('*')
-        .eq('patient_id', patient.id)
-        .is('visit_id', null)
-        .order('uploaded_at', { ascending: false });
-      
-      if (error) throw error;
+      const response = await fetch(getPatientFilesUrl(patient.id));
+      if (!response.ok) throw new Error('Failed to fetch files');
+      const data = await response.json();
       return data;
     },
   });
 
   const handleVisitClick = (visit: any) => {
-    console.log('Selected visit:', visit);
     setSelectedVisit(visit);
   };
 

@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { ReportsPageHeader } from './ReportsPageHeader';
 import { DateSelector } from './DateSelector';
@@ -30,53 +29,22 @@ export const ReportsPage = () => {
   const { data: visitStats, isLoading, refetch } = useQuery({
     queryKey: ['visit-stats', selectedDate],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('patient_visits')
-        .select('visit_type, patient_id, status')
-        .eq('visit_date', selectedDate);
-
-      if (error) throw error;
-
-      const primaryVisits = data?.filter(visit => visit.visit_type === 'primary').length || 0;
-      const followUpVisits = data?.filter(visit => visit.visit_type === 'follow_up').length || 0;
-      const totalVisits = data?.length || 0;
-      const waitingVisits = data?.filter(visit => (visit.status || 'waiting') === 'waiting').length || 0;
-
-      return {
-        primaryVisits,
-        followUpVisits,
-        totalVisits,
-        waitingVisits
-      };
+      const response = await fetch(`http://localhost:3002/reports/visit-stats?date=${selectedDate}`);
+      if (!response.ok) throw new Error('Failed to fetch visit stats');
+      return await response.json();
     }
   });
 
   const { data: visitDetails, refetch: refetchVisits } = useQuery({
     queryKey: ['visit-details', selectedDate, searchAllVisits],
     queryFn: async () => {
-      let query = supabase
-        .from('patient_visits')
-        .select(`
-          id,
-          visit_type,
-          visit_date,
-          chief_complaint,
-          diagnosis,
-          notes,
-          status,
-          created_at,
-          patients!inner(id, name, age, gender, phone, address)
-        `)
-        .order('visit_date', { ascending: false })
-        .order('created_at', { ascending: false });
-
-      if (!searchAllVisits) {
-        query = query.eq('visit_date', selectedDate);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-      return data || [];
+      const url = searchAllVisits 
+        ? 'http://localhost:3002/reports/visits/all'
+        : `http://localhost:3002/reports/visits?date=${selectedDate}`;
+      
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Failed to fetch visit details');
+      return await response.json();
     }
   });
 
@@ -87,10 +55,10 @@ export const ReportsPage = () => {
     }
 
     // Enhanced search filters - includes name, diagnosis, notes, and phone
-    const matchesTextSearch = searchText(searchTerm, visit.patients?.name || '') ||
+    const matchesTextSearch = searchText(searchTerm, visit.patient_name || '') ||
       searchText(searchTerm, visit.diagnosis || '') ||
       searchText(searchTerm, visit.notes || '') ||
-      (visit.patients?.phone && visit.patients.phone.includes(searchTerm));
+      (visit.patient_phone && visit.patient_phone.includes(searchTerm));
 
     return !searchTerm || matchesTextSearch;
   }) || [];

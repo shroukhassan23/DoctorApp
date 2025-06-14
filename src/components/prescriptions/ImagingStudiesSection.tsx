@@ -5,7 +5,6 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { supabase } from '@/integrations/supabase/client';
 import {visitImagingStudiesPatientUrl } from '@/components/constants.js';
 interface ImagingStudiesSectionProps {
   selectedImagingStudies: Array<{ studyId: string; name?: string; notes?: string }>;

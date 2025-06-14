@@ -1,10 +1,8 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Plus, Search, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { supabase } from '@/integrations/supabase/client';
 import { LabTestForm } from './LabTestForm';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
@@ -13,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
+import { managementLabTestsUrl, deleteLabTestUrl } from '@/components/constants.js';
 
 export const LabTestsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -24,13 +23,9 @@ export const LabTestsPage = () => {
   const { data: labTests, isLoading, refetch } = useQuery({
     queryKey: ['lab_tests'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('lab_tests')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      return data;
+      const response = await fetch(managementLabTestsUrl);
+      if (!response.ok) throw new Error('Failed to fetch lab tests');
+      return await response.json();
     },
   });
 
@@ -46,12 +41,14 @@ export const LabTestsPage = () => {
 
   const handleDelete = async (testId: string) => {
     try {
-      const { error } = await supabase
-        .from('lab_tests')
-        .delete()
-        .eq('id', testId);
-      
-      if (error) throw error;
+      const response = await fetch(deleteLabTestUrl(testId), {
+        method: 'DELETE'
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Delete failed');
+      }
       
       toast({ title: t('labTests.deletedSuccess') });
       refetch();
@@ -183,18 +180,6 @@ export const LabTestsPage = () => {
           </div>
         )}
       </div>
-      
-      {/* Edit Dialog */}
-      {editingTest && (
-        <Dialog open={!!editingTest} onOpenChange={(open) => !open && setEditingTest(null)}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle className={cn(language === 'ar' && 'text-right')}>{t('labTests.editTest')}</DialogTitle>
-            </DialogHeader>
-            <LabTestForm labTest={editingTest} onSave={handleLabTestSaved} />
-          </DialogContent>
-        </Dialog>
-      )}
     </div>
   );
 };

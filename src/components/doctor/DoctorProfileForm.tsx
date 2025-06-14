@@ -1,14 +1,13 @@
-
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
+import { doctorProfileUrl } from '@/components/constants.js';
 
 interface DoctorProfileFormProps {
   profile?: any;
@@ -34,23 +33,21 @@ export const DoctorProfileForm = ({ profile, onSave }: DoctorProfileFormProps) =
 
   const onSubmit = async (data: any) => {
     try {
-      if (profile) {
-        const { error } = await supabase
-          .from('doctor_profile')
-          .update(data)
-          .eq('id', profile.id);
-        
-        if (error) throw error;
-        toast({ title: t('profile.updatedSuccess') });
-      } else {
-        const { error } = await supabase
-          .from('doctor_profile')
-          .insert([data]);
-        
-        if (error) throw error;
-        toast({ title: t('profile.createdSuccess') });
+      const response = await fetch(doctorProfileUrl, {
+        method: 'POST', // The endpoint handles both create and update
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to save profile');
       }
-      
+
+      const result = await response.json();
+      toast({ title: profile ? t('profile.updatedSuccess') : t('profile.createdSuccess') });
       onSave();
     } catch (error) {
       console.error('Error saving profile:', error);

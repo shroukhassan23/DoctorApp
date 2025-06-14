@@ -1,23 +1,39 @@
-
-import { supabase } from '@/integrations/supabase/client';
+import { 
+  addprescriptionUrl, 
+  addPrescriptionMedicinesUrl,
+  addPrescriptionLabTestsUrl,
+  addPrescriptionImagingStudiesUrl,
+  getVisitPrescriptionUrl,
+  updatePrescriptionUrl,
+  deletePrescriptionItemsUrl,
+  deletePrescriptionLabTestsUrl,
+  deletePrescriptionImagingStudiesUrl
+} from '@/components/constants.js';
 
 export const updateExistingPrescription = async (prescriptionData: any, existingPrescription: any) => {
-  // Update existing prescription immediately for editing mode
-  const { error: prescriptionError } = await supabase
-    .from('prescriptions')
-    .update({
+  // Update existing prescription for editing mode
+  const updateResponse = await fetch(updatePrescriptionUrl(existingPrescription.id), {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
       notes: prescriptionData.notes || '',
+      diagnosis: prescriptionData.diagnosis || ''
     })
-    .eq('id', existingPrescription.id);
+  });
 
-  if (prescriptionError) throw prescriptionError;
+  if (!updateResponse.ok) {
+    const errorData = await updateResponse.json();
+    throw new Error(errorData.error || 'Failed to update prescription');
+  }
 
   // Delete existing items
-  await supabase.from('prescription_items').delete().eq('prescription_id', existingPrescription.id);
-  await supabase.from('prescription_lab_tests').delete().eq('prescription_id', existingPrescription.id);
-  await supabase.from('prescription_imaging_studies').delete().eq('prescription_id', existingPrescription.id);
+  await fetch(deletePrescriptionItemsUrl(existingPrescription.id), { method: 'DELETE' });
+  await fetch(deletePrescriptionLabTestsUrl(existingPrescription.id), { method: 'DELETE' });
+  await fetch(deletePrescriptionImagingStudiesUrl(existingPrescription.id), { method: 'DELETE' });
 
-  // Add medicines
+  // Add new medicines
   if (prescriptionData.medicines?.length > 0) {
     const medicineItems = prescriptionData.medicines
       .filter((med: any) => med.medicine_id)
@@ -31,38 +47,59 @@ export const updateExistingPrescription = async (prescriptionData: any, existing
       }));
 
     if (medicineItems.length > 0) {
-      const { error: medicineError } = await supabase
-        .from('prescription_items')
-        .insert(medicineItems);
-      if (medicineError) throw medicineError;
+      const medicineResponse = await fetch(addPrescriptionMedicinesUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ medicines: medicineItems })
+      });
+
+      if (!medicineResponse.ok) {
+        throw new Error('Failed to update prescription medicines');
+      }
     }
   }
 
-  // Add lab tests
+  // Add new lab tests
   if (prescriptionData.selectedLabTests?.length > 0) {
     const labTestItems = prescriptionData.selectedLabTests.map((test: any) => ({
       prescription_id: existingPrescription.id,
       lab_test_id: test.testId
     }));
 
-    const { error: labTestError } = await supabase
-      .from('prescription_lab_tests')
-      .insert(labTestItems);
-    if (labTestError) throw labTestError;
+    const labTestResponse = await fetch(addPrescriptionLabTestsUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ labTests: labTestItems })
+    });
+
+    if (!labTestResponse.ok) {
+      throw new Error('Failed to update prescription lab tests');
+    }
   }
 
-  // Add imaging studies
+  // Add new imaging studies
   if (prescriptionData.selectedImagingStudies?.length > 0) {
     const imagingStudyItems = prescriptionData.selectedImagingStudies.map((study: any) => ({
       prescription_id: existingPrescription.id,
-      imaging_study_id: study.studyId,
-      notes: study.notes || null
+      imaging_studies_id: study.studyId,
+      comments: study.notes || null
     }));
 
-    const { error: imagingStudyError } = await supabase
-      .from('prescription_imaging_studies')
-      .insert(imagingStudyItems);
-    if (imagingStudyError) throw imagingStudyError;
+    const imagingResponse = await fetch(addPrescriptionImagingStudiesUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ imagingStudies: imagingStudyItems })
+    });
+
+    if (!imagingResponse.ok) {
+      throw new Error('Failed to update prescription imaging studies');
+    }
   }
 };
 
@@ -70,31 +107,17 @@ export const loadExistingPrescription = async (visitId: string) => {
   if (!visitId) return null;
 
   try {
-    const { data: prescription, error } = await supabase
-      .from('prescriptions')
-      .select(`
-        *,
-        prescription_items (
-          *,
-          medicines (*)
-        ),
-        prescription_lab_tests (
-          *,
-          lab_tests (*)
-        ),
-        prescription_imaging_studies (
-          *,
-          imaging_studies (*)
-        )
-      `)
-      .eq('visit_id', visitId)
-      .maybeSingle();
-
-    if (error && error.code !== 'PGRST116') {
-      console.error('Error loading prescription:', error);
-      return null;
+    const response = await fetch(getVisitPrescriptionUrl(visitId));
+    
+    if (response.status === 404) {
+      return null; // No prescription found for this visit
+    }
+    
+    if (!response.ok) {
+      throw new Error('Failed to load prescription');
     }
 
+    const prescription = await response.json();
     return prescription;
   } catch (error) {
     console.error('Error loading prescription:', error);

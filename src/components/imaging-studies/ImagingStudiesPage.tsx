@@ -1,10 +1,8 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Plus, Search, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { supabase } from '@/integrations/supabase/client';
 import { ImagingStudyForm } from './ImagingStudyForm';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
@@ -13,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
+import { managementImagingStudiesUrl, deleteImagingStudyUrl } from '@/components/constants.js';
 
 export const ImagingStudiesPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -24,13 +23,9 @@ export const ImagingStudiesPage = () => {
   const { data: imagingStudies, isLoading, refetch } = useQuery({
     queryKey: ['imaging_studies'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('imaging_studies')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      return data;
+      const response = await fetch(managementImagingStudiesUrl);
+      if (!response.ok) throw new Error('Failed to fetch imaging studies');
+      return await response.json();
     },
   });
 
@@ -46,12 +41,14 @@ export const ImagingStudiesPage = () => {
 
   const handleDelete = async (studyId: string) => {
     try {
-      const { error } = await supabase
-        .from('imaging_studies')
-        .delete()
-        .eq('id', studyId);
-      
-      if (error) throw error;
+      const response = await fetch(deleteImagingStudyUrl(studyId), {
+        method: 'DELETE'
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Delete failed');
+      }
       
       toast({ title: t('imaging.deletedSuccess') });
       refetch();

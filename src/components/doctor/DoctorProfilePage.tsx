@@ -1,14 +1,13 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Edit, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { supabase } from '@/integrations/supabase/client';
 import { DoctorProfileForm } from './DoctorProfileForm';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
+import { doctorProfileUrl } from '@/components/constants.js';
 
 export const DoctorProfilePage = () => {
   const [showForm, setShowForm] = useState(false);
@@ -17,13 +16,12 @@ export const DoctorProfilePage = () => {
   const { data: doctorProfile, isLoading, refetch } = useQuery({
     queryKey: ['doctor-profile'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('doctor_profile')
-        .select('*')
-        .single();
-      
-      if (error && error.code !== 'PGRST116') throw error;
-      return data;
+      const response = await fetch(doctorProfileUrl);
+      if (response.status === 404) {
+        return null; // No profile created yet
+      }
+      if (!response.ok) throw new Error('Failed to fetch doctor profile');
+      return await response.json();
     },
   });
 

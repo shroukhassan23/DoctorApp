@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useCallback } from 'react';
 import { InlineHistoryTextarea } from './InlineHistoryTextarea';
 import { useAutocompleteHistory } from '@/hooks/useAutocompleteHistory';
 
@@ -20,7 +19,7 @@ export const SimpleHistoryTextarea = ({
 }: SimpleHistoryTextareaProps) => {
   const { diagnosisHistory, notesHistory, deleteDiagnosisHistory, deleteNotesHistory } = useAutocompleteHistory();
   
-  const getHistory = () => {
+  const getHistory = useCallback(() => {
     switch (historyType) {
       case 'diagnosis':
         return diagnosisHistory || [];
@@ -29,9 +28,9 @@ export const SimpleHistoryTextarea = ({
       default:
         return [];
     }
-  };
+  }, [diagnosisHistory, notesHistory, historyType]);
 
-  const getDeleteFunction = () => {
+  const getDeleteFunction = useCallback(() => {
     switch (historyType) {
       case 'diagnosis':
         return deleteDiagnosisHistory;
@@ -40,15 +39,24 @@ export const SimpleHistoryTextarea = ({
       default:
         return undefined;
     }
-  };
+  }, [deleteDiagnosisHistory, deleteNotesHistory, historyType]);
+
+  // Memoize the onChange to prevent re-renders
+  const handleChange = useCallback((newValue: string) => {
+    onChange(newValue);
+  }, [onChange]);
+
+  const handleSelect = useCallback((selectedValue: string) => {
+    onChange(selectedValue);
+  }, [onChange]);
 
   return (
     <InlineHistoryTextarea
       id={id}
       items={getHistory()}
       value={value}
-      onChange={onChange}
-      onSelect={onChange}
+      onChange={handleChange}
+      onSelect={handleSelect}
       onDelete={getDeleteFunction()}
       placeholder={placeholder}
     />
