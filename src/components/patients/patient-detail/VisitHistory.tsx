@@ -8,6 +8,7 @@ import { VisitForm } from '../VisitForm';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { deleteVisitUrl } from '@/components/constants.js';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface VisitHistoryProps {
   visits: any[];
@@ -18,7 +19,7 @@ interface VisitHistoryProps {
 export const VisitHistory = ({ visits, onVisitClick, onVisitUpdated }: VisitHistoryProps) => {
   const [editingVisit, setEditingVisit] = useState<any>(null);
   const { toast } = useToast();
-
+  const { t, language } = useLanguage();
   const handleDeleteVisit = async (visitId: string) => {
     try {
       const response = await fetch(deleteVisitUrl(visitId), {
@@ -99,7 +100,7 @@ export const VisitHistory = ({ visits, onVisitClick, onVisitUpdated }: VisitHist
                  (!visit.diagnosis || visit.diagnosis.trim() === '') && 
                  (!visit.notes || visit.notes.trim() === '') && (
                   <div className="text-sm text-gray-500 italic">
-                    No additional details recorded
+                   {t('visit.noAdditionalDetails')}
                   </div>
                 )}
               </div>
@@ -114,7 +115,7 @@ export const VisitHistory = ({ visits, onVisitClick, onVisitUpdated }: VisitHist
                   }}
                 >
                   <Edit className="w-4 h-4 mr-2" />
-                  Edit
+               {t('patients.edit')}
                 </Button>
                 
                 <AlertDialog>
@@ -125,7 +126,8 @@ export const VisitHistory = ({ visits, onVisitClick, onVisitUpdated }: VisitHist
                       onClick={(e) => e.stopPropagation()}
                     >
                       <Trash2 className="w-4 h-4 mr-2" />
-                      Delete
+                                    {t('visit.delete')}
+
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>

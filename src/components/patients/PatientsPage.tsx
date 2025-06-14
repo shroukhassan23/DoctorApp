@@ -151,7 +151,7 @@ export const PatientsPage = () => {
                         <DialogHeader>
                           <DialogTitle>{t('patients.viewDetails')} - {patient.name}</DialogTitle>
                           <DialogDescription>
-                            View and manage patient information, visits, and medical records.
+                           {t('patients.viewAndManage')}
                           </DialogDescription>
                         </DialogHeader>
                         <PatientDetail patient={patient} onUpdate={refetch} />

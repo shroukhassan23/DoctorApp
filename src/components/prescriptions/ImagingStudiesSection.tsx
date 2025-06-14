@@ -1,4 +1,4 @@
-
+import { useLanguage } from '@/contexts/LanguageContext';
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Label } from '@/components/ui/label';
@@ -25,7 +25,7 @@ export const ImagingStudiesSection = ({ selectedImagingStudies, setSelectedImagi
     const study = selectedImagingStudies.find(s => s.studyId === studyId);
     return study?.notes || '';
   };
-
+ const { t, language } = useLanguage();
   const isStudySelected = (studyId: string) => {
     return selectedImagingStudies.some(s => s.studyId === studyId);
   };
@@ -60,7 +60,7 @@ export const ImagingStudiesSection = ({ selectedImagingStudies, setSelectedImagi
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">Imaging Studies</CardTitle>
+        <CardTitle className="text-lg">{t('imaging.imaging')}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">

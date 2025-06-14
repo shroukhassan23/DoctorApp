@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-
+import { useLanguage } from '@/contexts/LanguageContext';
 import {visitLabTestsPatientUrl } from '@/components/constants.js';
 interface LabTestsSectionProps {
   selectedLabTests: Array<{ testId: string; name?: string }>;
@@ -20,7 +20,7 @@ const response =  await fetch(visitLabTestsPatientUrl);
            return response.json();
     },
   });
-
+ const { t, language } = useLanguage();
   const isTestSelected = (testId: string) => {
     return selectedLabTests.some(t => t.testId === testId);
   };
@@ -37,7 +37,7 @@ const response =  await fetch(visitLabTestsPatientUrl);
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">Lab Tests</CardTitle>
+        <CardTitle className="text-lg">{t('labTests.tests')}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-3">

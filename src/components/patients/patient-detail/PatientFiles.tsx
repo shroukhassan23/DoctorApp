@@ -7,7 +7,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { FileUpload } from '../FileUpload';
 import { useToast } from '@/hooks/use-toast';
 import { downloadPatientFileUrl, deletePatientFileUrl, previewPatientFileUrl } from '@/components/constants.js';
-
+import { useLanguage } from '@/contexts/LanguageContext';
 interface PatientFilesProps {
   files: any[];
   patientId: string;
@@ -20,7 +20,7 @@ export const PatientFiles = ({ files, patientId, onFileUploaded }: PatientFilesP
   const [previewFile, setPreviewFile] = useState<any>(null);
   const [zoomLevel, setZoomLevel] = useState(100);
   const { toast } = useToast();
-
+  const { t, language } = useLanguage();
   const handleFileUploaded = () => {
     onFileUploaded();
     setShowFileUpload(false);
@@ -263,17 +263,17 @@ export const PatientFiles = ({ files, patientId, onFileUploaded }: PatientFilesP
   return (
     <>
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-medium">General Files & Documents</h3>
+        <h3 className="text-lg font-medium">{t('patients.generalFiles')}</h3>
         <Dialog open={showFileUpload} onOpenChange={setShowFileUpload}>
           <DialogTrigger asChild>
             <Button>
               <Upload className="w-4 h-4 mr-2" />
-              Upload File
+              {t('visit.uploadFile')}
             </Button>
           </DialogTrigger>
           <DialogContent aria-describedby="upload-dialog-description">
             <DialogHeader>
-              <DialogTitle>Upload General File</DialogTitle>
+              <DialogTitle>{t('patients.generalFiles')}</DialogTitle>
               <DialogDescription>
                 Upload a file to attach to this patient's record. Supported formats include images, PDFs, and documents.
               </DialogDescription>
@@ -318,7 +318,7 @@ export const PatientFiles = ({ files, patientId, onFileUploaded }: PatientFilesP
                         onClick={() => handlePreview(file)}
                       >
                         <Eye className="w-4 h-4 mr-1" />
-                        Preview
+                        {t('visit.previewFile')}
                       </Button>
                     )}
                     
@@ -328,7 +328,7 @@ export const PatientFiles = ({ files, patientId, onFileUploaded }: PatientFilesP
                       onClick={() => handleDownload(file)}
                     >
                       <Download className="w-4 h-4 mr-1" />
-                      Download
+                     {t('visit.downloadFile')}
                     </Button>
                     
                     <AlertDialog>

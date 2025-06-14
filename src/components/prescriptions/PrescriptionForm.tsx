@@ -13,6 +13,7 @@ import { MedicineSection } from './MedicineSection';
 import { LabTestsSection } from './LabTestsSection';
 import { ImagingStudiesSection } from './ImagingStudiesSection';
 import { SimpleHistoryTextarea } from './SimpleHistoryTextarea';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface PrescriptionFormProps {
   patientId?: string;
@@ -34,6 +35,7 @@ export const PrescriptionForm = ({
   const [selectedImagingStudies, setSelectedImagingStudies] = useState<any[]>([]);
   const [selectedPatientId, setSelectedPatientId] = useState(patientId || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
+    const { t, language } = useLanguage();
   
   const { register, handleSubmit, setValue, watch, reset } = useForm({
     defaultValues: {
@@ -146,7 +148,8 @@ export const PrescriptionForm = ({
       {/* Only show patient selection if not embedded and no patientId provided and not editing */}
       {!isEmbedded && !patientId && !prescription && (
         <div>
-          <Label htmlFor="patient">Patient *</Label>
+  
+          <Label htmlFor="patient">{t('patients.patient')}*</Label>
           <Select
             value={selectedPatientId}
             onValueChange={(value) => setSelectedPatientId(value)}
@@ -166,7 +169,7 @@ export const PrescriptionForm = ({
       )}
 
       <div>
-        <Label htmlFor="prescription_date">Prescription Date</Label>
+        <Label htmlFor="prescription_date">{t('prescription.date')}</Label>
         <Input
           id="prescription_date"
           type="date"
@@ -175,10 +178,10 @@ export const PrescriptionForm = ({
       </div>
 
       <div>
-        <Label htmlFor="diagnosis">Diagnosis</Label>
+        <Label htmlFor="diagnosis">{t('prescription.diagnosis')}</Label>
         <SimpleHistoryTextarea
           id="diagnosis"
-          placeholder="Enter diagnosis..."
+          placeholder={t('prescription.enterDiagnosis')}
           value={watch('diagnosis')}
           onChange={(value) => setValue('diagnosis', value)}
           historyType="diagnosis"
@@ -201,10 +204,10 @@ export const PrescriptionForm = ({
       />
 
       <div>
-        <Label htmlFor="notes">Notes</Label>
+        <Label htmlFor="notes">{t('prescription.notes')}</Label>
         <Textarea
           id="notes"
-          placeholder="Enter prescription notes..."
+          placeholder={t('prescription.enterNotes')}
           {...register('notes')}
         />
       </div>
@@ -215,7 +218,7 @@ export const PrescriptionForm = ({
           disabled={isSubmitting} 
           onClick={isEmbedded ? handleSubmit(onSubmit) : undefined}
         >
-          {isSubmitting ? 'Saving...' : prescription ? 'Update Prescription' : 'Save Prescription'}
+          {isSubmitting ? 'Saving...' : prescription ? t('prescription.update') : t('prescription.save')}
         </Button>
       </div>
     </>
@@ -225,7 +228,7 @@ export const PrescriptionForm = ({
     <Card className={isEmbedded ? 'border-0 shadow-none' : ''}>
       {!isEmbedded && (
         <CardHeader>
-          <CardTitle>{prescription ? 'Edit Prescription' : 'Create New Prescription'}</CardTitle>
+          <CardTitle>{prescription ? t('prescription.edit') : t('prescription.new')}</CardTitle>
         </CardHeader>
       )}
       <CardContent className={isEmbedded ? 'p-0' : ''}>

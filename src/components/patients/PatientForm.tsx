@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { patientUrl } from '@/components/constants.js';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 
 interface PatientFormProps {
@@ -30,6 +31,7 @@ export const PatientForm = ({ patient, onSave }: PatientFormProps) => {
   const { toast } = useToast();
   const selectedGender = watch('gender');
   const dateOfBirth = watch('date_of_birth');
+  const { t, language } = useLanguage();
 
   // حساب العمر بناءً على تاريخ الميلاد
   useEffect(() => {
@@ -155,7 +157,7 @@ useEffect(() => {
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="name">Full Name *</Label>
+          <Label htmlFor="name">{t('patients.fullName')}*</Label>
           <Input
             id="name"
             {...register('name', { required: 'Name is required' })}
@@ -165,7 +167,7 @@ useEffect(() => {
         </div>
 
         <div>
-          <Label htmlFor="date_of_birth">Date of Birth *</Label>
+          <Label htmlFor="date_of_birth">{t('patients.dateOfBirth')}*</Label>
           <Input
             id="date_of_birth"
             type="date"
@@ -177,7 +179,7 @@ useEffect(() => {
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="age">Age (calculated automatically)</Label>
+          <Label htmlFor="age">{t('patients.age')}* (calculated automatically)</Label>
           <Input
             id="age"
             type="number"
@@ -189,7 +191,7 @@ useEffect(() => {
         </div>
 
         <div>
-          <Label htmlFor="gender">Gender *</Label>
+          <Label htmlFor="gender">{t('patients.gender')}*</Label>
         <Select
   value={selectedGender || ''}
   onValueChange={(value) => setValue('gender', value)}
@@ -209,7 +211,7 @@ useEffect(() => {
       </div>
 
       <div>
-        <Label htmlFor="phone">Phone Number</Label>
+        <Label htmlFor="phone">{t('patients.phone')}*</Label>
         <Input
           id="phone"
           {...register('phone')}
@@ -218,7 +220,7 @@ useEffect(() => {
       </div>
 
       <div>
-        <Label htmlFor="address">Address</Label>
+        <Label htmlFor="address">{t('patients.address')}*</Label>
         <Textarea
           id="address"
           {...register('address')}
@@ -228,7 +230,7 @@ useEffect(() => {
       </div>
 
       <div>
-        <Label htmlFor="medical_history">Medical History</Label>
+        <Label htmlFor="medical_history">{t('patients.medicalHistory')}*</Label>
         <Textarea
           id="medical_history"
           {...register('medical_history')}
@@ -239,7 +241,7 @@ useEffect(() => {
 
       <div className="flex justify-end space-x-2">
         <Button type="submit">
-          {patient ? 'Update Patient' : 'Add Patient'}
+          {patient ? t('patients.edit'): t('patients.add')}
         </Button>
       </div>
     </form>

@@ -349,7 +349,7 @@ export const VisitForm = ({ patientId, visit, onSave }: VisitFormProps) => {
 
             {/* File Upload Section */}
             <div>
-              <h3 className="text-lg font-medium mb-4">{t('visit.uploadFiles') || 'Upload Files (Optional)'}</h3>
+              <h3 className="text-lg font-medium mb-4">{t('visit.uploadFile') || 'Upload Files (Optional)'}</h3>
               <FileUpload
                 patientId={patientId}
                 onUpload={handleFileUploaded}

@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { X, Upload } from 'lucide-react';
 import { uploadPatientFileUrl } from '@/components/constants.js';
-
+import { useLanguage } from '@/contexts/LanguageContext';
 interface FileUploadProps {
   patientId: string;
   visitId?: string;
@@ -17,19 +17,17 @@ interface FileUploadProps {
 
 export const FileUpload = ({ patientId, visitId, onUpload, isEmbedded = false }: FileUploadProps) => {
   const { register, handleSubmit, reset, watch } = useForm();
-  
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
-
+    const { t, language } = useLanguage();
   const description = watch('description');
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     setSelectedFile(file || null);
   };
-
   const onSubmit = async (data: any) => {
     if (!selectedFile) {
       toast({ 
@@ -123,7 +121,7 @@ export const FileUpload = ({ patientId, visitId, onUpload, isEmbedded = false }:
     <div className="space-y-4">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
-          <Label htmlFor="file">Select File *</Label>
+          <Label htmlFor="file">{t('visit.selectFiles')}*</Label>
           <Input
             id="file"
             type="file"
@@ -138,11 +136,11 @@ export const FileUpload = ({ patientId, visitId, onUpload, isEmbedded = false }:
         </div>
 
         <div>
-          <Label htmlFor="description">Description (Optional)</Label>
+          <Label htmlFor="description">{t('visit.description')}</Label>
           <Textarea
             id="description"
             {...register('description')}
-            placeholder="Enter file description..."
+            placeholder={t( 'visit.enterDescription')}
             rows={2}
           />
         </div>
@@ -154,7 +152,7 @@ export const FileUpload = ({ patientId, visitId, onUpload, isEmbedded = false }:
             className="flex items-center gap-2"
           >
             <Upload className="w-4 h-4" />
-            {isUploading ? 'Adding...' : isEmbedded ? 'Add File' : 'Upload File'}
+            {isUploading ? 'Adding...' : isEmbedded ? t( 'visit.addFile') : t( 'visit.uploadFile')}
           </Button>
         </div>
       </form>

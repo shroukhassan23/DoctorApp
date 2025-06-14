@@ -7,7 +7,7 @@ import { PatientInformation } from './patient-detail/PatientInformation';
 import { VisitHistory } from './patient-detail/VisitHistory';
 import { PatientFiles } from './patient-detail/PatientFiles';
 import { getPatientVisitsUrl, getPatientFilesUrl } from '@/components/constants.js';
-
+import { useLanguage } from '@/contexts/LanguageContext';
 interface PatientDetailProps {
   patient: any;
   onUpdate: () => void;
@@ -15,7 +15,7 @@ interface PatientDetailProps {
 
 export const PatientDetail = ({ patient, onUpdate }: PatientDetailProps) => {
   const [selectedVisit, setSelectedVisit] = useState<any>(null);
-
+  const { t, language } = useLanguage();
   const { data: visits, refetch: refetchVisits } = useQuery({
     queryKey: ['patient-visits', patient.id],
     queryFn: async () => {
@@ -54,13 +54,13 @@ export const PatientDetail = ({ patient, onUpdate }: PatientDetailProps) => {
 
       <Tabs defaultValue="visits" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="visits">Visit History</TabsTrigger>
-          <TabsTrigger value="files">Files & Documents</TabsTrigger>
+          <TabsTrigger value="visits">{t('visit.visitHistory')}</TabsTrigger>
+          <TabsTrigger value="files">{t('visit.visitDocuments')}</TabsTrigger>
         </TabsList>
         
         <TabsContent value="visits" className="space-y-4">
           <div className="flex justify-between items-center">
-            <h3 className="text-lg font-medium">Visit History</h3>
+            <h3 className="text-lg font-medium">{t('visit.visitHistory')}</h3>
           </div>
           
           <VisitHistory 
