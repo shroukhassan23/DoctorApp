@@ -160,7 +160,7 @@ export const VisitHistory = ({ visits, onVisitClick, onVisitUpdated }: VisitHist
         <Dialog open={!!editingVisit} onOpenChange={() => setEditingVisit(null)}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Edit Visit - {formatDate(editingVisit.visit_date)}</DialogTitle>
+              <DialogTitle>{t('reports.editVisit')} - {formatDate(editingVisit.visit_date)}</DialogTitle>
             </DialogHeader>
             <VisitForm 
               patientId={editingVisit.patient_id} 

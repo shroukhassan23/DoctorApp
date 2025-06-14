@@ -520,7 +520,7 @@ const translations = {
     'visit.description':'الوصف (اختياري)',
 'visit.enterDescription':"ادخل الوصف",
 'visit.updateVisit':"تحديث الزياره",
-   'visit.editPrescription':'تعدي الوصفه الطبيه',
+   'visit.editPrescription':'تعديل الوصفه الطبيه',
 'visit.recordNewVisit':'تسجيل زياره جديده ل',
 'visit.addNewVisitRecord':'إضافه زياره جديده',
     'visit.updatePatientDetails':'تحديث بيانات المريض و المعلومات الطبيه ',
