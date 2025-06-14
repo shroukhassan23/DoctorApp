@@ -32,7 +32,7 @@ export const VisitDetail = ({ visit, patient }: VisitDetailProps) => {
       
       {/* Show files if they exist */}
       {!isLoadingFiles && files && files.length > 0 && (
-        <VisitFiles files={files} />
+        <VisitFiles files={files} patientId={patient.id} />
       )}
 
       {/* Show loading states */}

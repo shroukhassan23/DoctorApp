@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import { visitStatusPatientUrl, visitTypesPatientUrl } from '@/components/constants.js';
+import { SimpleHistoryTextarea } from '@/components/prescriptions/SimpleHistoryTextarea';
 
 interface VisitInformationFormProps {
   register: any;
@@ -42,13 +43,6 @@ export const VisitInformationForm = ({
   }, [propVisitTypes, propVisitStatuses]);
 
   // Debug effect to log current form values
-  useEffect(() => {
-    const currentValues = {
-      visit_type: watch('visit_type'),
-      status: watch('status'),
-      visit_date: watch('visit_date')
-    };
-  }, [watch('visit_type'), watch('status'), watch('visit_date'), visitTypes, visitStatuses]);
 
   return (
     <div className={cn("space-y-4", language === 'ar' && 'rtl')}>
@@ -163,6 +157,13 @@ export const VisitInformationForm = ({
 
       <div>
         <Label htmlFor="diagnosis" className={cn(language === 'ar' && 'text-right')}>{t('visit.diagnosis')}</Label>
+        {/* <SimpleHistoryTextarea
+          id="diagnosis"
+          placeholder={t('visit.enterDiagnosis')}
+          value={watch('diagnosis')}
+          onChange={(value) => setValue('diagnosis', value)}
+          historyType="diagnosis"
+        /> */}
         <Textarea
           id="diagnosis"
           placeholder={t('visit.enterDiagnosis')}

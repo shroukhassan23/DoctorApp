@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { X, Upload } from 'lucide-react';
 import { uploadPatientFileUrl } from '@/components/constants.js';
 import { useLanguage } from '@/contexts/LanguageContext';
+
 interface FileUploadProps {
   patientId: string;
   visitId?: string;
@@ -21,13 +22,14 @@ export const FileUpload = ({ patientId, visitId, onUpload, isEmbedded = false }:
   const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
-    const { t, language } = useLanguage();
+  const { t, language } = useLanguage();
   const description = watch('description');
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     setSelectedFile(file || null);
   };
+
   const onSubmit = async (data: any) => {
     if (!selectedFile) {
       toast({ 
@@ -117,45 +119,94 @@ export const FileUpload = ({ patientId, visitId, onUpload, isEmbedded = false }:
     });
   };
 
+  // Handle add file button click for embedded mode
+  const handleAddFile = () => {
+    const formData = new FormData();
+    const descriptionValue = (document.getElementById('description') as HTMLTextAreaElement)?.value || '';
+    
+    onSubmit({ description: descriptionValue });
+  };
+
   return (
     <div className="space-y-4">
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div>
-          <Label htmlFor="file">{t('visit.selectFiles')}*</Label>
-          <Input
-            id="file"
-            type="file"
-            onChange={handleFileChange}
-            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt"
-          />
-          {selectedFile && (
-            <p className="text-sm text-green-600 mt-1">
-              Selected: {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)
-            </p>
-          )}
-        </div>
+      {/* Remove the form wrapper when embedded */}
+      {isEmbedded ? (
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="file">{t('visit.selectFiles')}*</Label>
+            <Input
+              id="file"
+              type="file"
+              onChange={handleFileChange}
+              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt"
+            />
+            {selectedFile && (
+              <p className="text-sm text-green-600 mt-1">
+                Selected: {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)
+              </p>
+            )}
+          </div>
 
-        <div>
-          <Label htmlFor="description">{t('visit.description')}</Label>
-          <Textarea
-            id="description"
-            {...register('description')}
-            placeholder={t( 'visit.enterDescription')}
-            rows={2}
-          />
-        </div>
+          <div>
+            <Label htmlFor="description">{t('visit.description')}</Label>
+            <Textarea
+              id="description"
+              placeholder={t('visit.enterDescription')}
+              rows={2}
+            />
+          </div>
 
-        <div className="flex justify-end space-x-2">
-          <Button 
-            type="submit" 
-            disabled={!selectedFile || isUploading}
-            className="flex items-center gap-2"
-          >
-            <Upload className="w-4 h-4" />
-            {isUploading ? 'Adding...' : isEmbedded ? t( 'visit.addFile') : t( 'visit.uploadFile')}
-          </Button>
+          <div className="flex justify-end space-x-2">
+            <Button 
+              type="button"
+              onClick={handleAddFile}
+              disabled={!selectedFile || isUploading}
+              className="flex items-center gap-2"
+            >
+              <Upload className="w-4 h-4" />
+              {isUploading ? 'Adding...' : t('visit.addFile')}
+            </Button>
+          </div>
         </div>
-      </form>
+      ) : (
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div>
+            <Label htmlFor="file">{t('visit.selectFiles')}*</Label>
+            <Input
+              id="file"
+              type="file"
+              onChange={handleFileChange}
+              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt"
+            />
+            {selectedFile && (
+              <p className="text-sm text-green-600 mt-1">
+                Selected: {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)
+              </p>
+            )}
+          </div>
+
+          <div>
+            <Label htmlFor="description">{t('visit.description')}</Label>
+            <Textarea
+              id="description"
+              {...register('description')}
+              placeholder={t('visit.enterDescription')}
+              rows={2}
+            />
+          </div>
+
+          <div className="flex justify-end space-x-2">
+            <Button 
+              type="submit" 
+              disabled={!selectedFile || isUploading}
+              className="flex items-center gap-2"
+            >
+              <Upload className="w-4 h-4" />
+              {isUploading ? 'Uploading...' : t('visit.uploadFile')}
+            </Button>
+          </div>
+        </form>
+      )}
 
       {isEmbedded && uploadedFiles.length > 0 && (
         <div className="mt-4">
