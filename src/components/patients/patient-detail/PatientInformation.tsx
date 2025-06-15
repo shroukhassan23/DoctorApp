@@ -65,7 +65,7 @@ export const PatientInformation = ({ patient, onUpdate, onVisitSaved }: PatientI
                   {t('visit.addNewVisitRecord')}
                 </DialogDescription>
               </DialogHeader>
-              <VisitForm patientId={patient.id} onSave={handleVisitSaved} />
+              <VisitForm key={`visit-form-${patient.id}`} patientId={patient.id} onSave={handleVisitSaved} />
             </DialogContent>
           </Dialog>
         </div>

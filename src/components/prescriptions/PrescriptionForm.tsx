@@ -127,13 +127,18 @@ reset({
       return;
     }
 
+    let currentMedicines = medicines;
+  if (setMedicines && (setMedicines as any).getCurrentMedicines) {
+    currentMedicines = (setMedicines as any).getCurrentMedicines();
+  }
+
     setIsSubmitting(true);
     
     try {
       const prescriptionData = {
         ...data,
         patient_id: targetPatientId,
-        medicines,
+        medicines: currentMedicines,
         selectedLabTests,
         selectedImagingStudies,
         visit_id: visitId
