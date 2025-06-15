@@ -157,19 +157,19 @@ export const VisitInformationForm = ({
 
       <div>
         <Label htmlFor="diagnosis" className={cn(language === 'ar' && 'text-right')}>{t('visit.diagnosis')}</Label>
-        {/* <SimpleHistoryTextarea
+        <SimpleHistoryTextarea
           id="diagnosis"
           placeholder={t('visit.enterDiagnosis')}
           value={watch('diagnosis')}
           onChange={(value) => setValue('diagnosis', value)}
           historyType="diagnosis"
-        /> */}
-        <Textarea
+        />
+        {/* <Textarea
           id="diagnosis"
           placeholder={t('visit.enterDiagnosis')}
           {...register('diagnosis')}
           className={cn(language === 'ar' && 'text-right')}
-        />
+        /> */}
       </div>
 
       <div>
