@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Printer } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
+import { EditButton, PrintButton, SaveButton } from '@/components/ui/enhanced-button';
 
 interface VisitFormActionsProps {
   isSubmitting: boolean;
@@ -32,15 +33,13 @@ export const VisitFormActions = ({
       
       {/* Print Prescription Button - Show when prescription is saved */}
       {isPrescriptionSaved && onPrintPrescription && (
-        <Button 
-          type="button"
-          variant="outline" 
-          onClick={onPrintPrescription}
-          className={cn("flex items-center gap-2", language === 'ar' && 'flex-row-reverse')}
-        >
-          <Printer className="w-4 h-4" />
-          {t('visit.printPrescription') || 'Print Prescription'}
-        </Button>
+        <PrintButton 
+        type="button"
+        onClick={onPrintPrescription}
+        size="md"
+      >
+        {t('visit.printPrescription') || 'Print Prescription'}
+      </PrintButton>
       )}
       
       <Button 
@@ -49,6 +48,26 @@ export const VisitFormActions = ({
       >
         {isSubmitting ? (t('common.saving') || 'Saving...') : isEditing ? (t('visit.updateVisit') || 'Update Visit') : (t('visit.saveVisit') || 'Save Visit')}
       </Button>
+
+      {isEditing ? (
+  <EditButton 
+    type="submit" 
+    disabled={isSubmitting} 
+    loading={isSubmitting}
+    size="lg"
+  >
+    { (t('visit.updateVisit') || 'Update Visit')}
+  </EditButton>
+) : (
+  <SaveButton 
+    type="submit" 
+    disabled={isSubmitting} 
+    loading={isSubmitting}
+    size="lg"
+  >
+    { (t('common.saving') || 'Saving...')}
+  </SaveButton>
+)}
     </div>
   );
 };

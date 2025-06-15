@@ -15,6 +15,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import { patientUrl } from '@/components/constants.js'
 import { PageLoading, SectionLoading, TableLoading } from '@/components/ui/loading-spinner';
+import { AddButton, DeleteButton, ViewButton } from '../ui/enhanced-button';
 
 export const PatientsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -83,15 +84,9 @@ export const PatientsPage = () => {
     <div className={cn("p-6", language === 'ar' && "rtl")}>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-900">{t('patients.title')}</h1>
-        <Button
-          onClick={() => {
-            setSelectedPatient(null);
-            setShowForm(true);
-          }}
-        >
-          <Plus className="w-4 h-4 mr-2" />
+        <AddButton onClick={() => { setSelectedPatient(null); setShowForm(true); }}>
           {t('patients.addNew')}
-        </Button>
+        </AddButton>
       </div>
 
       <Dialog open={showForm} onOpenChange={setShowForm}>
@@ -122,90 +117,91 @@ export const PatientsPage = () => {
       </div>
 
       <div className="bg-white rounded-lg shadow">
-      {isLoading ? (
-  <TableLoading rows={6} columns={7} />
-) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className={cn(language === 'ar' && 'text-right')}>{t('patients.name')}</TableHead>
-              <TableHead className={cn(language === 'ar' && 'text-right')}>{t('patients.age')}</TableHead>
-              <TableHead className={cn(language === 'ar' && 'text-right')}>{t('patients.gender')}</TableHead>
-              <TableHead className={cn(language === 'ar' && 'text-right')}>{t('patients.dateOfBirth')}</TableHead>
-              <TableHead className={cn(language === 'ar' && 'text-right')}>{t('patients.phone')}</TableHead>
-              <TableHead className={cn(language === 'ar' && 'text-right')}>{t('patients.address')}</TableHead>
-              <TableHead className={cn(language === 'ar' ? 'text-left' : 'text-right')}>{t('common.actions')}</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredPatients.map((patient) => (
-              <TableRow key={patient.id}>
-                <TableCell className={cn("font-medium", language === 'ar' && 'text-right')}>{patient.name}</TableCell>
-                <TableCell className={cn(language === 'ar' && 'text-right')}>{patient.age}</TableCell>
-                <TableCell className={cn(language === 'ar' && 'text-right')}>{patient.gender}</TableCell>
-                <TableCell className={cn(language === 'ar' && 'text-right')}>{formatDateToDDMMYYYY(patient.date_of_birth)}</TableCell>
-                <TableCell className={cn(language === 'ar' && 'text-right')}>{patient.phone || 'N/A'}</TableCell>
-                <TableCell className={cn(language === 'ar' && 'text-right')}>{patient.address || 'N/A'}</TableCell>
-                <TableCell className={cn(language === 'ar' ? 'text-left' : 'text-right')}>
-                  <div className={cn("flex space-x-2", language === 'ar' ? 'justify-start flex-row-reverse space-x-reverse' : 'justify-end')}>
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setSelectedPatient(patient)}
-                        >
-                          <Eye className="w-4 h-4 mr-2" />
-                          {t('patients.viewDetails')}
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                        <DialogHeader>
-                          <DialogTitle>{t('patients.viewDetails')} - {patient.name}</DialogTitle>
-                          <DialogDescription>
-                            {t('patients.viewAndManage')}
-                          </DialogDescription>
-                        </DialogHeader>
-                        <PatientDetail patient={patient} onUpdate={refetch} />
-                      </DialogContent>
-                    </Dialog>
-
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="outline" size="sm">
-                          <Trash2 className="w-4 h-4 mr-2" />
-                          {t('common.delete')}
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>{t('patients.deleteConfirm')}</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            {t('patients.deleteDescription').replace('"{patient.name}"', `"${patient.name}"`)}
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => handleDelete(patient.id)}
-                            disabled={deletingPatient === patient.id} >
-                            {deletingPatient === patient.id ? (
-                              <div className="flex items-center gap-2">
-                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                                {t('common.deleting')}
-                              </div>
-                            ) : (
-                              t('common.delete')
-                            )}
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                </TableCell>
+        {isLoading ? (
+          <TableLoading rows={6} columns={7} />
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className={cn(language === 'ar' && 'text-right')}>{t('patients.name')}</TableHead>
+                <TableHead className={cn(language === 'ar' && 'text-right')}>{t('patients.age')}</TableHead>
+                <TableHead className={cn(language === 'ar' && 'text-right')}>{t('patients.gender')}</TableHead>
+                <TableHead className={cn(language === 'ar' && 'text-right')}>{t('patients.dateOfBirth')}</TableHead>
+                <TableHead className={cn(language === 'ar' && 'text-right')}>{t('patients.phone')}</TableHead>
+                <TableHead className={cn(language === 'ar' && 'text-right')}>{t('patients.address')}</TableHead>
+                <TableHead className={cn(language === 'ar' ? 'text-left' : 'text-right')}>{t('common.actions')}</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {filteredPatients.map((patient) => (
+                <TableRow key={patient.id}>
+                  <TableCell className={cn("font-medium", language === 'ar' && 'text-right')}>{patient.name}</TableCell>
+                  <TableCell className={cn(language === 'ar' && 'text-right')}>{patient.age}</TableCell>
+                  <TableCell className={cn(language === 'ar' && 'text-right')}>{patient.gender}</TableCell>
+                  <TableCell className={cn(language === 'ar' && 'text-right')}>{formatDateToDDMMYYYY(patient.date_of_birth)}</TableCell>
+                  <TableCell className={cn(language === 'ar' && 'text-right')}>{patient.phone || 'N/A'}</TableCell>
+                  <TableCell className={cn(language === 'ar' && 'text-right')}>{patient.address || 'N/A'}</TableCell>
+                  <TableCell className={cn(language === 'ar' ? 'text-left' : 'text-right')}>
+                    <div className={cn("flex space-x-2", language === 'ar' ? 'justify-start flex-row-reverse space-x-reverse' : 'justify-end')}>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <ViewButton
+                            size="sm"
+                            onClick={() => setSelectedPatient(patient)}
+                          >
+                            {t('patients.viewDetails')}
+                          </ViewButton>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                          <DialogHeader>
+                            <DialogTitle>{t('patients.viewDetails')} - {patient.name}</DialogTitle>
+                            <DialogDescription>
+                              {t('patients.viewAndManage')}
+                            </DialogDescription>
+                          </DialogHeader>
+                          <PatientDetail patient={patient} onUpdate={refetch} />
+                        </DialogContent>
+                      </Dialog>
+
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <DeleteButton
+                            onClick={() => handleDelete(patient.id)}
+                            disabled={deletingPatient === patient.id}
+                            loading={deletingPatient === patient.id}
+                          >
+                            {t('common.delete')}
+                          </DeleteButton>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>{t('patients.deleteConfirm')}</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              {t('patients.deleteDescription').replace('"{patient.name}"', `"${patient.name}"`)}
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDelete(patient.id)}
+                              disabled={deletingPatient === patient.id} >
+                              {deletingPatient === patient.id ? (
+                                <div className="flex items-center gap-2">
+                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                  {t('common.deleting')}
+                                </div>
+                              ) : (
+                                t('common.delete')
+                              )}
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         )}
 
         {filteredPatients.length === 0 && (

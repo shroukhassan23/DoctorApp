@@ -15,6 +15,7 @@ import { ImagingStudiesSection } from './ImagingStudiesSection';
 import { SimpleHistoryTextarea } from './SimpleHistoryTextarea';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { SectionLoading, ButtonLoading } from '@/components/ui/loading-spinner';
+import { EditButton, SaveButton } from '../ui/enhanced-button';
 
 
 interface PrescriptionFormProps {
@@ -237,17 +238,25 @@ reset({
       </div>
 
       <div className="flex justify-end">
-        <Button
-          type={isEmbedded ? "button" : "submit"}
-          disabled={isSubmitting}
-          onClick={isEmbedded ? handleSubmit(onSubmit) : undefined}
-        >
-          {isSubmitting ? (
-            <ButtonLoading text={prescription ? t('prescription.updating') : t('prescription.saving')} variant="dots" color="green" />
-          ) : (
-            prescription ? t('prescription.update') : t('prescription.save')
-          )}
-        </Button>
+      {prescription ? (
+  <EditButton 
+    type={isEmbedded ? "button" : "submit"} 
+    disabled={isSubmitting} 
+    loading={isSubmitting}
+    onClick={isEmbedded ? handleSubmit(onSubmit) : undefined}
+  >
+    {t('prescription.update')}
+  </EditButton>
+) : (
+  <SaveButton 
+    type={isEmbedded ? "button" : "submit"} 
+    disabled={isSubmitting} 
+    loading={isSubmitting}
+    onClick={isEmbedded ? handleSubmit(onSubmit) : undefined}
+  >
+    {t('prescription.save')}
+  </SaveButton>
+)}
       </div>
     </>
   );

@@ -10,6 +10,7 @@ import { useAutocompleteHistory } from '@/hooks/useAutocompleteHistory';
 import { InlineHistorySearch } from './InlineHistorySearch';
 import { visitMedicinePatientUrl } from '@/components/constants.js';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { AddButton, IconButton } from '../ui/enhanced-button';
 
 interface MedicineSectionProps {
   medicines: any[];
@@ -101,10 +102,9 @@ export const MedicineSection = ({ medicines, setMedicines }: MedicineSectionProp
       <CardHeader>
         <CardTitle className="text-lg flex items-center justify-between">
           {t('medicines.title')}
-          <Button type="button" onClick={addMedicine} size="sm">
-            <Plus className="w-4 h-4 mr-2" />
-            {t('prescription.medicines')}
-          </Button>
+          <AddButton type="button" onClick={addMedicine} size="sm">
+  {t('prescription.medicines')}
+</AddButton>
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -117,14 +117,13 @@ export const MedicineSection = ({ medicines, setMedicines }: MedicineSectionProp
                 <div className="flex items-center justify-between">
                   <h4 className="font-medium">{t('medicines.medicine')}{index + 1}</h4>
                   {localMedicines.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => removeMedicine(index)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                    <IconButton
+                    icon={Trash2}
+                    variant="danger"
+                    size="sm"
+                    onClick={() => removeMedicine(index)}
+                    tooltip="Remove medicine"
+                  />
                   )}
                 </div>
 
