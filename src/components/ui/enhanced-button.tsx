@@ -1,16 +1,16 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { 
-  Plus, 
-  Eye, 
-  Edit, 
-  Trash2, 
-  Save, 
-  X, 
-  Check, 
-  Download, 
-  Upload, 
+import {
+  Plus,
+  Eye,
+  Edit,
+  Trash2,
+  Save,
+  X,
+  Check,
+  Download,
+  Upload,
   Search,
   Printer,
   RefreshCw,
@@ -25,22 +25,22 @@ import {
 } from 'lucide-react';
 
 interface EnhancedButtonProps {
-    children?: React.ReactNode;
-    onClick?: (event?: React.MouseEvent<HTMLButtonElement>) => void;
-    disabled?: boolean;
-    loading?: boolean;
-    size?: 'sm' | 'md' | 'lg';
-    className?: string;
-    type?: 'button' | 'submit' | 'reset';
-  }
+  children?: React.ReactNode;
+  onClick?: (event?: React.MouseEvent<HTMLButtonElement>) => void;
+  disabled?: boolean;
+  loading?: boolean;
+  size?: 'sm' | 'md' | 'lg';
+  className?: string;
+  type?: 'button' | 'submit' | 'reset';
+}
 
 // Primary Action Button (Add, Create, Save)
-export const PrimaryButton = ({ 
-  children, 
-  onClick, 
-  disabled, 
-  loading, 
-  size = 'md', 
+export const PrimaryButton = ({
+  children,
+  onClick,
+  disabled,
+  loading,
+  size = 'md',
   className,
   type = 'button'
 }: EnhancedButtonProps) => {
@@ -57,9 +57,9 @@ export const PrimaryButton = ({
       disabled={disabled || loading}
       className={cn(
         'bg-blue-600 hover:bg-blue-700',
-'text-white font-semibold shadow-lg hover:shadow-xl',
-'transition-all duration-200 transform hover:scale-105',
-'border-0 focus:ring-4 focus:ring-blue-300',
+        'text-white font-semibold shadow-lg hover:shadow-xl',
+        'transition-all duration-200 transform hover:scale-105',
+        'border-0 focus:ring-4 focus:ring-blue-300',
         sizeClasses[size],
         disabled && 'opacity-50 cursor-not-allowed transform-none',
         className
@@ -78,12 +78,12 @@ export const PrimaryButton = ({
 };
 
 // Success Button (Save, Confirm)
-export const SuccessButton = ({ 
-  children, 
-  onClick, 
-  disabled, 
-  loading, 
-  size = 'md', 
+export const SuccessButton = ({
+  children,
+  onClick,
+  disabled,
+  loading,
+  size = 'md',
   className,
   type = 'button'
 }: EnhancedButtonProps) => {
@@ -121,12 +121,12 @@ export const SuccessButton = ({
 };
 
 // Danger Button (Delete, Remove)
-export const DangerButton = ({ 
-  children, 
-  onClick, 
-  disabled, 
-  loading, 
-  size = 'md', 
+export const DangerButton = ({
+  children,
+  onClick,
+  disabled,
+  loading,
+  size = 'md',
   className,
   type = 'button'
 }: EnhancedButtonProps) => {
@@ -164,12 +164,12 @@ export const DangerButton = ({
 };
 
 // Secondary Button (Edit, View, Cancel)
-export const SecondaryButton = ({ 
-  children, 
-  onClick, 
-  disabled, 
-  loading, 
-  size = 'md', 
+export const SecondaryButton = ({
+  children,
+  onClick,
+  disabled,
+  loading,
+  size = 'md',
   className,
   type = 'button'
 }: EnhancedButtonProps) => {
@@ -208,12 +208,12 @@ export const SecondaryButton = ({
 };
 
 // Warning Button (Update, Modify)
-export const WarningButton = ({ 
-  children, 
-  onClick, 
-  disabled, 
-  loading, 
-  size = 'md', 
+export const WarningButton = ({
+  children,
+  onClick,
+  disabled,
+  loading,
+  size = 'md',
   className,
   type = 'button'
 }: EnhancedButtonProps) => {
@@ -251,12 +251,12 @@ export const WarningButton = ({
 };
 
 // Info Button (View, Details)
-export const InfoButton = ({ 
-  children, 
-  onClick, 
-  disabled, 
-  loading, 
-  size = 'md', 
+export const InfoButton = ({
+  children,
+  onClick,
+  disabled,
+  loading,
+  size = 'md',
   className,
   type = 'button'
 }: EnhancedButtonProps) => {
@@ -294,27 +294,32 @@ export const InfoButton = ({
 };
 
 // Specific Action Buttons with Icons
-export const AddButton = ({ children = 'Add', className, size, ...props }: Omit<EnhancedButtonProps, 'children'> & { children?: string; className?: string }) => {
-    const sizeClasses = {
-      sm: 'px-3 py-1.5 text-sm',
-      md: 'px-4 py-2 text-sm',
-      lg: 'px-6 py-3 text-base'
-    };
-  
-    return (
+export const AddButton = React.forwardRef<
+  HTMLDivElement,
+  Omit<EnhancedButtonProps, 'children'> & { children?: string; className?: string }
+>(({ children = 'Add', className, size, loading, ...props }, ref) => {
+  const sizeClasses = {
+    sm: 'px-3 py-1.5 text-sm',
+    md: 'px-4 py-2 text-sm',
+    lg: 'px-6 py-3 text-base'
+  };
+
+  return (
+    <div ref={ref}>
       <Button
         {...props}
+        disabled={props.disabled || loading}
         className={cn(
           'bg-[#2463eb] hover:bg-[#1d4ed8]',
           'text-white font-semibold shadow-lg hover:shadow-xl',
           'transition-all duration-200 transform hover:scale-105',
           'border-0 focus:ring-4 focus:ring-blue-300',
           sizeClasses[size || 'sm'],
-          props.disabled && 'opacity-50 cursor-not-allowed transform-none',
+          (props.disabled || loading) && 'opacity-50 cursor-not-allowed transform-none',
           className
         )}
       >
-        {props.loading ? (
+        {loading ? (
           <div className="flex items-center gap-2">
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
             <Plus className="w-4 h-4 mr-1" />
@@ -327,8 +332,11 @@ export const AddButton = ({ children = 'Add', className, size, ...props }: Omit<
           </>
         )}
       </Button>
-    );
-  };
+    </div>
+  );
+});
+
+AddButton.displayName = 'AddButton';
 
 export const SaveButton = ({ children = 'Save', ...props }: Omit<EnhancedButtonProps, 'children'> & { children?: string }) => (
   <SuccessButton {...props}>
@@ -337,26 +345,31 @@ export const SaveButton = ({ children = 'Save', ...props }: Omit<EnhancedButtonP
   </SuccessButton>
 );
 
-export const EditButton = ({ children = 'Edit', className, size, ...props }: Omit<EnhancedButtonProps, 'children'> & { children?: string; className?: string }) => {
-    const sizeClasses = {
-      sm: 'px-3 py-1.5 text-sm',
-      md: 'px-4 py-2 text-sm',
-      lg: 'px-6 py-3 text-base'
-    };
-  
-    return (
+export const EditButton = React.forwardRef<
+  HTMLDivElement,
+  Omit<EnhancedButtonProps, 'children'> & { children?: string; className?: string }
+>(({ children = 'Edit', className, size, loading, ...props }, ref) => {
+  const sizeClasses = {
+    sm: 'px-3 py-1.5 text-sm',
+    md: 'px-4 py-2 text-sm',
+    lg: 'px-6 py-3 text-base'
+  };
+
+  return (
+    <div ref={ref}>
       <Button
         {...props}
+        disabled={props.disabled || loading}
         className={cn(
           'bg-[#475569] hover:bg-[#334155]', // blue-gray color
           'text-white font-semibold shadow-lg hover:shadow-xl',
           'transition-all duration-200 transform hover:scale-105',
           sizeClasses[size || 'sm'],
-          props.disabled && 'opacity-50 cursor-not-allowed transform-none',
+          (props.disabled || loading) && 'opacity-50 cursor-not-allowed transform-none',
           className
         )}
       >
-        {props.loading ? (
+        {loading ? (
           <div className="flex items-center gap-2">
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
             <Edit className="w-4 h-4 mr-1" />
@@ -369,29 +382,38 @@ export const EditButton = ({ children = 'Edit', className, size, ...props }: Omi
           </>
         )}
       </Button>
-    );
+    </div>
+  );
+});
+
+EditButton.displayName = 'EditButton';
+
+export const ViewButton = React.forwardRef<
+  HTMLDivElement,
+  Omit<EnhancedButtonProps, 'children'> & { children?: string; className?: string }
+>(({ children = 'View Details', className, size, loading, ...props }, ref) => {
+  const sizeClasses = {
+    sm: 'px-3 py-1.5 text-sm',
+    md: 'px-4 py-2 text-sm',
+    lg: 'px-6 py-3 text-base'
   };
-export const ViewButton = ({ children = 'View Details', className, size, ...props }: Omit<EnhancedButtonProps, 'children'> & { children?: string; className?: string }) => {
-    const sizeClasses = {
-      sm: 'px-3 py-1.5 text-sm',
-      md: 'px-4 py-2 text-sm',
-      lg: 'px-6 py-3 text-base'
-    };
-  
-    return (
+
+  return (
+    <div ref={ref}>
       <Button
         {...props}
+        disabled={props.disabled || loading}
         className={cn(
           'bg-[#1C4ED8] hover:bg-[#1e40af]',
           'text-white font-semibold shadow-lg hover:shadow-xl',
           'transition-all duration-200 transform hover:scale-105',
           'border-0 focus:ring-4 focus:ring-blue-300',
           sizeClasses[size || 'sm'],
-          props.disabled && 'opacity-50 cursor-not-allowed transform-none',
+          (props.disabled || loading) && 'opacity-50 cursor-not-allowed transform-none',
           className
         )}
       >
-        {props.loading ? (
+        {loading ? (
           <div className="flex items-center gap-2">
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
             <Eye className="w-4 h-4 mr-1" />
@@ -404,15 +426,55 @@ export const ViewButton = ({ children = 'View Details', className, size, ...prop
           </>
         )}
       </Button>
-    );
+    </div>
+  );
+});
+
+ViewButton.displayName = 'ViewButton';
+
+
+export const DeleteButton = React.forwardRef<
+  HTMLDivElement,
+  Omit<EnhancedButtonProps, 'children'> & { children?: string; className?: string }
+>(({ children = 'Delete', className, size, loading, ...props }, ref) => {
+  const sizeClasses = {
+    sm: 'px-3 py-1.5 text-sm',
+    md: 'px-4 py-2 text-sm',
+    lg: 'px-6 py-3 text-base'
   };
 
-export const DeleteButton = ({ children = 'Delete', ...props }: Omit<EnhancedButtonProps, 'children'> & { children?: string }) => (
-  <DangerButton {...props}>
-    <Trash2 className="w-4 h-4 mr-1" />
-    {children}
-  </DangerButton>
-);
+  return (
+    <div ref={ref}>
+      <Button
+        {...props}
+        disabled={props.disabled || loading}
+        className={cn(
+          'bg-red-600 hover:bg-red-700',
+          'text-white font-semibold shadow-lg hover:shadow-xl',
+          'transition-all duration-200 transform hover:scale-105',
+          'border-0 focus:ring-4 focus:ring-red-300',
+          sizeClasses[size || 'sm'],
+          (props.disabled || loading) && 'opacity-50 cursor-not-allowed transform-none',
+          className
+        )}
+      >
+        {loading ? (
+          <div className="flex items-center gap-2">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+            <Trash2 className="w-4 h-4 mr-1" />
+            {children}
+          </div>
+        ) : (
+          <>
+            <Trash2 className="w-4 h-4 mr-1" />
+            {children}
+          </>
+        )}
+      </Button>
+    </div>
+  );
+});
+
 
 export const CancelButton = ({ children = 'Cancel', ...props }: Omit<EnhancedButtonProps, 'children'> & { children?: string }) => (
   <SecondaryButton {...props}>
@@ -443,40 +505,40 @@ export const UploadButton = ({ children = 'Upload', ...props }: Omit<EnhancedBut
 );
 
 export const PrintButton = ({ children = 'Print', className, size, ...props }: Omit<EnhancedButtonProps, 'children'> & { children?: string; className?: string }) => {
-    const sizeClasses = {
-      sm: 'px-3 py-1.5 text-sm',
-      md: 'px-4 py-2 text-sm',
-      lg: 'px-6 py-3 text-base'
-    };
-  
-    return (
-      <Button
-        {...props}
-        className={cn(
-          'bg-[#2463eb] hover:bg-[#1d4ed8]',
-          'text-white font-semibold shadow-lg hover:shadow-xl',
-          'transition-all duration-200 transform hover:scale-105',
-          'border-0 focus:ring-4 focus:ring-blue-300',
-          sizeClasses[size || 'sm'],
-          props.disabled && 'opacity-50 cursor-not-allowed transform-none',
-          className
-        )}
-      >
-        {props.loading ? (
-          <div className="flex items-center gap-2">
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-            <Printer className="w-4 h-4 mr-1" />
-            {children}
-          </div>
-        ) : (
-          <>
-            <Printer className="w-4 h-4 mr-1" />
-            {children}
-          </>
-        )}
-      </Button>
-    );
+  const sizeClasses = {
+    sm: 'px-3 py-1.5 text-sm',
+    md: 'px-4 py-2 text-sm',
+    lg: 'px-6 py-3 text-base'
   };
+
+  return (
+    <Button
+      {...props}
+      className={cn(
+        'bg-[#2463eb] hover:bg-[#1d4ed8]',
+        'text-white font-semibold shadow-lg hover:shadow-xl',
+        'transition-all duration-200 transform hover:scale-105',
+        'border-0 focus:ring-4 focus:ring-blue-300',
+        sizeClasses[size || 'sm'],
+        props.disabled && 'opacity-50 cursor-not-allowed transform-none',
+        className
+      )}
+    >
+      {props.loading ? (
+        <div className="flex items-center gap-2">
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+          <Printer className="w-4 h-4 mr-1" />
+          {children}
+        </div>
+      ) : (
+        <>
+          <Printer className="w-4 h-4 mr-1" />
+          {children}
+        </>
+      )}
+    </Button>
+  );
+};
 
 export const RefreshButton = ({ children = 'Refresh', ...props }: Omit<EnhancedButtonProps, 'children'> & { children?: string }) => (
   <SecondaryButton {...props}>
@@ -493,48 +555,48 @@ export const SearchButton = ({ children = 'Search', ...props }: Omit<EnhancedBut
 );
 
 // Icon-only buttons (for compact spaces)
-export const IconButton = ({ 
-    icon: Icon, 
-    variant = 'secondary',
-    size = 'md',
-    tooltip,
-    className,
-    ...props 
-  }: {
-    icon: React.ComponentType<{ className?: string }>;
-    variant?: 'primary' | 'secondary' | 'danger' | 'success' | 'warning' | 'info';
-    tooltip?: string;
-  } & Omit<EnhancedButtonProps, 'children'>) => {
-    const sizeClasses = {
-      sm: 'p-1.5',
-      md: 'p-2',
-      lg: 'p-3'
-    };
-  
-    const variantClasses = {
-        primary: 'bg-blue-600 hover:bg-blue-700 text-white',
-        secondary: 'bg-white hover:bg-gray-50 border-2 border-gray-300 hover:border-gray-400 text-gray-700',
-        danger: 'bg-red-600 hover:bg-red-700 text-white',
-        success: 'bg-green-600 hover:bg-green-700 text-white',
-        warning: 'bg-orange-600 hover:bg-orange-700 text-white',
-        info: 'bg-indigo-600 hover:bg-indigo-700 text-white'
-      };
-  
-    return (
-      <Button
-        {...props}
-        title={tooltip}
-        className={cn(
-          'aspect-square font-semibold shadow-lg hover:shadow-xl',
-          'transition-all duration-200 transform hover:scale-105',
-          'border-0 focus:ring-4',
-          sizeClasses[size],
-          variantClasses[variant],
-          props.disabled && 'opacity-50 cursor-not-allowed transform-none',
-          className
-        )}
-      >
-        <Icon className="w-4 h-4" />
-      </Button>
-    );
+export const IconButton = ({
+  icon: Icon,
+  variant = 'secondary',
+  size = 'md',
+  tooltip,
+  className,
+  ...props
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  variant?: 'primary' | 'secondary' | 'danger' | 'success' | 'warning' | 'info';
+  tooltip?: string;
+} & Omit<EnhancedButtonProps, 'children'>) => {
+  const sizeClasses = {
+    sm: 'p-1.5',
+    md: 'p-2',
+    lg: 'p-3'
   };
+
+  const variantClasses = {
+    primary: 'bg-blue-600 hover:bg-blue-700 text-white',
+    secondary: 'bg-white hover:bg-gray-50 border-2 border-gray-300 hover:border-gray-400 text-gray-700',
+    danger: 'bg-red-600 hover:bg-red-700 text-white',
+    success: 'bg-green-600 hover:bg-green-700 text-white',
+    warning: 'bg-orange-600 hover:bg-orange-700 text-white',
+    info: 'bg-indigo-600 hover:bg-indigo-700 text-white'
+  };
+
+  return (
+    <Button
+      {...props}
+      title={tooltip}
+      className={cn(
+        'aspect-square font-semibold shadow-lg hover:shadow-xl',
+        'transition-all duration-200 transform hover:scale-105',
+        'border-0 focus:ring-4',
+        sizeClasses[size],
+        variantClasses[variant],
+        props.disabled && 'opacity-50 cursor-not-allowed transform-none',
+        className
+      )}
+    >
+      <Icon className="w-4 h-4" />
+    </Button>
+  );
+};

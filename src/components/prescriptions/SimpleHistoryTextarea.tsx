@@ -10,13 +10,16 @@ interface SimpleHistoryTextareaProps {
   historyType: 'diagnosis' | 'notes';
 }
 
-export const SimpleHistoryTextarea = ({ 
+export const SimpleHistoryTextarea = React.forwardRef<
+  HTMLTextAreaElement,
+  SimpleHistoryTextareaProps
+>(({ 
   id, 
   placeholder, 
   value, 
   onChange, 
   historyType 
-}: SimpleHistoryTextareaProps) => {
+}, ref) => {
   const { diagnosisHistory, notesHistory, deleteDiagnosisHistory, deleteNotesHistory } = useAutocompleteHistory();
   
   const getHistory = useCallback(() => {
@@ -52,6 +55,7 @@ export const SimpleHistoryTextarea = ({
 
   return (
     <InlineHistoryTextarea
+      ref={ref}
       id={id}
       items={getHistory()}
       value={value}
@@ -61,4 +65,6 @@ export const SimpleHistoryTextarea = ({
       placeholder={placeholder}
     />
   );
-};
+});
+
+SimpleHistoryTextarea.displayName = 'SimpleHistoryTextarea';
