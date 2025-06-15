@@ -32,12 +32,12 @@ export const PatientInformation = ({ patient, onUpdate, onVisitSaved }: PatientI
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>{t('patients.info')}</CardTitle>
-        <div className="flex space-x-2">
+        <div className="flex gap-2">
           <Dialog open={showEditForm} onOpenChange={setShowEditForm}>
             <DialogTrigger asChild>
-            <EditButton size="sm">
-  {t('patients.edit')}
-</EditButton>
+              <EditButton size="sm">
+                {t('patients.edit')}
+              </EditButton>
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
@@ -52,9 +52,9 @@ export const PatientInformation = ({ patient, onUpdate, onVisitSaved }: PatientI
 
           <Dialog open={showVisitForm} onOpenChange={setShowVisitForm}>
             <DialogTrigger asChild>
-            <AddButton size="sm">
-  {t('patients.addVisit')}
-</AddButton>
+              <AddButton size="sm">
+                {t('patients.addVisit')}
+              </AddButton>
             </DialogTrigger>
             <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>

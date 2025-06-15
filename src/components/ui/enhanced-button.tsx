@@ -25,14 +25,14 @@ import {
 } from 'lucide-react';
 
 interface EnhancedButtonProps {
-  children?: React.ReactNode;
-  onClick?: () => void;
-  disabled?: boolean;
-  loading?: boolean;
-  size?: 'sm' | 'md' | 'lg';
-  className?: string;
-  type?: 'button' | 'submit' | 'reset';
-}
+    children?: React.ReactNode;
+    onClick?: (event?: React.MouseEvent<HTMLButtonElement>) => void;
+    disabled?: boolean;
+    loading?: boolean;
+    size?: 'sm' | 'md' | 'lg';
+    className?: string;
+    type?: 'button' | 'submit' | 'reset';
+  }
 
 // Primary Action Button (Add, Create, Save)
 export const PrimaryButton = ({ 
@@ -56,10 +56,10 @@ export const PrimaryButton = ({
       onClick={onClick}
       disabled={disabled || loading}
       className={cn(
-        'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800',
-        'text-white font-semibold shadow-lg hover:shadow-xl',
-        'transition-all duration-200 transform hover:scale-105',
-        'border-0 focus:ring-4 focus:ring-blue-300',
+        'bg-blue-600 hover:bg-blue-700',
+'text-white font-semibold shadow-lg hover:shadow-xl',
+'transition-all duration-200 transform hover:scale-105',
+'border-0 focus:ring-4 focus:ring-blue-300',
         sizeClasses[size],
         disabled && 'opacity-50 cursor-not-allowed transform-none',
         className
@@ -99,7 +99,7 @@ export const SuccessButton = ({
       onClick={onClick}
       disabled={disabled || loading}
       className={cn(
-        'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800',
+        'bg-green-600 hover:bg-green-700',
         'text-white font-semibold shadow-lg hover:shadow-xl',
         'transition-all duration-200 transform hover:scale-105',
         'border-0 focus:ring-4 focus:ring-green-300',
@@ -142,7 +142,7 @@ export const DangerButton = ({
       onClick={onClick}
       disabled={disabled || loading}
       className={cn(
-        'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800',
+        'bg-red-600 hover:bg-red-700',
         'text-white font-semibold shadow-lg hover:shadow-xl',
         'transition-all duration-200 transform hover:scale-105',
         'border-0 focus:ring-4 focus:ring-red-300',
@@ -229,7 +229,7 @@ export const WarningButton = ({
       onClick={onClick}
       disabled={disabled || loading}
       className={cn(
-        'bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800',
+        'bg-orange-600 hover:bg-orange-700',
         'text-white font-semibold shadow-lg hover:shadow-xl',
         'transition-all duration-200 transform hover:scale-105',
         'border-0 focus:ring-4 focus:ring-orange-300',
@@ -272,7 +272,7 @@ export const InfoButton = ({
       onClick={onClick}
       disabled={disabled || loading}
       className={cn(
-        'bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800',
+        'bg-indigo-600 hover:bg-indigo-700',
         'text-white font-semibold shadow-lg hover:shadow-xl',
         'transition-all duration-200 transform hover:scale-105',
         'border-0 focus:ring-4 focus:ring-indigo-300',
@@ -294,86 +294,200 @@ export const InfoButton = ({
 };
 
 // Specific Action Buttons with Icons
-export const AddButton = ({ children = 'Add', ...props }: Omit<EnhancedButtonProps, 'children'> & { children?: string }) => (
-  <PrimaryButton {...props}>
-    <Plus className="w-4 h-4 mr-2" />
-    {children}
-  </PrimaryButton>
-);
+export const AddButton = ({ children = 'Add', className, size, ...props }: Omit<EnhancedButtonProps, 'children'> & { children?: string; className?: string }) => {
+    const sizeClasses = {
+      sm: 'px-3 py-1.5 text-sm',
+      md: 'px-4 py-2 text-sm',
+      lg: 'px-6 py-3 text-base'
+    };
+  
+    return (
+      <Button
+        {...props}
+        className={cn(
+          'bg-[#2463eb] hover:bg-[#1d4ed8]',
+          'text-white font-semibold shadow-lg hover:shadow-xl',
+          'transition-all duration-200 transform hover:scale-105',
+          'border-0 focus:ring-4 focus:ring-blue-300',
+          sizeClasses[size || 'sm'],
+          props.disabled && 'opacity-50 cursor-not-allowed transform-none',
+          className
+        )}
+      >
+        {props.loading ? (
+          <div className="flex items-center gap-2">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+            <Plus className="w-4 h-4 mr-1" />
+            {children}
+          </div>
+        ) : (
+          <>
+            <Plus className="w-4 h-4 mr-1" />
+            {children}
+          </>
+        )}
+      </Button>
+    );
+  };
 
 export const SaveButton = ({ children = 'Save', ...props }: Omit<EnhancedButtonProps, 'children'> & { children?: string }) => (
   <SuccessButton {...props}>
-    <Save className="w-4 h-4 mr-2" />
+    <Save className="w-4 h-4 mr-1" />
     {children}
   </SuccessButton>
 );
 
-export const EditButton = ({ children = 'Edit', ...props }: Omit<EnhancedButtonProps, 'children'> & { children?: string }) => (
-  <WarningButton {...props}>
-    <Edit className="w-4 h-4 mr-2" />
-    {children}
-  </WarningButton>
-);
-
-export const ViewButton = ({ children = 'View Details', ...props }: Omit<EnhancedButtonProps, 'children'> & { children?: string }) => (
-  <InfoButton {...props}>
-    <Eye className="w-4 h-4 mr-2" />
-    {children}
-  </InfoButton>
-);
+export const EditButton = ({ children = 'Edit', className, size, ...props }: Omit<EnhancedButtonProps, 'children'> & { children?: string; className?: string }) => {
+    const sizeClasses = {
+      sm: 'px-3 py-1.5 text-sm',
+      md: 'px-4 py-2 text-sm',
+      lg: 'px-6 py-3 text-base'
+    };
+  
+    return (
+      <Button
+        {...props}
+        className={cn(
+          'bg-[#475569] hover:bg-[#334155]', // blue-gray color
+          'text-white font-semibold shadow-lg hover:shadow-xl',
+          'transition-all duration-200 transform hover:scale-105',
+          sizeClasses[size || 'sm'],
+          props.disabled && 'opacity-50 cursor-not-allowed transform-none',
+          className
+        )}
+      >
+        {props.loading ? (
+          <div className="flex items-center gap-2">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+            <Edit className="w-4 h-4 mr-1" />
+            {children}
+          </div>
+        ) : (
+          <>
+            <Edit className="w-4 h-4 mr-1" />
+            {children}
+          </>
+        )}
+      </Button>
+    );
+  };
+export const ViewButton = ({ children = 'View Details', className, size, ...props }: Omit<EnhancedButtonProps, 'children'> & { children?: string; className?: string }) => {
+    const sizeClasses = {
+      sm: 'px-3 py-1.5 text-sm',
+      md: 'px-4 py-2 text-sm',
+      lg: 'px-6 py-3 text-base'
+    };
+  
+    return (
+      <Button
+        {...props}
+        className={cn(
+          'bg-[#1C4ED8] hover:bg-[#1e40af]',
+          'text-white font-semibold shadow-lg hover:shadow-xl',
+          'transition-all duration-200 transform hover:scale-105',
+          'border-0 focus:ring-4 focus:ring-blue-300',
+          sizeClasses[size || 'sm'],
+          props.disabled && 'opacity-50 cursor-not-allowed transform-none',
+          className
+        )}
+      >
+        {props.loading ? (
+          <div className="flex items-center gap-2">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+            <Eye className="w-4 h-4 mr-1" />
+            {children}
+          </div>
+        ) : (
+          <>
+            <Eye className="w-4 h-4 mr-1" />
+            {children}
+          </>
+        )}
+      </Button>
+    );
+  };
 
 export const DeleteButton = ({ children = 'Delete', ...props }: Omit<EnhancedButtonProps, 'children'> & { children?: string }) => (
   <DangerButton {...props}>
-    <Trash2 className="w-4 h-4 mr-2" />
+    <Trash2 className="w-4 h-4 mr-1" />
     {children}
   </DangerButton>
 );
 
 export const CancelButton = ({ children = 'Cancel', ...props }: Omit<EnhancedButtonProps, 'children'> & { children?: string }) => (
   <SecondaryButton {...props}>
-    <X className="w-4 h-4 mr-2" />
+    <X className="w-4 h-4 mr-1" />
     {children}
   </SecondaryButton>
 );
 
 export const ConfirmButton = ({ children = 'Confirm', ...props }: Omit<EnhancedButtonProps, 'children'> & { children?: string }) => (
   <SuccessButton {...props}>
-    <Check className="w-4 h-4 mr-2" />
+    <Check className="w-4 h-4 mr-1" />
     {children}
   </SuccessButton>
 );
 
 export const DownloadButton = ({ children = 'Download', ...props }: Omit<EnhancedButtonProps, 'children'> & { children?: string }) => (
   <SecondaryButton {...props}>
-    <Download className="w-4 h-4 mr-2" />
+    <Download className="w-4 h-4 mr-1" />
     {children}
   </SecondaryButton>
 );
 
 export const UploadButton = ({ children = 'Upload', ...props }: Omit<EnhancedButtonProps, 'children'> & { children?: string }) => (
   <PrimaryButton {...props}>
-    <Upload className="w-4 h-4 mr-2" />
+    <Upload className="w-4 h-4 mr-1" />
     {children}
   </PrimaryButton>
 );
 
-export const PrintButton = ({ children = 'Print', ...props }: Omit<EnhancedButtonProps, 'children'> & { children?: string }) => (
-  <SecondaryButton {...props}>
-    <Printer className="w-4 h-4 mr-2" />
-    {children}
-  </SecondaryButton>
-);
+export const PrintButton = ({ children = 'Print', className, size, ...props }: Omit<EnhancedButtonProps, 'children'> & { children?: string; className?: string }) => {
+    const sizeClasses = {
+      sm: 'px-3 py-1.5 text-sm',
+      md: 'px-4 py-2 text-sm',
+      lg: 'px-6 py-3 text-base'
+    };
+  
+    return (
+      <Button
+        {...props}
+        className={cn(
+          'bg-[#2463eb] hover:bg-[#1d4ed8]',
+          'text-white font-semibold shadow-lg hover:shadow-xl',
+          'transition-all duration-200 transform hover:scale-105',
+          'border-0 focus:ring-4 focus:ring-blue-300',
+          sizeClasses[size || 'sm'],
+          props.disabled && 'opacity-50 cursor-not-allowed transform-none',
+          className
+        )}
+      >
+        {props.loading ? (
+          <div className="flex items-center gap-2">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+            <Printer className="w-4 h-4 mr-1" />
+            {children}
+          </div>
+        ) : (
+          <>
+            <Printer className="w-4 h-4 mr-1" />
+            {children}
+          </>
+        )}
+      </Button>
+    );
+  };
 
 export const RefreshButton = ({ children = 'Refresh', ...props }: Omit<EnhancedButtonProps, 'children'> & { children?: string }) => (
   <SecondaryButton {...props}>
-    <RefreshCw className="w-4 h-4 mr-2" />
+    <RefreshCw className="w-4 h-4 mr-1" />
     {children}
   </SecondaryButton>
 );
 
 export const SearchButton = ({ children = 'Search', ...props }: Omit<EnhancedButtonProps, 'children'> & { children?: string }) => (
   <PrimaryButton {...props}>
-    <Search className="w-4 h-4 mr-2" />
+    <Search className="w-4 h-4 mr-1" />
     {children}
   </PrimaryButton>
 );
@@ -398,13 +512,13 @@ export const IconButton = ({
     };
   
     const variantClasses = {
-      primary: 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white',
-      secondary: 'bg-white hover:bg-gray-50 border-2 border-gray-300 hover:border-gray-400 text-gray-700',
-      danger: 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white',
-      success: 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white',
-      warning: 'bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white',
-      info: 'bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white'
-    };
+        primary: 'bg-blue-600 hover:bg-blue-700 text-white',
+        secondary: 'bg-white hover:bg-gray-50 border-2 border-gray-300 hover:border-gray-400 text-gray-700',
+        danger: 'bg-red-600 hover:bg-red-700 text-white',
+        success: 'bg-green-600 hover:bg-green-700 text-white',
+        warning: 'bg-orange-600 hover:bg-orange-700 text-white',
+        info: 'bg-indigo-600 hover:bg-indigo-700 text-white'
+      };
   
     return (
       <Button

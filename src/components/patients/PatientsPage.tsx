@@ -142,7 +142,7 @@ export const PatientsPage = () => {
                   <TableCell className={cn(language === 'ar' && 'text-right')}>{patient.phone || 'N/A'}</TableCell>
                   <TableCell className={cn(language === 'ar' && 'text-right')}>{patient.address || 'N/A'}</TableCell>
                   <TableCell className={cn(language === 'ar' ? 'text-left' : 'text-right')}>
-                    <div className={cn("flex space-x-2", language === 'ar' ? 'justify-start flex-row-reverse space-x-reverse' : 'justify-end')}>
+                    <div className={cn("flex gap-2", language === 'ar' ? 'justify-start flex-row-reverse gap-reverse' : 'justify-end')}>
                       <Dialog>
                         <DialogTrigger asChild>
                           <ViewButton
