@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
 import { PrescriptionPrint } from '../prescriptions/PrescriptionPrint';
 import { FileUpload } from './FileUpload';
 import { VisitInformationForm } from './visit-form/VisitInformationForm';
@@ -12,6 +14,17 @@ import { updateExistingPrescription, loadExistingPrescription } from './visit-fo
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import { SectionLoading, ButtonLoading } from '@/components/ui/loading-spinner';
+import { 
+  Calendar, 
+  User, 
+  Stethoscope, 
+  FileText, 
+  Upload, 
+  Clock,
+  CheckCircle,
+  AlertTriangle,
+  Activity
+} from 'lucide-react';
 
 import {
   addVisitUrl,
@@ -95,6 +108,7 @@ export const VisitForm = ({ patientId, visit, onSave }: VisitFormProps) => {
 
     fetchVisitData();
   }, []);
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const year = date.getFullYear();
@@ -102,11 +116,10 @@ export const VisitForm = ({ patientId, visit, onSave }: VisitFormProps) => {
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   };
+
   // Populate form when editing
   useEffect(() => {
-    
     if (visit && visitTypes.length > 0 && visitStatuses.length > 0) {
-
       // Format date properly for input[type="date"]
       let formattedDate = visit.visit_date;
       if (formattedDate) {
@@ -151,7 +164,6 @@ export const VisitForm = ({ patientId, visit, onSave }: VisitFormProps) => {
   };
 
   const handlePrescriptionSaved = async (prescriptionData: any) => {
-
     try {
       if (isEditing && existingPrescription) {
         await updateExistingPrescription(prescriptionData, existingPrescription);
@@ -240,7 +252,6 @@ export const VisitForm = ({ patientId, visit, onSave }: VisitFormProps) => {
         toast({ title: t('visit.updatedSuccess') });
       } else {
         // Create new visit
-
         const visitData = {
           patient_id: patientId,
           visit_date: data.visit_date,
@@ -332,62 +343,197 @@ export const VisitForm = ({ patientId, visit, onSave }: VisitFormProps) => {
   const shouldShowPrintButton = isPrescriptionSaved || !!existingPrescription || !!currentPrescriptionData;
   const hasPrescriptionContent = prescriptionData !== null || existingPrescription !== null || currentPrescriptionData !== null;
 
+  // Get form completion status
+  const formValues = watch();
+  const requiredFields = ['visit_date', 'visit_type', 'chief_complaint', 'diagnosis', 'status'];
+  const completedFields = requiredFields.filter(field => formValues[field]).length;
+  const completionPercentage = Math.round((completedFields / requiredFields.length) * 100);
 
   return (
-    <div className={cn(language === 'ar' && 'rtl')}>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        {/* Visit Details Section */}
-        {isLoadingVisitData ? (
-          <SectionLoading text={t('general.loading') || t('visit.loading')} variant="dots" color="blue" />
-        ) : (
-          <VisitInformationForm
-            register={register}
-            errors={errors}
-            setValue={setValue}
-            watch={watch}
-            visitTypes={visitTypes}
-            visitStatuses={visitStatuses}
-          />
-        )}
+    <div className={cn("w-full space-y-6", language === 'ar' && 'rtl')}>
+      {/* Header Card */}
+      <Card className="shadow-lg border-0 bg-gradient-to-r from-white to-blue-50/30">
+        <CardHeader className="pb-4">
+          <div className={cn("flex items-center justify-between", language === 'ar' && 'flex-row-reverse')}>
+            <div className={cn("flex items-center gap-4", language === 'ar' && 'flex-row-reverse')}>
+              <div className="p-3 bg-[#2463EB] rounded-xl shadow-lg">
+                {isEditing ? <Activity className="w-7 h-7 text-white" /> : <Stethoscope className="w-7 h-7 text-white" />}
+              </div>
+              <div>
+                <CardTitle className={cn("text-2xl font-bold text-gray-900", language === 'ar' && 'text-right')}>
+                  {isEditing ? 'Edit Visit Record' : 'New Patient Visit'}
+                </CardTitle>
+                <p className={cn("text-gray-600", language === 'ar' && 'text-right')}>
+                  {isEditing ? 'Update visit information and prescription' : 'Record patient consultation details'}
+                </p>
+              </div>
+            </div>
+            
+            {/* Status Badges */}
+            <div className={cn("flex items-center gap-2", language === 'ar' && 'flex-row-reverse')}>
+              <Badge variant="secondary" className={cn(
+                "px-3 py-1",
+                completionPercentage === 100 ? "bg-green-100 text-green-800 border-green-200" : "bg-orange-100 text-orange-800 border-orange-200"
+              )}>
+                <CheckCircle className="w-3 h-3 mr-1" />
+                {completionPercentage}% Complete
+              </Badge>
+              
+              {shouldShowPrintButton && (
+                <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-blue-200 px-3 py-1">
+                  <FileText className="w-3 h-3 mr-1" />
+                  Prescription Ready
+                </Badge>
+              )}
+            </div>
+          </div>
 
-        {/* Prescription Section */}
-        <VisitPrescriptionSection
-          prescriptionKey={prescriptionKey}
-          patientId={patientId}
-          visitId={visit?.id}
-          existingPrescription={existingPrescription}
-          isEditing={isEditing}
-          isPrescriptionSaved={shouldShowPrintButton}
-          onPrescriptionSaved={handlePrescriptionSaved}
-          onPrintPrescription={handlePrintPrescription}
-        />
-
-        {!isEditing && (
-          <>
-            <Separator />
-
-            {/* File Upload Section */}
-            <div>
-              <h3 className="text-lg font-medium mb-4">{t('visit.uploadFile') || 'Upload Files (Optional)'}</h3>
-              <FileUpload
-                patientId={patientId}
-                onUpload={handleFileUploaded}
-                isEmbedded={true}
+          {/* Progress Bar */}
+          <div className="mt-4">
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div 
+                className="h-2 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 transition-all duration-500"
+                style={{ width: `${completionPercentage}%` }}
               />
             </div>
-          </>
+          </div>
+        </CardHeader>
+      </Card>
+
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        {/* Visit Details Section */}
+        <Card className="shadow-lg border-0 bg-white">
+          <CardHeader className="pb-6">
+            <CardTitle className={cn("flex items-center gap-3 text-xl font-bold", language === 'ar' && 'flex-row-reverse text-right')}>
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <Calendar className="w-5 h-5 text-[#2463EB]" />
+              </div>
+              Visit Information
+              {errors && Object.keys(errors).length > 0 && (
+                <Badge variant="destructive" className="ml-auto">
+                  <AlertTriangle className="w-3 h-3 mr-1" />
+                  {Object.keys(errors).length} Error{Object.keys(errors).length > 1 ? 's' : ''}
+                </Badge>
+              )}
+            </CardTitle>
+          </CardHeader>
+            <CardContent>
+              {isLoadingVisitData ? (
+                <SectionLoading text={t('general.loading') || 'Loading visit form...'} variant="dots" color="blue" />
+              ) : (
+                <div className="w-full">
+                  {/* Required Fields Info */}
+                  <div className={cn("mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200", language === 'ar' && 'text-right')}>
+                    <div className={cn("flex items-start gap-2 text-sm text-blue-800", language === 'ar' && 'flex-row-reverse')}>
+                      <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="font-medium mb-1">Required Fields:</p>
+                        <p className="text-xs">
+                          Visit Date, Visit Type, Chief Complaint, Diagnosis, and Status are required to save the visit.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <VisitInformationForm
+                    register={register}
+                    errors={errors}
+                    setValue={setValue}
+                    watch={watch}
+                    visitTypes={visitTypes}
+                    visitStatuses={visitStatuses}
+                  />
+                </div>
+              )}
+            </CardContent>
+        </Card>
+
+        {/* Prescription Section */}
+        <Card className="shadow-lg border-0 bg-white">
+          <CardHeader className="pb-6">
+            <CardTitle className={cn("flex items-center gap-3 text-xl font-bold", language === 'ar' && 'flex-row-reverse text-right')}>
+              <div className="p-2 bg-green-100 rounded-lg">
+                <FileText className="w-5 h-5 text-green-600" />
+              </div>
+              Prescription & Treatment
+              {shouldShowPrintButton && (
+                <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-200 ml-auto">
+                  <CheckCircle className="w-3 h-3 mr-1" />
+                  Saved
+                </Badge>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="px-8 pb-8">
+            <div className="w-full">
+              <VisitPrescriptionSection
+                prescriptionKey={prescriptionKey}
+                patientId={patientId}
+                visitId={visit?.id}
+                existingPrescription={existingPrescription}
+                isEditing={isEditing}
+                isPrescriptionSaved={shouldShowPrintButton}
+                onPrescriptionSaved={handlePrescriptionSaved}
+                onPrintPrescription={handlePrintPrescription}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {!isEditing && (
+          <Card className="shadow-lg border-0 bg-white">
+            <CardHeader className="pb-6">
+              <CardTitle className={cn("flex items-center gap-3 text-xl font-bold", language === 'ar' && 'flex-row-reverse text-right')}>
+                <div className="p-2 bg-purple-100 rounded-lg">
+                  <Upload className="w-5 h-5 text-purple-600" />
+                </div>
+                File Attachments
+                <Badge variant="secondary" className="ml-auto">
+                  Optional
+                </Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="px-8 pb-8">
+              <div className="w-full space-y-6">
+                <p className={cn("text-gray-600 text-sm", language === 'ar' && 'text-right')}>
+                  Upload relevant documents, images, or test results for this visit.
+                </p>
+                <div className="w-full">
+                  <FileUpload
+                    patientId={patientId}
+                    onUpload={handleFileUploaded}
+                    isEmbedded={true}
+                  />
+                </div>
+                {uploadedFiles.length > 0 && (
+                  <div className={cn("mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200", language === 'ar' && 'text-right')}>
+                    <div className={cn("flex items-center gap-2 text-sm text-blue-800", language === 'ar' && 'flex-row-reverse')}>
+                      <Upload className="w-4 h-4" />
+                      <span className="font-medium">
+                        {uploadedFiles.length} file{uploadedFiles.length > 1 ? 's' : ''} ready for upload
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         )}
 
-        <Separator />
-
-        {/* Save Button with Print Option */}
-        <VisitFormActions
-          isSubmitting={isSubmitting}
-          isPrescriptionSaved={shouldShowPrintButton}
-          hasPrescriptionContent={hasPrescriptionContent}
-          isEditing={isEditing}
-          onPrintPrescription={handlePrintPrescription}
-        />
+        {/* Action Buttons */}
+        <Card className="shadow-lg border-0 bg-white">
+          <CardContent className="px-8 py-8">
+            <div className="w-full">
+              <VisitFormActions
+                isSubmitting={isSubmitting}
+                isPrescriptionSaved={shouldShowPrintButton}
+                hasPrescriptionContent={hasPrescriptionContent}
+                isEditing={isEditing}
+                onPrintPrescription={handlePrintPrescription}
+              />
+            </div>
+          </CardContent>
+        </Card>
       </form>
 
       {/* Print Dialog */}

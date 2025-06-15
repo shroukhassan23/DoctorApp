@@ -77,27 +77,34 @@ export const PatientsPage = () => {
   };
 
   if (isLoading) {
-    return <PageLoading text="Loading patients..." variant="pulse" color="blue" />;
+    return <PageLoading text="Loading patients..." variant="dots" color="blue" />;
   }
 
   return (
     <div className={cn("p-6", language === 'ar' && "rtl")}>
-      <div className="flex justify-between items-center mb-6 p-6 bg-white rounded-xl shadow-md border border-gray-200">
-        <div className="flex items-center gap-4">
+      <div className={cn("flex justify-between items-center mb-8", language === 'ar' && 'flex-row-reverse rtl')}>
+        <div className={cn("flex items-center gap-4", language === 'ar' && 'flex-row-reverse')}>
           <div className="p-3 bg-[#2463EB] rounded-xl shadow-lg">
             <Users className="w-7 h-7 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-black">
-            {t('patients.title')}
-          </h1>
+          <div>
+            <h1 className={cn("text-3xl font-bold text-gray-900", language === 'ar' && 'text-right')}>
+              {t('patients.title')}
+            </h1>
+            <p className={cn("text-gray-600 mt-1", language === 'ar' && 'text-right')}>
+              Manage patient records and medical information
+            </p>
+          </div>
         </div>
 
         <AddButton
+          size="sm"
           onClick={() => { setSelectedPatient(null); setShowForm(true); }}
         >
           {t('patients.addNew')}
         </AddButton>
       </div>
+
 
       <Dialog open={showForm} onOpenChange={setShowForm}>
         <DialogContent className="max-w-2xl">
@@ -112,9 +119,9 @@ export const PatientsPage = () => {
       </Dialog>
 
 
-      <div className="mb-6 p-6 bg-white rounded-xl shadow-md border border-gray-200">
+      <div className="mb-8 p-6 bg-white rounded-xl shadow-md border border-gray-200">
         <div className="space-y-3">
-          <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+          <label className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2", language === 'ar' && 'text-right flex-row-reverse')}>
             <Search className="w-4 h-4 text-[#2463EB]" />
             {t('patients.search')}
           </label>
@@ -124,7 +131,7 @@ export const PatientsPage = () => {
               language === 'ar' ? 'right-4' : 'left-4'
             )} />
             <Input
-              placeholder={t('patients.searchPlaceholder')}
+              placeholder="Search by name, phone, or medical record..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className={cn(
@@ -186,7 +193,7 @@ export const PatientsPage = () => {
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <DeleteButton
-                            onClick={() => handleDelete(patient.id)}
+                            size="sm"
                             disabled={deletingPatient === patient.id}
                             loading={deletingPatient === patient.id}
                           >

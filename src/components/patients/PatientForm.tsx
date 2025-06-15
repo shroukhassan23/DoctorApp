@@ -1,22 +1,38 @@
 import React, { useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { SaveButton, CancelButton } from '@/components/ui/enhanced-button';
 import { useToast } from '@/hooks/use-toast';
 import { patientUrl } from '@/components/constants.js';
 import { useLanguage } from '@/contexts/LanguageContext';
-
+import { cn } from '@/lib/utils';
+import { 
+  User, 
+  Calendar, 
+  Users, 
+  Phone, 
+  MapPin, 
+  FileText, 
+  AlertCircle,
+  UserPlus,
+  Edit,
+  Info,
+  Baby
+} from 'lucide-react';
 
 interface PatientFormProps {
   patient?: any;
   onSave: () => void;
+  onCancel?: () => void;
 }
 
-export const PatientForm = ({ patient, onSave }: PatientFormProps) => {
-  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm({
+export const PatientForm = ({ patient, onSave, onCancel }: PatientFormProps) => {
+  const { register, handleSubmit, setValue, watch, formState: { errors, isSubmitting } } = useForm({
     defaultValues: patient || {
       name: '',
       age: '',
@@ -33,7 +49,7 @@ export const PatientForm = ({ patient, onSave }: PatientFormProps) => {
   const dateOfBirth = watch('date_of_birth');
   const { t, language } = useLanguage();
 
-  // حساب العمر بناءً على تاريخ الميلاد
+  // Calculate age based on date of birth
   useEffect(() => {
     if (dateOfBirth) {
       const today = new Date();
@@ -49,7 +65,7 @@ export const PatientForm = ({ patient, onSave }: PatientFormProps) => {
     }
   }, [dateOfBirth, setValue]);
 
-  // تعيين القيم عند تحميل بيانات المريض
+  // Set values when loading patient data
   useEffect(() => {
     if (patient) {
       Object.keys(patient).forEach((key) => {
@@ -64,15 +80,12 @@ export const PatientForm = ({ patient, onSave }: PatientFormProps) => {
     }
   }, [patient, setValue]);
 
-  // لتعيين قيمة gender في select عند تحميل بيانات المريض
-useEffect(() => {
-  if (patient) {
- // const gender=(patient?.gender==1)? "Male":(patient?.gender==2)?"Female":"Other";
- 
-    setValue('gender', patient.gender || '');
-  }
-}, [patient, setValue]);
-
+  // Set gender value in select when loading patient data
+  useEffect(() => {
+    if (patient) {
+      setValue('gender', patient.gender || '');
+    }
+  }, [patient, setValue]);
 
   const onSubmit = async (data: any) => {
     try {
@@ -139,6 +152,16 @@ useEffect(() => {
           body: JSON.stringify({ patient: formData })
         });
 
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to add patient');
+        }
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to add patient');
+        }
+
         toast({ title: t('patients.addSuccess') });
       }
 
@@ -153,97 +176,271 @@ useEffect(() => {
     }
   };
 
+  // Get form completion percentage
+  const formValues = watch();
+  const requiredFields = ['name', 'date_of_birth', 'gender'];
+  const completedFields = requiredFields.filter(field => formValues[field]).length;
+  const completionPercentage = Math.round((completedFields / requiredFields.length) * 100);
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="name">{t('patients.fullName')}*</Label>
-          <Input
-            id="name"
-            {...register('name', { required: 'Name is required' })}
-            placeholder={t('patients.enterFullName')}
-          />
-          {errors.name && <p className="text-red-500 text-sm mt-1">{String(errors.name.message)}</p>}
+    <div className={cn("max-h-[80vh] flex flex-col", language === 'ar' && 'rtl')}>
+      {/* Compact Header */}
+      <div className={cn("p-4 bg-gradient-to-r from-white to-blue-50/30 border-b flex-shrink-0", language === 'ar' && 'flex-row-reverse')}>
+        <div className={cn("flex items-center gap-3", language === 'ar' && 'flex-row-reverse')}>
+          <div className="p-2 bg-[#2463EB] rounded-lg">
+            {patient ? <Edit className="w-5 h-5 text-white" /> : <UserPlus className="w-5 h-5 text-white" />}
+          </div>
+          <div className="flex-1">
+            <h2 className={cn("text-lg font-bold text-gray-900", language === 'ar' && 'text-right')}>
+              {patient ? 'Edit Patient Information' : 'Add New Patient'}
+            </h2>
+            <p className={cn("text-sm text-gray-600", language === 'ar' && 'text-right')}>
+              {patient ? 'Update patient details and medical information' : 'Enter patient details to create a new record'}
+            </p>
+          </div>
+          <Badge variant="secondary" className={cn(
+            "px-2 py-1 text-xs",
+            completionPercentage === 100 ? "bg-green-100 text-green-800" : "bg-orange-100 text-orange-800"
+          )}>
+            {completionPercentage}% Complete
+          </Badge>
         </div>
-
-        <div>
-          <Label htmlFor="date_of_birth">{t('patients.dateOfBirth')}*</Label>
-          <Input
-            id="date_of_birth"
-            type="date"
-            {...register('date_of_birth', { required: t('message.dateRequired') })}
-          />
-          {errors.date_of_birth && <p className="text-red-500 text-sm mt-1">{String(errors.date_of_birth.message)}</p>}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="age">{t('patients.age')}* (calculated automatically)</Label>
-          <Input
-            id="age"
-            type="number"
-            {...register('age')}
-            placeholder={t('message.ageCalculated')}
-            readOnly
-            className="bg-gray-100"
-          />
-        </div>
-
-        <div>
-          <Label htmlFor="gender">{t('patients.gender')}*</Label>
-        <Select
-  value={selectedGender || ''}
-  onValueChange={(value) => setValue('gender', value)}
->
-  <SelectTrigger>
-    <SelectValue placeholder="Select gender" />
-  </SelectTrigger>
-  <SelectContent>
-    <SelectItem value="male">Male</SelectItem>
-    <SelectItem value="female">Female</SelectItem>
-    <SelectItem value="other">Other</SelectItem>
-  </SelectContent>
-</Select>
-
-          {errors.gender && <p className="text-red-500 text-sm mt-1">{String(errors.gender.message)}</p>}
+        
+        {/* Compact Progress Bar */}
+        <div className="mt-3">
+          <div className="w-full bg-gray-200 rounded-full h-1.5">
+            <div 
+              className="h-1.5 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 transition-all duration-500"
+              style={{ width: `${completionPercentage}%` }}
+            />
+          </div>
         </div>
       </div>
 
-      <div>
-        <Label htmlFor="phone">{t('patients.phone')}*</Label>
-        <Input
-          id="phone"
-          {...register('phone')}
-          placeholder={t('patients.enterPhone')}
-        />
-      </div>
+      {/* Scrollable Form Content */}
+      <div className="flex-1 overflow-y-auto p-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            {/* Basic Information */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label 
+                  htmlFor="name" 
+                  className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2", language === 'ar' && 'text-right flex-row-reverse')}
+                >
+                  <User className="w-4 h-4 text-[#2463EB]" />
+                  {t('patients.fullName')} <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="name"
+                  {...register('name', { required: 'Name is required' })}
+                  placeholder={t('patients.enterFullName')}
+                  className={cn(
+                    "h-9 border-gray-300 bg-gray-50 focus:bg-white focus:border-[#2463EB] focus:ring-[#2463EB]/20 shadow-sm text-sm",
+                    errors.name && "border-red-500 focus:border-red-500 focus:ring-red-500/20",
+                    language === 'ar' && 'text-right'
+                  )}
+                />
+                {errors.name && (
+                  <p className={cn("text-red-500 text-sm mt-1 flex items-center gap-1", language === 'ar' && 'text-right flex-row-reverse')}>
+                    <AlertCircle className="w-3 h-3" />
+                    {String(errors.name.message)}
+                  </p>
+                )}
+              </div>
 
-      <div>
-        <Label htmlFor="address">{t('patients.address')}*</Label>
-        <Textarea
-          id="address"
-          {...register('address')}
-          placeholder={t('patients.enterAddress')}
-          rows={2}
-        />
-      </div>
+              <div className="space-y-2">
+                <Label 
+                  htmlFor="date_of_birth" 
+                  className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2", language === 'ar' && 'text-right flex-row-reverse')}
+                >
+                  <Calendar className="w-4 h-4 text-[#2463EB]" />
+                  {t('patients.dateOfBirth')} <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="date_of_birth"
+                  type="date"
+                  {...register('date_of_birth', { required: 'Date of birth is required' })}
+                  className={cn(
+                    "h-9 border-gray-300 bg-gray-50 focus:bg-white focus:border-[#2463EB] focus:ring-[#2463EB]/20 shadow-sm text-sm",
+                    errors.date_of_birth && "border-red-500 focus:border-red-500 focus:ring-red-500/20",
+                    language === 'ar' && 'text-right'
+                  )}
+                />
+                {errors.date_of_birth && (
+                  <p className={cn("text-red-500 text-sm mt-1 flex items-center gap-1", language === 'ar' && 'text-right flex-row-reverse')}>
+                    <AlertCircle className="w-3 h-3" />
+                    {String(errors.date_of_birth.message)}
+                  </p>
+                )}
+              </div>
+            </div>
 
-      <div>
-        <Label htmlFor="medical_history">{t('patients.medicalHistory')}*</Label>
-        <Textarea
-          id="medical_history"
-          {...register('medical_history')}
-          placeholder={t('patients.enterMedicalHistory')}
-          rows={4}
-        />
-      </div>
+            {/* Age and Gender */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label 
+                  htmlFor="age" 
+                  className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2", language === 'ar' && 'text-right flex-row-reverse')}
+                >
+                  <Baby className="w-4 h-4 text-[#2463EB]" />
+                  {t('patients.age')} <span className="text-gray-400 text-xs">(auto-calculated)</span>
+                </Label>
+                <Input
+                  id="age"
+                  type="number"
+                  {...register('age')}
+                  placeholder={t('message.ageCalculated')}
+                  readOnly
+                  className={cn(
+                    "h-9 border-gray-300 bg-gray-100 text-gray-600 cursor-not-allowed text-sm",
+                    language === 'ar' && 'text-right'
+                  )}
+                />
+                <p className={cn("text-xs text-gray-500", language === 'ar' && 'text-right')}>
+                  Auto-calculated from date of birth
+                </p>
+              </div>
 
-      <div className="flex justify-end space-x-2">
-        <Button type="submit">
-          {patient ? t('patients.edit'): t('patients.add')}
-        </Button>
+              <div className="space-y-2">
+                <Label 
+                  htmlFor="gender" 
+                  className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2", language === 'ar' && 'text-right flex-row-reverse')}
+                >
+                  <Users className="w-4 h-4 text-[#2463EB]" />
+                  {t('patients.gender')} <span className="text-red-500">*</span>
+                </Label>
+                <Select
+                  value={selectedGender || ''}
+                  onValueChange={(value) => setValue('gender', value)}
+                >
+                  <SelectTrigger className={cn(
+                    "h-9 border-gray-300 bg-gray-50 focus:bg-white focus:border-[#2463EB] focus:ring-[#2463EB]/20 shadow-sm text-sm",
+                    errors.gender && "border-red-500 focus:border-red-500 focus:ring-red-500/20",
+                    language === 'ar' && 'text-right'
+                  )}>
+                    <SelectValue placeholder="Select gender" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="male">Male</SelectItem>
+                    <SelectItem value="female">Female</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+                {errors.gender && (
+                  <p className={cn("text-red-500 text-sm mt-1 flex items-center gap-1", language === 'ar' && 'text-right flex-row-reverse')}>
+                    <AlertCircle className="w-3 h-3" />
+                    {String(errors.gender.message)}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Contact Information */}
+            <div className="space-y-2">
+              <Label 
+                htmlFor="phone" 
+                className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2", language === 'ar' && 'text-right flex-row-reverse')}
+              >
+                <Phone className="w-4 h-4 text-[#2463EB]" />
+                {t('patients.phone')} <span className="text-gray-400 text-xs">(Optional)</span>
+              </Label>
+              <div className="relative">
+                <Phone className={cn(
+                  "absolute top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400",
+                  language === 'ar' ? 'right-3' : 'left-3'
+                )} />
+                <Input
+                  id="phone"
+                  {...register('phone')}
+                  placeholder="Enter phone number"
+                  className={cn(
+                    "h-9 border-gray-300 bg-gray-50 focus:bg-white focus:border-[#2463EB] focus:ring-[#2463EB]/20 shadow-sm text-sm",
+                    language === 'ar' ? 'pr-10 text-right' : 'pl-10'
+                  )}
+                />
+              </div>
+            </div>
+
+            {/* Address */}
+            <div className="space-y-2">
+              <Label 
+                htmlFor="address" 
+                className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2", language === 'ar' && 'text-right flex-row-reverse')}
+              >
+                <MapPin className="w-4 h-4 text-[#2463EB]" />
+                {t('patients.address')} <span className="text-gray-400 text-xs">(Optional)</span>
+              </Label>
+              <Textarea
+                id="address"
+                {...register('address')}
+                placeholder="Enter patient's address"
+                rows={2}
+                className={cn(
+                  "border-gray-300 bg-gray-50 focus:bg-white focus:border-[#2463EB] focus:ring-[#2463EB]/20 shadow-sm resize-none text-sm",
+                  language === 'ar' && 'text-right'
+                )}
+              />
+            </div>
+
+            {/* Medical History */}
+            <div className="space-y-2">
+              <Label 
+                htmlFor="medical_history" 
+                className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2", language === 'ar' && 'text-right flex-row-reverse')}
+              >
+                <FileText className="w-4 h-4 text-[#2463EB]" />
+                {t('patients.medicalHistory')} <span className="text-gray-400 text-xs">(Optional)</span>
+              </Label>
+              <Textarea
+                id="medical_history"
+                {...register('medical_history')}
+                placeholder="Enter medical history, allergies, chronic conditions, etc."
+                rows={2}
+                className={cn(
+                  "border-gray-300 bg-gray-50 focus:bg-white focus:border-[#2463EB] focus:ring-[#2463EB]/20 shadow-sm resize-none text-sm",
+                  language === 'ar' && 'text-right'
+                )}
+              />
+            </div>
+
+            {/* Compact Form Guidelines */}
+            <div className={cn("p-3 bg-blue-50 rounded-lg border border-blue-200", language === 'ar' && 'text-right')}>
+              <div className={cn("flex items-start gap-2 text-xs text-blue-800", language === 'ar' && 'flex-row-reverse')}>
+                <Info className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="font-medium mb-1">Guidelines:</p>
+                  <p className={cn("text-xs", language === 'ar' && 'text-right')}>
+                    Fields marked with <span className="text-red-500">*</span> are required. Age is auto-calculated.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        {/* Fixed Action Buttons at Bottom */}
+        <div className={cn("border-t bg-gray-50 p-4 flex gap-3 flex-shrink-0", language === 'ar' ? 'justify-start flex-row-reverse' : 'justify-end')}>
+          {onCancel && (
+            <CancelButton 
+              type="button" 
+              onClick={onCancel}
+              disabled={isSubmitting}
+              className="px-4 py-2"
+            >
+              Cancel
+            </CancelButton>
+          )}
+          
+          <SaveButton 
+            type="submit"
+            loading={isSubmitting}
+            disabled={isSubmitting}
+            className="px-6 py-2"
+            onClick={handleSubmit(onSubmit)}
+          >
+            {patient ? t('patients.edit') : t('patients.add')}
+          </SaveButton>
+        </div>
       </div>
-    </form>
   );
 };

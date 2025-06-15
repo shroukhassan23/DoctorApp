@@ -16,7 +16,10 @@ interface InlineHistoryTextareaProps {
   historyType?: string;
 }
 
-export const InlineHistoryTextarea = ({ 
+export const InlineHistoryTextarea = React.forwardRef<
+  HTMLTextAreaElement,
+  InlineHistoryTextareaProps
+>(({ 
   items, 
   onSelect, 
   onDelete, 
@@ -26,7 +29,7 @@ export const InlineHistoryTextarea = ({
   className,
   id,
   historyType
-}: InlineHistoryTextareaProps) => {
+}, ref) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -70,6 +73,7 @@ export const InlineHistoryTextarea = ({
   return (
     <div ref={containerRef} className={cn("relative", className)}>
       <textarea
+        ref={ref}
         id={id}
         value={value}
         onChange={handleInputChange}
@@ -110,4 +114,6 @@ export const InlineHistoryTextarea = ({
       )}
     </div>
   );
-};
+});
+
+InlineHistoryTextarea.displayName = 'InlineHistoryTextarea';

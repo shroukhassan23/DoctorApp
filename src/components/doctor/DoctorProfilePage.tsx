@@ -70,44 +70,46 @@ export const DoctorProfilePage = () => {
   }
 
   return (
-    <div className={cn("min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-6", language === 'ar' && 'rtl')}>
-      <div className="max-w-6xl mx-auto">
+    <div className={cn("p-6", language === 'ar' && "rtl")}>
         {/* Header Section */}
-        <div className={cn("flex justify-between items-center mb-8 p-6 bg-white rounded-xl shadow-md border border-gray-200", language === 'ar' && 'flex-row-reverse rtl')}>
-          <div className={cn("flex items-center gap-4", language === 'ar' && 'flex-row-reverse')}>
-            <div className="p-3 bg-[#2463EB] rounded-xl shadow-lg">
-              <Settings className="w-7 h-7 text-white" />
-            </div>
-            <div className="space-y-1">
-              <h1 className={cn("text-3xl font-bold text-black", language === 'ar' && 'text-right')}>
-                {t('profile.title')}
-              </h1>
-              <p className={cn("text-gray-600 text-sm", language === 'ar' && 'text-right')}>
-                {doctorProfile ? t('profile.manageInfo') : t('profile.create')}
-              </p>
-            </div>
-          </div>
+<div className={cn("flex justify-between items-center mb-8", language === 'ar' && 'flex-row-reverse rtl')}>
+  <div className={cn("flex items-center gap-4", language === 'ar' && 'flex-row-reverse')}>
+    <div className="p-3 bg-[#2463EB] rounded-xl shadow-lg">
+      <Settings className="w-7 h-7 text-white" />
+    </div>
+    <div className="space-y-1">
+      <h1 className={cn("text-3xl font-bold text-gray-900", language === 'ar' && 'text-right')}>
+        {t('profile.title')}
+      </h1>
+      <p className={cn("text-gray-600", language === 'ar' && 'text-right')}>
+        {doctorProfile ? 'Manage your professional information' : 'Create your professional profile'}
+      </p>
+    </div>
+  </div>
 
-          <Dialog open={showForm} onOpenChange={setShowForm}>
-            <DialogTrigger asChild>
-              <Button
-                size="lg"
-                className="shadow-lg hover:shadow-xl transition-all duration-300"
-              >
-                {doctorProfile ? <Edit className="w-5 h-5 mr-2" /> : <UserPlus className="w-5 h-5 mr-2" />}
-                {doctorProfile ? t('profile.editProfile') : t('profile.createProfile')}
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle className={cn("text-xl font-semibold", language === 'ar' && 'text-right')}>
-                  {doctorProfile ? t('profile.editProfile') : t('profile.createProfile')}
-                </DialogTitle>
-              </DialogHeader>
-              <DoctorProfileForm profile={doctorProfile} onSave={handleProfileSaved} />
-            </DialogContent>
-          </Dialog>
-        </div>
+  <Dialog open={showForm} onOpenChange={setShowForm}>
+    <DialogTrigger asChild>
+      <Button
+        size="sm"
+        className={cn(
+          "bg-[#2463EB] hover:bg-blue-700 text-white shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-2",
+          language === 'ar' && 'flex-row-reverse'
+        )}
+      >
+        {doctorProfile ? <Edit className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
+        {doctorProfile ? t('profile.editProfile') : t('profile.createProfile')}
+      </Button>
+    </DialogTrigger>
+    <DialogContent className="max-w-2xl">
+      <DialogHeader>
+        <DialogTitle className={cn("text-xl font-semibold text-gray-900", language === 'ar' && 'text-right')}>
+          {doctorProfile ? t('profile.editProfile') : t('profile.createProfile')}
+        </DialogTitle>
+      </DialogHeader>
+      <DoctorProfileForm profile={doctorProfile} onSave={handleProfileSaved} />
+    </DialogContent>
+  </Dialog>
+</div>
 
         {doctorProfile ? (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -359,7 +361,6 @@ export const DoctorProfilePage = () => {
             </CardContent>
           </Card>
         )}
-      </div>
     </div>
   );
 };
