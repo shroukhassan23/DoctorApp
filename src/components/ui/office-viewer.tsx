@@ -325,36 +325,65 @@ const TextPreviewAttempt = ({ fileUrl, fileName }: { fileUrl: string; fileName: 
 
   // Render CSV table
   if (tableData.length > 0) {
+    const headers = tableData[0];
+    const rows = tableData.slice(1);
+    
     return (
-      <div className="border rounded-lg overflow-auto max-h-64">
-        <table className="w-full text-sm">
-          <tbody>
-            {tableData.map((row, index) => (
-              <tr key={index} className={index === 0 ? 'bg-gray-100 font-medium' : ''}>
-                {row.map((cell, cellIndex) => (
-                  <td key={cellIndex} className="border border-gray-200 px-2 py-1">
-                    {cell || '-'}
-                  </td>
+      <div className="space-y-2">
+        <div className="relative w-full overflow-auto rounded-lg border border-gray-200 shadow-sm bg-white max-h-64">
+          <table className="w-full caption-bottom text-sm border-collapse">
+            <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
+              <tr>
+                {headers.map((header, index) => (
+                  <th
+                    key={index}
+                    className="h-12 px-4 text-left align-middle font-semibold text-gray-700 uppercase tracking-wider text-xs bg-transparent first:rounded-tl-lg last:rounded-tr-lg relative after:content-[''] after:absolute after:right-0 after:top-3 after:bottom-3 after:w-px after:bg-gray-300 last:after:hidden"
+                  >
+                    {header || `Column ${index + 1}`}
+                  </th>
                 ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
-        <p className="text-xs text-gray-500 p-2 bg-gray-50">
-          Preview limited to first 50 rows. Download file to view complete content.
-        </p>
+            </thead>
+            <tbody className="divide-y divide-gray-100 bg-white">
+              {rows.map((row, rowIndex) => (
+                <tr
+                  key={rowIndex}
+                  className="transition-all duration-200 ease-in-out hover:bg-blue-50/50 hover:shadow-sm group"
+                >
+                  {row.map((cell, cellIndex) => (
+                    <td
+                      key={cellIndex}
+                      className="px-4 py-3 align-middle text-gray-900 relative group-hover:text-gray-800 transition-colors duration-200 after:content-[''] after:absolute after:right-0 after:top-2 after:bottom-2 after:w-px after:bg-gray-100 last:after:hidden group-hover:after:bg-gray-200"
+                    >
+                      {cell || '-'}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="text-xs text-gray-600 font-medium bg-gray-50 py-2 px-3 rounded-lg border border-gray-200">
+          📊 Preview showing {Math.min(rows.length, 50)} rows of {tableData.length - 1} total. Download file to view complete content.
+        </div>
       </div>
     );
   }
 
   // Render text content
   return (
-    <div className="bg-white border rounded-lg p-4 max-h-64 overflow-auto">
-      <pre className="text-sm whitespace-pre-wrap font-mono text-gray-800">{content}</pre>
+    <div className="space-y-2">
+      <div className="bg-white border border-gray-200 rounded-lg shadow-sm max-h-64 overflow-auto">
+        <div className="p-4">
+          <pre className="text-sm whitespace-pre-wrap font-mono text-gray-800 leading-relaxed">
+            {content}
+          </pre>
+        </div>
+      </div>
       {content.length >= 5000 && (
-        <p className="text-xs text-gray-500 mt-2 pt-2 border-t">
-          Preview truncated at 5000 characters. Download file to view complete content.
-        </p>
+        <div className="text-xs text-gray-600 font-medium bg-amber-50 py-2 px-3 rounded-lg border border-amber-200">
+          ⚠️ Preview truncated at 5,000 characters. Download file to view complete content.
+        </div>
       )}
     </div>
   );
