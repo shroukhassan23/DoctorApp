@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Upload, FileText, Trash2, Eye, X, Download, ZoomIn, ZoomOut } from 'lucide-react';
+import { Upload, FileText, Trash2, Eye, X, Download, ZoomIn, ZoomOut, Music, Film, FileImage, FileSpreadsheet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -8,6 +8,7 @@ import { FileUpload } from '../FileUpload';
 import { useToast } from '@/hooks/use-toast';
 import { downloadPatientFileUrl, deletePatientFileUrl, previewPatientFileUrl } from '@/components/constants.js';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { EnhancedFilePreviewer } from '@/components/ui/file-preview';
 interface PatientFilesProps {
   files: any[];
   patientId: string;
@@ -118,32 +119,57 @@ export const PatientFiles = ({ files, patientId, onFileUploaded }: PatientFilesP
   // Function to get file icon based on type
   const getFileIcon = (filename: string, fileType: string) => {
     const extension = filename.split('.').pop()?.toLowerCase();
-
+  
     if (fileType?.includes('pdf') || extension === 'pdf') {
       return <FileText className="w-5 h-5 text-red-500" />;
     }
-    if (fileType?.includes('image') || ['jpg', 'jpeg', 'png', 'gif'].includes(extension || '')) {
-      return <FileText className="w-5 h-5 text-green-500" />;
+    if (fileType?.includes('image') || ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(extension || '')) {
+      return <FileImage className="w-5 h-5 text-green-500" />;
+    }
+    if (fileType?.includes('spreadsheet') || ['xlsx', 'xls', 'csv'].includes(extension || '')) {
+      return <FileSpreadsheet className="w-5 h-5 text-green-600" />;
     }
     if (fileType?.includes('word') || ['doc', 'docx'].includes(extension || '')) {
       return <FileText className="w-5 h-5 text-blue-500" />;
     }
+    if (fileType?.includes('presentation') || ['ppt', 'pptx'].includes(extension || '')) {
+      return <FileText className="w-5 h-5 text-orange-500" />;
+    }
+    if (fileType?.includes('video') || ['mp4', 'avi', 'mov', 'webm'].includes(extension || '')) {
+      return <Film className="w-5 h-5 text-purple-500" />;
+    }
+    if (fileType?.includes('audio') || ['mp3', 'wav', 'ogg'].includes(extension || '')) {
+      return <Music className="w-5 h-5 text-pink-500" />;
+    }
     return <FileText className="w-5 h-5 text-gray-500" />;
   };
-
   // Function to check if file can be previewed
   const canPreview = (fileType: string, filename: string) => {
     const extension = filename.split('.').pop()?.toLowerCase();
     const imageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-    const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-
+    const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'];
+    const documentTypes = ['application/pdf', 'text/plain'];
+    const documentExtensions = ['pdf', 'txt', 'md'];
+    const videoTypes = ['video/mp4', 'video/avi', 'video/mov', 'video/webm'];
+    const videoExtensions = ['mp4', 'avi', 'mov', 'webm'];
+    const audioTypes = ['audio/mp3', 'audio/wav', 'audio/ogg'];
+    const audioExtensions = ['mp3', 'wav', 'ogg', 'aac'];
+    
+    // Office documents can be "previewed" through online viewers
+    const officeTypes = ['application/vnd.openxmlformats-officedocument', 'application/msword'];
+    const officeExtensions = ['docx', 'doc', 'xlsx', 'xls', 'pptx', 'ppt'];
+  
     return (
-      fileType?.includes('pdf') ||
-      extension === 'pdf' ||
       imageTypes.some(type => fileType?.includes(type)) ||
       imageExtensions.includes(extension || '') ||
-      fileType?.includes('text/plain') ||
-      extension === 'txt'
+      documentTypes.some(type => fileType?.includes(type)) ||
+      documentExtensions.includes(extension || '') ||
+      videoTypes.some(type => fileType?.includes(type)) ||
+      videoExtensions.includes(extension || '') ||
+      audioTypes.some(type => fileType?.includes(type)) ||
+      audioExtensions.includes(extension || '') ||
+      officeTypes.some(type => fileType?.includes(type)) ||
+      officeExtensions.includes(extension || '')
     );
   };
 
@@ -154,6 +180,7 @@ export const PatientFiles = ({ files, patientId, onFileUploaded }: PatientFilesP
 
   // Preview component
   const FilePreview = ({ file }: { file: any }) => {
+    
     const fileUrl = getFileUrl(file);
     const displayFilename = getDisplayFilename(file.file_name);
     const extension = displayFilename.split('.').pop()?.toLowerCase();
@@ -377,7 +404,12 @@ export const PatientFiles = ({ files, patientId, onFileUploaded }: PatientFilesP
                 Preview of {getDisplayFilename(previewFile.file_name)} - {formatFileSize(previewFile.file_size)}
               </DialogDescription>
             </DialogHeader>
-            <FilePreview file={previewFile} />
+            <EnhancedFilePreviewer
+  file={previewFile}
+  fileUrl={getFileUrl(previewFile)}
+  onDownload={() => handleDownload(previewFile)}
+  onClose={closePreview}
+/>
           </DialogContent>
         </Dialog>
       )}

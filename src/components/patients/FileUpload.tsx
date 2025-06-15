@@ -176,7 +176,7 @@ export const FileUpload = ({ patientId, visitId, onUpload, isEmbedded = false }:
               id="file"
               type="file"
               onChange={handleFileChange}
-              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt"
+              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt,.mp4,.mp3,.xlsx,.csv,.xls"
             />
             {selectedFile && (
               <p className="text-sm text-green-600 mt-1">
