@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { SectionLoading } from '@/components/ui/loading-spinner';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -7,23 +8,26 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, Trash2 } from 'lucide-react';
 import { useAutocompleteHistory } from '@/hooks/useAutocompleteHistory';
 import { InlineHistorySearch } from './InlineHistorySearch';
-import {visitMedicinePatientUrl } from '@/components/constants.js';
+import { visitMedicinePatientUrl } from '@/components/constants.js';
 import { useLanguage } from '@/contexts/LanguageContext';
+
 interface MedicineSectionProps {
   medicines: any[];
   setMedicines: React.Dispatch<React.SetStateAction<any[]>>;
 }
 
 export const MedicineSection = ({ medicines, setMedicines }: MedicineSectionProps) => {
-  const { data: medicineOptions } = useQuery({
+
+  const { data: medicineOptions, isLoading: medicinesLoading } = useQuery({
     queryKey: ['medicines'],
     queryFn: async () => {
-   const response =  await fetch(visitMedicinePatientUrl);
-           if (!response.ok) throw new Error('Failed to fetch medecines');
-           return response.json();
+
+      const response = await fetch(visitMedicinePatientUrl);
+      if (!response.ok) throw new Error('Failed to fetch medecines');
+      return response.json();
     },
   });
- const { t, language } = useLanguage();
+  const { t, language } = useLanguage();
   const {
     dosageHistory,
     durationHistory,
@@ -44,7 +48,7 @@ export const MedicineSection = ({ medicines, setMedicines }: MedicineSectionProp
   useEffect(() => {
     setLocalMedicines(medicines);
   }, [medicines]);
-  
+
   // Expose getCurrentMedicines function to parent
   useEffect(() => {
     if (setMedicines && typeof setMedicines === 'function') {
@@ -54,14 +58,14 @@ export const MedicineSection = ({ medicines, setMedicines }: MedicineSectionProp
 
   // Update only local state - no parent re-render
   const updateMedicine = useCallback((index: number, field: string, value: string) => {
-    setLocalMedicines(prev => prev.map((med, i) => 
+    setLocalMedicines(prev => prev.map((med, i) =>
       i === index ? { ...med, [field]: value } : med
     ));
   }, []);
 
   // Commit changes to parent when medicine selection changes
   const updateMedicineSelection = useCallback((index: number, medicineId: string) => {
-    const newMedicines = localMedicines.map((med, i) => 
+    const newMedicines = localMedicines.map((med, i) =>
       i === index ? { ...med, medicine_id: medicineId } : med
     );
     setLocalMedicines(newMedicines);
@@ -96,97 +100,98 @@ export const MedicineSection = ({ medicines, setMedicines }: MedicineSectionProp
     <Card>
       <CardHeader>
         <CardTitle className="text-lg flex items-center justify-between">
-         { t('medicines.title')}
+          {t('medicines.title')}
           <Button type="button" onClick={addMedicine} size="sm">
             <Plus className="w-4 h-4 mr-2" />
-           {t('prescription.medicines')}
+            {t('prescription.medicines')}
           </Button>
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          {localMedicines.map((medicine, index) => (
-            <div key={index} className="border rounded-lg p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <h4 className="font-medium">{t('medicines.medicine')}{index + 1}</h4>
-                {localMedicines.length > 1 && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => removeMedicine(index)}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                )}
-              </div>
-              
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label>{t('medicines.medicineName')} *</Label>
-                  <Select
-                    value={localMedicines[index]?.medicine_id}
-                    onValueChange={(value) => updateMedicineSelection(index, value)}
-                  >
-                    <SelectTrigger>
-                    <SelectValue placeholder={t('medicines.select')}>
-                   {
-                     medicineOptions?.find((med) => String(med.id) === String(medicine.medicine_id))?.name
-                     ?? t('medicines.select')
-                   }
-                   </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {medicineOptions?.map((med) => (
-                     <SelectItem key={med.id} value={String(med.id)}>
-                       {med.name}
-                     </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+        {medicinesLoading ? (
+          <SectionLoading text={t('general.loading') || 'Loading medicines...'} />
+        ) : (
+          <div className="space-y-4">
+            {localMedicines.map((medicine, index) => (
+              <div key={index} className="border rounded-lg p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-medium">{t('medicines.medicine')}{index + 1}</h4>
+                  {localMedicines.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => removeMedicine(index)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  )}
                 </div>
-                
-                <div>
-                  <Label>{t('medicines.dosage')}</Label>
-                  <InlineHistorySearch
-                    items={dosageHistory || []}
-                    value={localMedicines[index]?.dosage || ''}
-                    onChange={(value) => updateMedicine(index, 'dosage', value)}
-                    onSelect={(value) => updateMedicine(index, 'dosage', value)}
-                    onDelete={deleteDosageHistory}
-                    placeholder={t('medicines.enterDosage')}
-                  />
-                </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label>{t('medicines.duration')}</Label>
-                  <InlineHistorySearch
-                    items={durationHistory || []}
-                    value={localMedicines[index]?.duration || ''}
-                    onChange={(value) => updateMedicine(index, 'duration', value)}
-                    onSelect={(value) => updateMedicine(index, 'duration', value)}
-                    onDelete={deleteDurationHistory}
-                    placeholder={t('medicines.enterDuration')}
-                  />
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>{t('medicines.medicineName')} *</Label>
+                    <Select
+                      value={localMedicines[index]?.medicine_id}
+                      onValueChange={(value) => updateMedicineSelection(index, value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={t('medicines.select')}>
+                          {medicineOptions?.find((med) => String(med.id) === String(medicine.medicine_id))?.name ?? t('medicines.select')}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {medicineOptions?.map((med) => (
+                          <SelectItem key={med.id} value={String(med.id)}>
+                            {med.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label>{t('medicines.dosage')}</Label>
+                    <InlineHistorySearch
+                      items={dosageHistory || []}
+                      value={localMedicines[index]?.dosage || ''}
+                      onChange={(value) => updateMedicine(index, 'dosage', value)}
+                      onSelect={(value) => updateMedicine(index, 'dosage', value)}
+                      onDelete={deleteDosageHistory}
+                      placeholder={t('medicines.enterDosage')}
+                    />
+                  </div>
                 </div>
-                
-                <div>
-                  <Label>{t('medicines.instructions')}</Label>
-                  <InlineHistorySearch
-                    items={instructionHistory || []}
-                    value={localMedicines[index]?.instructions || ''}
-                    onChange={(value) => updateMedicine(index, 'instructions', value)}
-                    onSelect={(value) => updateMedicine(index, 'instructions', value)}
-                    onDelete={deleteInstructionHistory}
-                    placeholder={t('medicines.enterInstructions')}
-                  />
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>{t('medicines.duration')}</Label>
+                    <InlineHistorySearch
+                      items={durationHistory || []}
+                      value={localMedicines[index]?.duration || ''}
+                      onChange={(value) => updateMedicine(index, 'duration', value)}
+                      onSelect={(value) => updateMedicine(index, 'duration', value)}
+                      onDelete={deleteDurationHistory}
+                      placeholder={t('medicines.enterDuration')}
+                    />
+                  </div>
+
+                  <div>
+                    <Label>{t('medicines.instructions')}</Label>
+                    <InlineHistorySearch
+                      items={instructionHistory || []}
+                      value={localMedicines[index]?.instructions || ''}
+                      onChange={(value) => updateMedicine(index, 'instructions', value)}
+                      onSelect={(value) => updateMedicine(index, 'instructions', value)}
+                      onDelete={deleteInstructionHistory}
+                      placeholder={t('medicines.enterInstructions')}
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
