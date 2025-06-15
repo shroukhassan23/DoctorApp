@@ -45,19 +45,22 @@ const upload = multer({
   },
   fileFilter: function (req, file, cb) {
     // Check file types
-    const allowedTypes = /jpeg|jpg|png|gif|pdf|doc|docx|txt|xls|xlsx|ppt|pptx/;
+    const allowedTypes = /jpeg|jpg|png|gif|pdf|doc|docx|txt|xls|xlsx|ppt|pptx|mp3|mp4|xlsx|csv|xls|/;
     const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    console.log('File type:', file.mimetype);
+    console.log('File extension:', path.extname(file.originalname).toLowerCase());
     const mimetype = allowedTypes.test(file.mimetype) || 
                      file.mimetype.includes('application/pdf') ||
                      file.mimetype.includes('application/msword') ||
                      file.mimetype.includes('application/vnd.openxmlformats') ||
                      file.mimetype.includes('application/vnd.ms-excel') ||
                      file.mimetype.includes('application/vnd.ms-powerpoint');
+    console.log('MIME type valid:', mimetype);
     
     if (mimetype && extname) {
       return cb(null, true);
     } else {
-      cb(new Error('Only images, PDFs, and documents (DOC, DOCX, XLS, XLSX, PPT, PPTX) are allowed!'));
+      cb(new Error('Only images, PDFs, MP3, MP4, and documents (DOC, DOCX, XLS, XLSX, PPT, PPTX) are allowed!'));
     }
   }
 });
