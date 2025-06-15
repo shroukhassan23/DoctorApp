@@ -59,23 +59,23 @@ export const PrescriptionForm = ({
     },
     enabled: !isEmbedded && !patientId
   });
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0'); // +1 because months are 0-based
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0'); // +1 because months are 0-based
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
   // Load existing prescription data when editing
   useEffect(() => {
     if (prescription) {
-      reset({
-        prescription_date: prescription.prescription_date
-          ? formatDate(prescription.prescription_date)
-          : formatDate(new Date().toISOString()),
-        notes: prescription.notes || '',
-        diagnosis: prescription.diagnosis || ''
-      });
+reset({
+  prescription_date: prescription.prescription_date 
+    ? formatDate(prescription.prescription_date)
+    : formatDate(new Date().toISOString()),
+  notes: prescription.notes || '',
+  diagnosis: prescription.diagnosis || ''
+});
 
 
       // Load medicines

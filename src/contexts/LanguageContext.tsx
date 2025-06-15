@@ -50,7 +50,7 @@ const translations = {
     'patients.searchPlaceholder': 'Search patients by name or phone...',
     'patients.name': 'Name',
     'patients.fullName': '*Full Name',
-
+     'patients.add':'Add Patient',
     'patients.age': 'Age',
     'patients.gender': 'Gender',
     'patients.dateOfBirth': 'Date of Birth',
