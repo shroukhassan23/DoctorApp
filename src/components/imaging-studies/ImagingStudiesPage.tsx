@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Plus, Search, Edit, Trash2 } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Scan } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ImagingStudyForm } from './ImagingStudyForm';
@@ -49,15 +49,15 @@ export const ImagingStudiesPage = () => {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Delete failed');
       }
-      
+
       toast({ title: t('imaging.deletedSuccess') });
       refetch();
     } catch (error) {
       console.error('Error deleting imaging study:', error);
-      toast({ 
-        title: t('imaging.errorDeleting'), 
+      toast({
+        title: t('imaging.errorDeleting'),
         description: t('form.tryAgain'),
-        variant: 'destructive' 
+        variant: 'destructive'
       });
     }
   };
@@ -76,12 +76,28 @@ export const ImagingStudiesPage = () => {
 
   return (
     <div className={cn("p-6", language === 'ar' && "rtl")}>
-      <div className={cn("flex justify-between items-center mb-6", language === 'ar' && 'flex-row-reverse')}>
-        <h1 className="text-2xl font-bold text-gray-900">{t('imaging.title')}</h1>
+
+
+      {/* Enhanced Imaging Header */}
+      <div className={cn("flex justify-between items-center mb-8 p-6 bg-white rounded-xl shadow-md border border-gray-200", language === 'ar' && 'flex-row-reverse rtl')}>
+        <div className={cn("flex items-center gap-4", language === 'ar' && 'flex-row-reverse')}>
+          <div className="p-3 bg-[#2463EB] rounded-xl shadow-lg">
+            <Scan className="w-7 h-7 text-white" />
+          </div>
+          <h1 className={cn("text-3xl font-bold text-black", language === 'ar' && 'text-right')}>
+            {t('imaging.title')}
+          </h1>
+        </div>
+
         <Dialog open={showForm} onOpenChange={setShowForm}>
           <DialogTrigger asChild>
-            <Button className={cn(language === 'ar' && 'flex-row-reverse')}>
-              <Plus className="w-4 h-4 mr-2" />
+            <Button
+              className={cn(
+                "shadow-lg hover:shadow-xl transition-all duration-300",
+                language === 'ar' && 'flex-row-reverse'
+              )}
+            >
+              <Plus className="w-5 h-5 mr-2" />
               {t('imaging.addNew')}
             </Button>
           </DialogTrigger>
@@ -94,16 +110,28 @@ export const ImagingStudiesPage = () => {
         </Dialog>
       </div>
 
-      <div className="mb-6">
-        <div className="relative">
-          <Search className={cn("absolute top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4", 
-            language === 'ar' ? 'right-3' : 'left-3')} />
-          <Input
-            placeholder={t('imaging.searchPlaceholder')}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className={cn(language === 'ar' ? 'pr-10 text-right' : 'pl-10')}
-          />
+      {/* Enhanced Imaging Search */}
+      <div className="mb-8 p-6 bg-white rounded-xl shadow-md border border-gray-200">
+        <div className="space-y-3">
+          <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+            <Search className="w-4 h-4 text-[#2463EB]" />
+            Search Imaging Studies
+          </label>
+          <div className="relative">
+            <Search className={cn(
+              "absolute top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5",
+              language === 'ar' ? 'right-4' : 'left-4'
+            )} />
+            <Input
+              placeholder={t('imaging.searchPlaceholder')}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className={cn(
+                "h-12 border-gray-300 bg-gray-50 focus:bg-white focus:border-[#2463EB] focus:ring-[#2463EB]/20 shadow-sm",
+                language === 'ar' ? 'pr-12 text-right' : 'pl-12'
+              )}
+            />
+          </div>
         </div>
       </div>
 
@@ -127,8 +155,8 @@ export const ImagingStudiesPage = () => {
                   <div className={cn("flex space-x-2", language === 'ar' ? 'justify-start flex-row-reverse space-x-reverse' : 'justify-end')}>
                     <Dialog open={editingStudy?.id === study.id} onOpenChange={(open) => !open && setEditingStudy(null)}>
                       <DialogTrigger asChild>
-                        <Button 
-                          variant="outline" 
+                        <Button
+                          variant="outline"
                           size="sm"
                           onClick={() => setEditingStudy(study)}
                           className={cn(language === 'ar' && 'flex-row-reverse')}
@@ -144,7 +172,7 @@ export const ImagingStudiesPage = () => {
                         <ImagingStudyForm imagingStudy={editingStudy} onSave={handleStudySaved} />
                       </DialogContent>
                     </Dialog>
-                    
+
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button variant="outline" size="sm" className={cn(language === 'ar' && 'flex-row-reverse')}>
@@ -173,7 +201,7 @@ export const ImagingStudiesPage = () => {
             ))}
           </TableBody>
         </Table>
-        
+
         {filteredStudies.length === 0 && (
           <div className="text-center py-12">
             <p className="text-gray-500">{t('imaging.noStudies')}</p>

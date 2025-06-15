@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { 
-  Edit, 
-  User, 
-  Stethoscope, 
-  MapPin, 
-  Phone, 
-  Mail, 
-  Building2, 
+import {
+  Edit,
+  User,
+  Stethoscope,
+  MapPin,
+  Phone,
+  Mail,
+  Building2,
   GraduationCap,
   Award,
   Clock,
@@ -15,7 +15,9 @@ import {
   UserPlus,
   Star,
   Shield,
-  Activity
+  Activity,
+  Settings,
+  Contact
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -71,19 +73,27 @@ export const DoctorProfilePage = () => {
     <div className={cn("min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-6", language === 'ar' && 'rtl')}>
       <div className="max-w-6xl mx-auto">
         {/* Header Section */}
-        <div className={cn("flex justify-between items-center mb-8", language === 'ar' && 'flex-row-reverse')}>
-          <div className="space-y-2">
-            <h1 className={cn("text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent", language === 'ar' && 'text-right')}>
-              {t('profile.title')}
-            </h1>
-            <p className={cn("text-gray-600", language === 'ar' && 'text-right')}>
-              {doctorProfile ? 'Manage your professional information' : 'Create your professional profile'}
-            </p>
+        <div className={cn("flex justify-between items-center mb-8 p-6 bg-white rounded-xl shadow-md border border-gray-200", language === 'ar' && 'flex-row-reverse rtl')}>
+          <div className={cn("flex items-center gap-4", language === 'ar' && 'flex-row-reverse')}>
+            <div className="p-3 bg-[#2463EB] rounded-xl shadow-lg">
+              <Settings className="w-7 h-7 text-white" />
+            </div>
+            <div className="space-y-1">
+              <h1 className={cn("text-3xl font-bold text-black", language === 'ar' && 'text-right')}>
+                {t('profile.title')}
+              </h1>
+              <p className={cn("text-gray-600 text-sm", language === 'ar' && 'text-right')}>
+                {doctorProfile ? 'Manage your professional information' : 'Create your professional profile'}
+              </p>
+            </div>
           </div>
-          
+
           <Dialog open={showForm} onOpenChange={setShowForm}>
             <DialogTrigger asChild>
-              <Button size="lg" className="shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
+              <Button
+                size="lg"
+                className="shadow-lg hover:shadow-xl transition-all duration-300"
+              >
                 {doctorProfile ? <Edit className="w-5 h-5 mr-2" /> : <UserPlus className="w-5 h-5 mr-2" />}
                 {doctorProfile ? t('profile.editProfile') : t('profile.createProfile')}
               </Button>
@@ -141,7 +151,7 @@ export const DoctorProfilePage = () => {
                           </p>
                         </div>
                       </div>
-                      
+
                       <div className="flex items-start space-x-3">
                         <Stethoscope className="w-5 h-5 text-blue-600 mt-1 flex-shrink-0" />
                         <div className="min-w-0 flex-1">
@@ -167,7 +177,7 @@ export const DoctorProfilePage = () => {
                           </p>
                         </div>
                       </div>
-                      
+
                       <div className="flex items-start space-x-3">
                         <Mail className="w-5 h-5 text-blue-600 mt-1 flex-shrink-0" />
                         <div className="min-w-0 flex-1">
@@ -205,7 +215,7 @@ export const DoctorProfilePage = () => {
                         </p>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-start space-x-3">
                       <MapPin className="w-5 h-5 text-indigo-600 mt-1 flex-shrink-0" />
                       <div className="min-w-0 flex-1">
@@ -244,7 +254,7 @@ export const DoctorProfilePage = () => {
                       Complete
                     </Badge>
                   </div>
-                  
+
                   <div className="flex items-center justify-between p-3 bg-white rounded-lg shadow-sm">
                     <div className="flex items-center space-x-3">
                       <div className="p-2 bg-purple-100 rounded-lg">
@@ -256,7 +266,7 @@ export const DoctorProfilePage = () => {
                       {doctorProfile.specialization ? 'Set' : 'Not Set'}
                     </span>
                   </div>
-                  
+
                   <div className="flex items-center justify-between p-3 bg-white rounded-lg shadow-sm">
                     <div className="flex items-center space-x-3">
                       <div className="p-2 bg-orange-100 rounded-lg">
@@ -323,12 +333,12 @@ export const DoctorProfilePage = () => {
                     <UserPlus className="w-4 h-4 text-white" />
                   </div>
                 </div>
-                
+
                 <h3 className="text-2xl font-bold text-gray-900 mb-3">{t('profile.noProfile')}</h3>
                 <p className="text-gray-600 mb-6 leading-relaxed">
                   {t('profile.noProfileDescription')}
                 </p>
-                
+
                 <Dialog open={showForm} onOpenChange={setShowForm}>
                   <DialogTrigger asChild>
                     <Button size="lg" className="shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">

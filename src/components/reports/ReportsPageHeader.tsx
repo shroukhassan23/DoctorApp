@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { CalendarDays } from 'lucide-react';
+import { CalendarDays, FileText } from 'lucide-react';
 import { format, isValid, parseISO } from 'date-fns';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
@@ -26,12 +26,20 @@ export const ReportsPageHeader = ({ selectedDate }: ReportsPageHeaderProps) => {
   };
 
   return (
-    <div className={cn("flex items-center justify-between", language === 'ar' && 'flex-row-reverse')}>
-      <h1 className={cn("text-3xl font-bold", language === 'ar' && 'text-right')}>{t('reports.title')}</h1>
+    <div className={cn("flex items-center justify-between mb-6 p-6 bg-white rounded-xl shadow-md border border-gray-200", language === 'ar' && 'flex-row-reverse rtl')}>
+      <div className={cn("flex items-center gap-4", language === 'ar' && 'flex-row-reverse')}>
+        <div className="p-3 bg-[#2463EB] rounded-xl shadow-lg">
+          <FileText className="w-7 h-7 text-white" />
+        </div>
+        <h1 className={cn("text-3xl font-bold text-black", language === 'ar' && 'text-right')}>
+          {t('reports.title')}
+        </h1>
+      </div>
+
       <div className={cn("flex items-center gap-2", language === 'ar' && 'flex-row-reverse')}>
         <CalendarDays className="h-5 w-5 text-gray-500" />
         <span className={cn("text-sm text-gray-500", language === 'ar' && 'text-right')}>
-          {formatDate(selectedDate)}
+          {selectedDate ? formatDate(selectedDate) : 'No date selected'}
         </span>
       </div>
     </div>
