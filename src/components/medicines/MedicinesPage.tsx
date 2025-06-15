@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Plus, Search, Edit, Trash2 } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Pill } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { MedicineForm } from './MedicineForm';
@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import { managementMedicinesUrl, deleteMedicineUrl } from '@/components/constants.js';
+import { AddButton } from '../ui/enhanced-button';
 
 export const MedicinesPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -49,15 +50,15 @@ export const MedicinesPage = () => {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Delete failed');
       }
-      
+
       toast({ title: t('medicines.deletedSuccess') });
       refetch();
     } catch (error) {
       console.error('Error deleting medicine:', error);
-      toast({ 
-        title: t('medicines.errorDeleting'), 
+      toast({
+        title: t('medicines.errorDeleting'),
         description: t('form.tryAgain'),
-        variant: 'destructive' 
+        variant: 'destructive'
       });
     }
   };
@@ -68,14 +69,24 @@ export const MedicinesPage = () => {
 
   return (
     <div className={cn("p-6", language === 'ar' && "rtl")}>
-      <div className={cn("flex justify-between items-center mb-6", language === 'ar' && 'flex-row-reverse')}>
-        <h1 className="text-2xl font-bold text-gray-900">{t('medicines.title')}</h1>
+      <div className={cn("flex justify-between items-center mb-6 p-6 bg-white rounded-xl shadow-md border border-gray-200", language === 'ar' && 'flex-row-reverse rtl')}>
+        <div className={cn("flex items-center gap-4", language === 'ar' && 'flex-row-reverse')}>
+          <div className="p-3 bg-[#2463EB] rounded-xl shadow-lg">
+            <Pill className="w-7 h-7 text-white" />
+          </div>
+          <h1 className={cn("text-3xl font-bold text-black", language === 'ar' && 'text-right')}>
+            {t('medicines.title')}
+          </h1>
+        </div>
+
         <Dialog open={showForm} onOpenChange={setShowForm}>
           <DialogTrigger asChild>
-            <Button onClick={() => setSelectedMedicine(null)} className={cn(language === 'ar' && 'flex-row-reverse')}>
-              <Plus className="w-4 h-4 mr-2" />
+
+            <AddButton
+              onClick={() => { setSelectedMedicine(null) }}
+            >
               {t('medicines.addNew')}
-            </Button>
+            </AddButton>
           </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
@@ -88,18 +99,29 @@ export const MedicinesPage = () => {
         </Dialog>
       </div>
 
-      <div className="mb-6">
-        <div className="relative">
-          <Search className={cn("absolute top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4", 
-            language === 'ar' ? 'right-3' : 'left-3')} />
-          <Input
-            placeholder={t('medicines.searchPlaceholder')}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className={cn(language === 'ar' ? 'pr-10 text-right' : 'pl-10')}
-          />
-        </div>
-      </div>
+      <div className="mb-6 p-6 bg-white rounded-xl shadow-md border border-gray-200">
+  <div className="space-y-3">
+    <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+      <Search className="w-4 h-4 text-[#2463EB]" />
+      Search Medicines
+    </label>
+    <div className="relative">
+      <Search className={cn(
+        "absolute top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5",
+        language === 'ar' ? 'right-4' : 'left-4'
+      )} />
+      <Input
+        placeholder={t('medicines.searchPlaceholder')}
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        className={cn(
+          "h-12 border-gray-300 bg-gray-50 focus:bg-white focus:border-[#2463EB] focus:ring-[#2463EB]/20 shadow-sm",
+          language === 'ar' ? 'pr-12 text-right' : 'pl-12'
+        )}
+      />
+    </div>
+  </div>
+</div>
 
       <div className="bg-white rounded-lg shadow">
         <Table>
@@ -125,8 +147,8 @@ export const MedicinesPage = () => {
                   <div className={cn("flex space-x-2", language === 'ar' ? 'justify-start flex-row-reverse space-x-reverse' : 'justify-end')}>
                     <Dialog>
                       <DialogTrigger asChild>
-                        <Button 
-                          variant="outline" 
+                        <Button
+                          variant="outline"
                           size="sm"
                           onClick={() => setSelectedMedicine(medicine)}
                           className={cn(language === 'ar' && 'flex-row-reverse')}
@@ -142,7 +164,7 @@ export const MedicinesPage = () => {
                         <MedicineForm medicine={medicine} onSave={handleMedicineSaved} />
                       </DialogContent>
                     </Dialog>
-                    
+
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button variant="outline" size="sm" className={cn(language === 'ar' && 'flex-row-reverse')}>
@@ -171,7 +193,7 @@ export const MedicinesPage = () => {
             ))}
           </TableBody>
         </Table>
-        
+
         {filteredMedicines.length === 0 && (
           <div className="text-center py-12">
             <p className="text-gray-500">{t('medicines.noMedicines')}</p>
