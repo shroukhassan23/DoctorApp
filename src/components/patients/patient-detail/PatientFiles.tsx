@@ -94,12 +94,12 @@ export const PatientFiles = ({ files, patientId, onFileUploaded }: PatientFilesP
         throw new Error(errorData.error || 'Delete failed');
       }
 
-      toast({ title: 'File deleted successfully' });
+      toast({ title: t('message.fileDeleted') });
       onFileUploaded(); // Refresh the files list
     } catch (error) {
       console.error('Error deleting file:', error);
       toast({
-        title: 'Error deleting file',
+        title: t('message.fileDeleteError'),
         description: error instanceof Error ? error.message : 'Please try again.',
         variant: 'destructive'
       });

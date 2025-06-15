@@ -89,7 +89,7 @@ useEffect(() => {
       if (!formData.name) {
         toast({
           title: t('message.validationError'),
-          description: 'Patient name is required.',
+          description: t('message.patientNameRequired'),
           variant: 'destructive'
         });
         return;
@@ -98,7 +98,7 @@ useEffect(() => {
       if (!formData.date_of_birth) {
         toast({
           title: t('message.validationError'),
-          description: 'Date of birth is required.',
+          description: t('message.dateRequired'),
           variant: 'destructive'
         });
         return;
@@ -107,7 +107,7 @@ useEffect(() => {
       if (!formData.gender) {
         toast({
           title: 'Validation Error',
-          description: 'Gender is required.',
+          description:  t('message.genderRequired'),
           variant: 'destructive'
         });
         return;
@@ -128,7 +128,7 @@ useEffect(() => {
         }
 
         const result = await response.json();
-        toast({ title: 'تم تحديث بيانات المريض بنجاح' });
+        toast({ title: t('patients.updatedSuccess') });
 
       } else {
         const response = await fetch(patientUrl, {
@@ -139,15 +139,15 @@ useEffect(() => {
           body: JSON.stringify({ patient: formData })
         });
 
-        toast({ title: 'Patient added successfully' });
+        toast({ title: t('patients.addSuccess') });
       }
 
       onSave();
     } catch (error) {
       console.error('Error saving patient:', error);
       toast({
-        title: 'Error saving patient',
-        description: error instanceof Error ? error.message : 'Please try again.',
+        title: t('patients.errorSaving'),
+        description: error instanceof Error ? error.message : t('message.pleaseTryAgain'),
         variant: 'destructive'
       });
     }
@@ -161,7 +161,7 @@ useEffect(() => {
           <Input
             id="name"
             {...register('name', { required: 'Name is required' })}
-            placeholder="Enter patient's full name"
+            placeholder={t('patients.enterFullName')}
           />
           {errors.name && <p className="text-red-500 text-sm mt-1">{String(errors.name.message)}</p>}
         </div>
@@ -171,7 +171,7 @@ useEffect(() => {
           <Input
             id="date_of_birth"
             type="date"
-            {...register('date_of_birth', { required: 'Date of birth is required' })}
+            {...register('date_of_birth', { required: t('message.dateRequired') })}
           />
           {errors.date_of_birth && <p className="text-red-500 text-sm mt-1">{String(errors.date_of_birth.message)}</p>}
         </div>
@@ -184,7 +184,7 @@ useEffect(() => {
             id="age"
             type="number"
             {...register('age')}
-            placeholder="Age will be calculated from date of birth"
+            placeholder={t('message.ageCalculated')}
             readOnly
             className="bg-gray-100"
           />
@@ -215,7 +215,7 @@ useEffect(() => {
         <Input
           id="phone"
           {...register('phone')}
-          placeholder="Enter phone number"
+          placeholder={t('patients.enterPhone')}
         />
       </div>
 
@@ -224,7 +224,7 @@ useEffect(() => {
         <Textarea
           id="address"
           {...register('address')}
-          placeholder="Enter patient's address"
+          placeholder={t('patients.enterAddress')}
           rows={2}
         />
       </div>
@@ -234,7 +234,7 @@ useEffect(() => {
         <Textarea
           id="medical_history"
           {...register('medical_history')}
-          placeholder="Enter medical history, allergies, chronic conditions, etc."
+          placeholder={t('patients.enterMedicalHistory')}
           rows={4}
         />
       </div>

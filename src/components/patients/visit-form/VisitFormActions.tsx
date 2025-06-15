@@ -58,7 +58,7 @@ export const VisitFormActions = ({
     loading={isSubmitting}
     size="lg"
   >
-    { (t('common.saving') || 'Saving...')}
+    { (t('common.save') || 'Saving...')}
   </SaveButton>
 )}
     </div>
