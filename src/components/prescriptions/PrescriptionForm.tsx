@@ -57,17 +57,24 @@ export const PrescriptionForm = ({
     },
     enabled: !isEmbedded && !patientId
   });
+  
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0'); // +1 because months are 0-based
   const day = String(date.getDate()).padStart(2, '0');
+  
   return `${year}-${month}-${day}`;
+  
 };
   // Load existing prescription data when editing
   useEffect(() => {
     if (prescription) {
+        console.log('Raw prescription date:', prescription.prescription_date),
+console.log('Parsed date:', new Date(prescription.prescription_date)),
+
 reset({
+
   prescription_date: prescription.prescription_date 
     ? formatDate(prescription.prescription_date)
     : formatDate(new Date().toISOString()),
