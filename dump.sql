@@ -359,3 +359,12 @@ CREATE INDEX idx_instruction_usage ON instruction_history(usage_count DESC, last
 
 
 
+ALTER TABLE medicine 
+ADD COLUMN dosage VARCHAR(100) NULL AFTER name_ar,
+ADD COLUMN form VARCHAR(100) NULL AFTER dosage,
+ADD COLUMN manufacturer VARCHAR(100) NULL AFTER form,
+ADD COLUMN price DECIMAL(10,2) NULL AFTER manufacturer,
+ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP AFTER price,
+ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP AFTER created_at;
+
+ALTER TABLE lab_tests ADD COLUMN description TEXT NULL AFTER name_ar;

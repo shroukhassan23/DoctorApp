@@ -107,9 +107,9 @@ reset({
       // Load imaging studies
       if (prescription.prescription_imaging_studies) {
         const loadedImagingStudies = prescription.prescription_imaging_studies.map((study: any) => ({
-          studyId: study.imaging_study_id,
-          name: study.imaging_studies?.name,
-          notes: study.notes
+          studyId: String(study.imaging_study_id || study.imaging_studies_id), 
+          name: study.imaging_studies?.name?.trim() || '',
+          notes: study.comments || study.notes || '' 
         }));
         setSelectedImagingStudies(loadedImagingStudies);
       }
@@ -195,12 +195,17 @@ reset({
 
       <div>
         <Label htmlFor="diagnosis">{t('prescription.diagnosis')}</Label>
-        <SimpleHistoryTextarea
+        {/* <SimpleHistoryTextarea
           id="diagnosis"
           placeholder={t('prescription.enterDiagnosis')}
           value={watch('diagnosis')}
           onChange={(value) => setValue('diagnosis', value)}
           historyType="diagnosis"
+        /> */}
+        <Textarea
+          id="diagnosis"
+          placeholder={t('prescription.enterDiagnosis')}
+          {...register('diagnosis')}
         />
       </div>
 

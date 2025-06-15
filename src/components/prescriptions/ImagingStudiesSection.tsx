@@ -6,6 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {visitImagingStudiesPatientUrl } from '@/components/constants.js';
+
 interface ImagingStudiesSectionProps {
   selectedImagingStudies: Array<{ studyId: string; name?: string; notes?: string }>;
   setSelectedImagingStudies: React.Dispatch<React.SetStateAction<Array<{ studyId: string; name?: string; notes?: string }>>>;
@@ -16,44 +17,51 @@ export const ImagingStudiesSection = ({ selectedImagingStudies, setSelectedImagi
     queryKey: ['imaging_studies'],
     queryFn: async () => {
      const response =  await fetch(visitImagingStudiesPatientUrl);
-                if (!response.ok) throw new Error('Failed to fetch medecines');
+                if (!response.ok) throw new Error('Failed to fetch imaging studies');
                 return response.json();
     },
   });
 
-  const getStudyNotes = (studyId: string) => {
-    const study = selectedImagingStudies.find(s => s.studyId === studyId);
+  const { t, language } = useLanguage();
+
+  const getStudyNotes = (studyId: number | string) => {
+    const study = selectedImagingStudies.find(s => String(s.studyId) === String(studyId));
     return study?.notes || '';
   };
- const { t, language } = useLanguage();
-  const isStudySelected = (studyId: string) => {
-    return selectedImagingStudies.some(s => s.studyId === studyId);
+
+  const isStudySelected = (studyId: number | string) => {
+    const result = selectedImagingStudies.some(s => String(s.studyId) === String(studyId));
+    console.log(`🔍 isStudySelected(${studyId}):`, result, 'comparing with:', selectedImagingStudies.map(s => s.studyId));
+    return result;
+
   };
 
-  const onImagingStudyChange = (studyId: string, checked: boolean, notes?: string) => {
+  const onImagingStudyChange = (studyId: number | string, checked: boolean, notes?: string) => {
+    const studyIdStr = String(studyId);
+    
     if (checked) {
-      const study = imagingStudies?.find(s => s.id === studyId);
-      const existingStudy = selectedImagingStudies.find(s => s.studyId === studyId);
+      const study = imagingStudies?.find(s => s.id === Number(studyId));
+      const existingStudy = selectedImagingStudies.find(s => String(s.studyId) === studyIdStr);
       
       if (existingStudy) {
         // Update existing study with new notes
         setSelectedImagingStudies(prev => prev.map(s => 
-          s.studyId === studyId ? { ...s, notes: notes || s.notes } : s
+          String(s.studyId) === studyIdStr ? { ...s, notes: notes || s.notes } : s
         ));
       } else {
         // Add new study
         setSelectedImagingStudies(prev => [...prev, { 
-          studyId, 
-          name: study?.name, 
+          studyId: studyIdStr, 
+          name: study?.name?.trim(), // Trim whitespace from names
           notes: notes || '' 
         }]);
       }
     } else {
-      setSelectedImagingStudies(prev => prev.filter(s => s.studyId !== studyId));
+      setSelectedImagingStudies(prev => prev.filter(s => String(s.studyId) !== studyIdStr));
     }
   };
 
-  const handleNotesChange = (studyId: string, notes: string) => {
+  const handleNotesChange = (studyId: number | string, notes: string) => {
     onImagingStudyChange(studyId, true, notes);
   };
 
@@ -68,11 +76,13 @@ export const ImagingStudiesSection = ({ selectedImagingStudies, setSelectedImagi
             <div key={study.id} className="space-y-2">
               <div className="flex items-center space-x-2">
                 <Checkbox
-                  id={study.id}
+                  id={`study-${study.id}`}
                   checked={isStudySelected(study.id)}
                   onCheckedChange={(checked) => onImagingStudyChange(study.id, checked as boolean, getStudyNotes(study.id))}
                 />
-                <Label htmlFor={study.id} className="text-sm">{study.name}</Label>
+                <Label htmlFor={`study-${study.id}`} className="text-sm">
+                  {study.name?.trim() || 'Unnamed Study'}
+                </Label>
               </div>
               {isStudySelected(study.id) && (
                 <div className="ml-6">

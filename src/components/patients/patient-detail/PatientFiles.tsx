@@ -118,7 +118,7 @@ export const PatientFiles = ({ files, patientId, onFileUploaded }: PatientFilesP
   // Function to get file icon based on type
   const getFileIcon = (filename: string, fileType: string) => {
     const extension = filename.split('.').pop()?.toLowerCase();
-    
+
     if (fileType?.includes('pdf') || extension === 'pdf') {
       return <FileText className="w-5 h-5 text-red-500" />;
     }
@@ -136,9 +136,9 @@ export const PatientFiles = ({ files, patientId, onFileUploaded }: PatientFilesP
     const extension = filename.split('.').pop()?.toLowerCase();
     const imageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
     const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-    
+
     return (
-      fileType?.includes('pdf') || 
+      fileType?.includes('pdf') ||
       extension === 'pdf' ||
       imageTypes.some(type => fileType?.includes(type)) ||
       imageExtensions.includes(extension || '') ||
@@ -196,11 +196,8 @@ export const PatientFiles = ({ files, patientId, onFileUploaded }: PatientFilesP
                 </Button>
               </>
             )}
-            <Button variant="outline" size="sm" onClick={() => handleDownload(file)}>
+            <Button style={{marginRight: '30px'}} variant="outline" size="sm" onClick={() => handleDownload(file)}>
               <Download className="w-4 h-4" />
-            </Button>
-            <Button variant="outline" size="sm" onClick={closePreview}>
-              <X className="w-4 h-4" />
             </Button>
           </div>
         </div>
@@ -282,12 +279,12 @@ export const PatientFiles = ({ files, patientId, onFileUploaded }: PatientFilesP
           </DialogContent>
         </Dialog>
       </div>
-      
+
       <div className="space-y-3">
         {files?.map((file) => {
           const displayFilename = getDisplayFilename(file.file_name);
           const canPreviewFile = canPreview(file.file_type, displayFilename);
-          
+
           return (
             <Card key={file.id}>
               <CardContent className="pt-4">
@@ -312,8 +309,8 @@ export const PatientFiles = ({ files, patientId, onFileUploaded }: PatientFilesP
                   </div>
                   <div className="flex space-x-2">
                     {canPreviewFile && (
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         size="sm"
                         onClick={() => handlePreview(file)}
                       >
@@ -321,20 +318,20 @@ export const PatientFiles = ({ files, patientId, onFileUploaded }: PatientFilesP
                         {t('visit.previewFile')}
                       </Button>
                     )}
-                    
-                    <Button 
-                      variant="outline" 
+
+                    <Button
+                      variant="outline"
                       size="sm"
                       onClick={() => handleDownload(file)}
                     >
                       <Download className="w-4 h-4 mr-1" />
-                     {t('visit.downloadFile')}
+                      {t('visit.downloadFile')}
                     </Button>
-                    
+
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button 
-                          variant="outline" 
+                        <Button
+                          variant="outline"
                           size="sm"
                           disabled={isDeleting === file.id}
                         >
