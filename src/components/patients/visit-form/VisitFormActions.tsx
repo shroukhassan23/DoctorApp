@@ -41,13 +41,6 @@ export const VisitFormActions = ({
         {t('visit.printPrescription') || 'Print Prescription'}
       </PrintButton>
       )}
-      
-      <Button 
-        type="submit" 
-        disabled={isSubmitting || (!isEditing && hasPrescriptionContent && !isPrescriptionSaved)}
-      >
-        {isSubmitting ? (t('common.saving') || 'Saving...') : isEditing ? (t('visit.updateVisit') || 'Update Visit') : (t('visit.saveVisit') || 'Save Visit')}
-      </Button>
 
       {isEditing ? (
   <EditButton 
