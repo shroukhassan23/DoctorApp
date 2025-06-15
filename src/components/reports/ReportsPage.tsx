@@ -52,11 +52,17 @@ const { data: visitDetails, refetch: refetchVisits } = useQuery({
   }
 });
 
-  const filteredVisits = visitDetails?.filter(visit => {
-    // Status filter
-    if (statusFilter !== 'all' && (visit.status || 'waiting') !== statusFilter) {
-      return false;
-    }
+const statusMap: Record<number, string> = {
+  1: 'waiting',
+  2: 'completed',
+  3: 'cancelled'
+};
+
+const filteredVisits = visitDetails?.filter(visit => {
+  const statusText = statusMap[visit.status_id] || 'waiting';
+  if (statusFilter !== 'all' && statusText !== statusFilter) {
+    return false;
+  }
 
     // Enhanced search filters - includes name, diagnosis, notes, and phone
     const matchesTextSearch = searchText(searchTerm, visit.patient_name || '') ||
@@ -67,15 +73,9 @@ const { data: visitDetails, refetch: refetchVisits } = useQuery({
     return !searchTerm || matchesTextSearch;
   }) || [];
 
-const handleEditVisit = (visit: any) => {
-  setEditingVisit({
-    ...visit,
-    patient: {
-      name: visit.patient_name || '',
-    },
-  });
-};
-
+  const handleEditVisit = (visit: any) => {
+    setEditingVisit(visit);
+  };
 
   const handleVisitUpdated = () => {
     refetchVisits();

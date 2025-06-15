@@ -167,7 +167,7 @@ export const VisitForm = ({ patientId, visit, onSave }: VisitFormProps) => {
     try {
       if (isEditing && existingPrescription) {
         await updateExistingPrescription(prescriptionData, existingPrescription);
-        toast({ title: 'Prescription updated successfully' });
+        toast({ title: t('prescription.updateSuccess') });
 
         // Reload the prescription data to get the latest state
         const response = await fetch(getVisitPrescriptionUrl(visit.id));
@@ -184,13 +184,13 @@ export const VisitForm = ({ patientId, visit, onSave }: VisitFormProps) => {
         // For new prescriptions
         updatePrescriptionData(prescriptionData);
         setCurrentPrescriptionData(prescriptionData);
-        toast({ title: 'Prescription saved successfully' });
+        toast({ title: t('prescription.savedSuccess') });
       }
     } catch (error) {
       console.error('Error saving prescription:', error);
       toast({
-        title: 'Error saving prescription',
-        description: 'Please try again.',
+        title: t('prescription.notSavedSuccess'),
+        description: t('message.pleaseTryAgain'),
         variant: 'destructive'
       });
       return;
@@ -199,7 +199,7 @@ export const VisitForm = ({ patientId, visit, onSave }: VisitFormProps) => {
 
   const handleFileUploaded = (fileData: any) => {
     setUploadedFiles(prev => [...prev, fileData]);
-    toast({ title: 'File prepared for upload' });
+    toast({ title: t('message.prepared') });
   };
 
   const onSubmit = async (data: any) => {
@@ -214,8 +214,8 @@ export const VisitForm = ({ patientId, visit, onSave }: VisitFormProps) => {
 
     if (!isEditing && hasAnyPrescriptionContent && !isPrescriptionSaved) {
       toast({
-        title: 'Prescription not saved',
-        description: 'Please save the prescription before saving the visit.',
+        title:  t('prescription.notSavedSuccess'),
+        description: t('message.savePrescription'),
         variant: 'destructive'
       });
       return;
@@ -249,7 +249,7 @@ export const VisitForm = ({ patientId, visit, onSave }: VisitFormProps) => {
           throw new Error(error.error || 'Failed to update visit');
         }
 
-        toast({ title: 'Visit updated successfully' });
+        toast({ title: t('visit.updatedSuccess') });
       } else {
         // Create new visit
         const visitData = {
@@ -286,15 +286,15 @@ export const VisitForm = ({ patientId, visit, onSave }: VisitFormProps) => {
         // Upload files if any
         await uploadFiles(uploadedFiles, patientId, visitId);
 
-        toast({ title: 'Visit recorded successfully' });
+        toast({ title: t('visit.recordeSuccess') });
       }
 
       onSave();
     } catch (error) {
       console.error('Error saving visit:', error);
       toast({
-        title: 'Error saving visit',
-        description: error.message || 'Please try again.',
+        title: t('visit.saveFail'),
+        description: error.message || t('message.pleaseTryAgain'),
         variant: 'destructive'
       });
     } finally {

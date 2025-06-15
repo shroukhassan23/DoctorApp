@@ -50,14 +50,13 @@ const translations = {
     'patients.searchPlaceholder': 'Search patients by name or phone...',
     'patients.name': 'Name',
     'patients.fullName': '*Full Name',
+    'patients.enterFullName':"Enter patient's full name",
      'patients.add':'Add Patient',
     'patients.age': 'Age',
     'patients.gender': 'Gender',
     'patients.dateOfBirth': 'Date of Birth',
 'patients.viewAndManage':'View and manage patient information, visits, and medical records.',
-  
-
-    'patients.phone': 'Phone',
+  'patients.phone': 'Phone',
     'patients.address': 'Address',
      'patients.medicalHistory': 'Medical History',
     'patients.viewDetails': 'View Details',
@@ -73,6 +72,12 @@ const translations = {
     'patients.patient': 'Patient',
 'patients.generalFiles':'General Files & Documents',
 'patients.uploadFiles':'Upload General Files',
+    'patients.updatedSuccess': 'Patient data updated successfuly',
+'patients.errorSaving':'Error saving patient',
+     'patients.addSuccess': 'Patient added successfuly',
+     'patients.enterPhone':'Enter phone number' ,
+     'patients.enterAddress':'Enter address',
+     'patients.enterMedicalHistory':"Enter medical history, allergies, chronic conditions, etc.",
     // Medicines
     'medicines.title': 'Medicine Management',
     'medicines.medicine': 'Medicine',
@@ -252,8 +257,10 @@ const translations = {
     'visit.enterDescription':"Enter file description...",
     'visit.downloadFile':'Download',
     'visit.previewFile':'Preview',
-   
-    
+   'visit.updatedSuccess':'Visit updated successfully',
+    'visit.recordeSuccess':'Visit recorded successfully',
+     'visit.saveFail':'Error saving visit',
+     'visit.loading':'Loading visit form...',
     // Prescription
     'prescription.date': 'Prescription Date',
     'prescription.diagnosis': 'Diagnosis',
@@ -268,6 +275,9 @@ const translations = {
      'prescription.update': 'Update Prescription',
      'prescription.enterDiagnosis': "Enter diagnosis...",
      'prescription.enterNotes': "Enter prescription notes...",
+    'prescription.updateSuccess':'Prescription updated successfully',
+    'prescription.savedSuccess':'Prescription saved successfully',
+    'prescription.notSavedSuccess':'Error saving prescription',
 
 
     
@@ -294,6 +304,13 @@ const translations = {
 'message.validationError':'Validation Error',
 'message.patientNameRequired':'patient name is required',
 'message.dateRequired':'Date of birth is required',
+'message.gender':'Gender is required',
+'message.pleaseTryAgain':'Please try again.',
+'message.ageCalculated':"Age will be calculated from date of birth",
+'message.prepared':'File prepared for upload',
+'message.savePrescription':'Please save the prescription before saving the visit.',
+    'message.fileDeleted':'File deleted successfully',
+    'message.fileDeleteError':'Error deleting file',
 
   },
   ar: {
@@ -334,7 +351,8 @@ const translations = {
     'patients.addNew': 'إضافة مريض جديد',
     'patients.searchPlaceholder': 'البحث عن المرضى بالاسم أو الهاتف...',
     'patients.name': 'الاسم',
-    'patients.age': 'العمر',
+    'patients.enterFullName':"ادخل اسم المريض بالكامل",
+        'patients.age': 'العمر',
     'patients.gender': 'الجنس',
     'patients.dateOfBirth': 'تاريخ الميلاد',
     'patients.phone': 'الهاتف',
@@ -356,6 +374,13 @@ const translations = {
 'patients.generalFiles':'الملفات و المستندات',
 'patients.uploadFiles':'تحميل الملفات ',
 'patients.viewAndManage':'عرض و إدارة معلومات المريض ,الزيارات و السجلات الطبيه ',
+    'patients.updatedSuccess': 'تم تحديث بيانات المريض  بنجاح',
+     'patients.addSuccess': 'تم إضافة المريض بنجاح',
+     'patients.errorSaving':'خطأ في الحفظ',
+     'patients.enterPhone':'ادخل رقم التليفون' ,
+     'patients.enterAddress':'ادخل العنوان',
+     'patients.enterMedicalHistory':"ادخل التاريخ الطبي",
+
   // Medicines
     
     'medicines.title': 'إدارة الأدوية',
@@ -536,7 +561,10 @@ const translations = {
 'visit.addNewVisitRecord':'إضافه زياره جديده',
     'visit.updatePatientDetails':'تحديث بيانات المريض و المعلومات الطبيه ',
  'visit.previewFile':'عرض',
-    
+     'visit.updatedSuccess':'تم تحديث الزياره بنجاح',
+     'visit.recordeSuccess':'تم تسجيل الزياره بنجاح',
+     'visit.saveFail':'خطأ في حفظ الزياره',
+     'visit.loading':'تحميل الزياره من...',
     // Prescription
     'prescription.date': 'تاريخ الوصفة الطبية',
     'prescription.diagnosis': 'الجرعه',
@@ -551,6 +579,10 @@ const translations = {
      'prescription.new': 'إنشاء وصفه طبيه',
   'prescription.enterDiagnosis': "أدخل الجرعه",
      'prescription.enterNotes': "أدخل الملاحظات",
+    'prescription.updateSuccess':'تم تعديل الوصفه الطبيه بنجاح',
+    'prescription.savedSuccess':'تم حفظ الوصفه الطبيه بنجاح',
+    'prescription.notSavedSuccess':'لم يتم حفظ الوصفه الطبيه ',
+
     
     // Forms
     'form.required': 'هذا الحقل مطلوب',
@@ -568,13 +600,18 @@ const translations = {
     'message.nofile':'لم يتم تحديد ملف',
     'message.pleaseSelectFile':'اختر ملف للرفع',
     'message.fileAdded':'تم إضافة الملف بنجاح',
+    'message.fileDeleted':'تم حذف الملف بنجاح',
     'message.add':'جاري الإضافه...',
 'message.upload':'جاري الرفع...',
 'message.validationError':'خطأ في التحقق',
 'message.patientNameRequired':'اسم المريض مطلوب',
 'message.dateRequired':'تاريخ الميلاد مطلوب',
-
-
+'message.gender':'النوع مطلوب',
+'message.pleaseTryAgain':'حاول مره اخري',
+'message.ageCalculated':'يتم حساب العمر من تاريخ الميلاد',
+'message.prepared':'تم تجهيز الملف للرفع',
+'message.savePrescription':'احفظ الوصف الطبيه اولا',
+'message.fileDeleteError':'خطأ في حذف الملف',
   },
 };
 

@@ -102,7 +102,7 @@ export const PatientForm = ({ patient, onSave, onCancel }: PatientFormProps) => 
       if (!formData.name) {
         toast({
           title: t('message.validationError'),
-          description: 'Patient name is required.',
+          description: t('message.patientNameRequired'),
           variant: 'destructive'
         });
         return;
@@ -111,7 +111,7 @@ export const PatientForm = ({ patient, onSave, onCancel }: PatientFormProps) => 
       if (!formData.date_of_birth) {
         toast({
           title: t('message.validationError'),
-          description: 'Date of birth is required.',
+          description: t('message.dateRequired'),
           variant: 'destructive'
         });
         return;
@@ -120,7 +120,7 @@ export const PatientForm = ({ patient, onSave, onCancel }: PatientFormProps) => 
       if (!formData.gender) {
         toast({
           title: 'Validation Error',
-          description: 'Gender is required.',
+          description:  t('message.genderRequired'),
           variant: 'destructive'
         });
         return;
@@ -141,7 +141,7 @@ export const PatientForm = ({ patient, onSave, onCancel }: PatientFormProps) => 
         }
 
         const result = await response.json();
-        toast({ title: 'Patient updated successfully' });
+        toast({ title: t('patients.updatedSuccess') });
 
       } else {
         const response = await fetch(patientUrl, {
@@ -157,15 +157,20 @@ export const PatientForm = ({ patient, onSave, onCancel }: PatientFormProps) => 
           throw new Error(errorData.error || 'Failed to add patient');
         }
 
-        toast({ title: 'Patient added successfully' });
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to add patient');
+        }
+
+        toast({ title: t('patients.addSuccess') });
       }
 
       onSave();
     } catch (error) {
       console.error('Error saving patient:', error);
       toast({
-        title: 'Error saving patient',
-        description: error instanceof Error ? error.message : 'Please try again.',
+        title: t('patients.errorSaving'),
+        description: error instanceof Error ? error.message : t('message.pleaseTryAgain'),
         variant: 'destructive'
       });
     }
@@ -228,7 +233,7 @@ export const PatientForm = ({ patient, onSave, onCancel }: PatientFormProps) => 
                 <Input
                   id="name"
                   {...register('name', { required: 'Name is required' })}
-                  placeholder="Enter patient's full name"
+                  placeholder={t('patients.enterFullName')}
                   className={cn(
                     "h-9 border-gray-300 bg-gray-50 focus:bg-white focus:border-[#2463EB] focus:ring-[#2463EB]/20 shadow-sm text-sm",
                     errors.name && "border-red-500 focus:border-red-500 focus:ring-red-500/20",
@@ -284,7 +289,7 @@ export const PatientForm = ({ patient, onSave, onCancel }: PatientFormProps) => 
                   id="age"
                   type="number"
                   {...register('age')}
-                  placeholder="Age will be calculated from date of birth"
+                  placeholder={t('message.ageCalculated')}
                   readOnly
                   className={cn(
                     "h-9 border-gray-300 bg-gray-100 text-gray-600 cursor-not-allowed text-sm",
