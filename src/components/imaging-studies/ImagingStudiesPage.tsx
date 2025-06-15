@@ -12,6 +12,7 @@ import { format } from 'date-fns';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import { managementImagingStudiesUrl, deleteImagingStudyUrl } from '@/components/constants.js';
+import { AddButton, DeleteButton, EditButton } from '../ui/enhanced-button';
 
 export const ImagingStudiesPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -78,62 +79,62 @@ export const ImagingStudiesPage = () => {
     <div className={cn("p-6", language === 'ar' && "rtl")}>
 
 
-      {/* Enhanced Imaging Header */}
-      <div className={cn("flex justify-between items-center mb-8 p-6 bg-white rounded-xl shadow-md border border-gray-200", language === 'ar' && 'flex-row-reverse rtl')}>
-        <div className={cn("flex items-center gap-4", language === 'ar' && 'flex-row-reverse')}>
-          <div className="p-3 bg-[#2463EB] rounded-xl shadow-lg">
-            <Scan className="w-7 h-7 text-white" />
-          </div>
-          <h1 className={cn("text-3xl font-bold text-black", language === 'ar' && 'text-right')}>
-            {t('imaging.title')}
-          </h1>
-        </div>
+<div className={cn("flex justify-between items-center mb-8", language === 'ar' && 'flex-row-reverse rtl')}>
+  <div className={cn("flex items-center gap-4", language === 'ar' && 'flex-row-reverse')}>
+    <div className="p-3 bg-[#2463EB] rounded-xl shadow-lg">
+      <Scan className="w-7 h-7 text-white" />
+    </div>
+    <div>
+      <h1 className={cn("text-3xl font-bold text-gray-900", language === 'ar' && 'text-right')}>
+        {t('imaging.title')}
+      </h1>
+      <p className={cn("text-gray-600 mt-1", language === 'ar' && 'text-right')}>
+        Manage medical imaging studies and diagnostic procedures
+      </p>
+    </div>
+  </div>
 
-        <Dialog open={showForm} onOpenChange={setShowForm}>
-          <DialogTrigger asChild>
-            <Button
-              className={cn(
-                "shadow-lg hover:shadow-xl transition-all duration-300",
-                language === 'ar' && 'flex-row-reverse'
-              )}
-            >
-              <Plus className="w-5 h-5 mr-2" />
-              {t('imaging.addNew')}
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle className={cn(language === 'ar' && 'text-right')}>{t('imaging.addNew')}</DialogTitle>
-            </DialogHeader>
-            <ImagingStudyForm onSave={handleStudySaved} />
-          </DialogContent>
-        </Dialog>
-      </div>
+  <Dialog open={showForm} onOpenChange={setShowForm}>
+    <DialogTrigger asChild>
+      <AddButton size="sm">
+        {t('imaging.addNew')}
+      </AddButton>
+    </DialogTrigger>
+    <DialogContent className="max-w-2xl">
+      <DialogHeader>
+        <DialogTitle className={cn(language === 'ar' && 'text-right')}>
+          {t('imaging.addNew')}
+        </DialogTitle>
+      </DialogHeader>
+      <ImagingStudyForm onSave={handleStudySaved} />
+    </DialogContent>
+  </Dialog>
+</div>
 
-      {/* Enhanced Imaging Search */}
-      <div className="mb-8 p-6 bg-white rounded-xl shadow-md border border-gray-200">
-        <div className="space-y-3">
-          <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-            <Search className="w-4 h-4 text-[#2463EB]" />
-            Search Imaging Studies
-          </label>
-          <div className="relative">
-            <Search className={cn(
-              "absolute top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5",
-              language === 'ar' ? 'right-4' : 'left-4'
-            )} />
-            <Input
-              placeholder={t('imaging.searchPlaceholder')}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className={cn(
-                "h-12 border-gray-300 bg-gray-50 focus:bg-white focus:border-[#2463EB] focus:ring-[#2463EB]/20 shadow-sm",
-                language === 'ar' ? 'pr-12 text-right' : 'pl-12'
-              )}
-            />
-          </div>
-        </div>
-      </div>
+{/* Enhanced Search Section */}
+<div className="mb-8 p-6 bg-white rounded-xl shadow-md border border-gray-200">
+  <div className="space-y-3">
+    <label className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2", language === 'ar' && 'text-right flex-row-reverse')}>
+      <Scan className="w-4 h-4 text-[#2463EB]" />
+      Search Imaging Studies
+    </label>
+    <div className="relative">
+      <Search className={cn(
+        "absolute top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5",
+        language === 'ar' ? 'right-4' : 'left-4'
+      )} />
+      <Input
+        placeholder="Search by study name, modality, or body part (X-Ray, MRI, CT)..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        className={cn(
+          "h-12 border-gray-300 bg-gray-50 focus:bg-white focus:border-[#2463EB] focus:ring-[#2463EB]/20 shadow-sm",
+          language === 'ar' ? 'pr-12 text-right' : 'pl-12'
+        )}
+      />
+    </div>
+  </div>
+</div>
 
       <div className="bg-white rounded-lg shadow">
         <Table>
@@ -155,15 +156,12 @@ export const ImagingStudiesPage = () => {
                   <div className={cn("flex space-x-2", language === 'ar' ? 'justify-start flex-row-reverse space-x-reverse' : 'justify-end')}>
                     <Dialog open={editingStudy?.id === study.id} onOpenChange={(open) => !open && setEditingStudy(null)}>
                       <DialogTrigger asChild>
-                        <Button
-                          variant="outline"
+                        <EditButton
                           size="sm"
                           onClick={() => setEditingStudy(study)}
-                          className={cn(language === 'ar' && 'flex-row-reverse')}
                         >
-                          <Edit className="w-4 h-4 mr-2" />
                           {t('common.edit')}
-                        </Button>
+                        </EditButton>
                       </DialogTrigger>
                       <DialogContent className="max-w-2xl">
                         <DialogHeader>
@@ -175,10 +173,9 @@ export const ImagingStudiesPage = () => {
 
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="outline" size="sm" className={cn(language === 'ar' && 'flex-row-reverse')}>
-                          <Trash2 className="w-4 h-4 mr-2" />
+                        <DeleteButton size="sm">
                           {t('common.delete')}
-                        </Button>
+                        </DeleteButton>
                       </AlertDialogTrigger>
                       <AlertDialogContent className={cn(language === 'ar' && 'rtl')}>
                         <AlertDialogHeader>

@@ -115,7 +115,7 @@ const handleEditVisit = (visit: any) => {
   };
 
   return (
-    <div className={cn("container mx-auto p-6 space-y-6", language === 'ar' && 'rtl')}>
+    <div className={cn("p-6", language === 'ar' && "rtl")}>
      <ReportsPageHeader selectedDate={`${formatDateToDDMMYYYY(fromDate)} - ${formatDateToDDMMYYYY(toDate)}`} />
 
 

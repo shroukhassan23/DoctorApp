@@ -28,15 +28,8 @@ export const DateSelector = ({
 
   return (
     <Card className={cn("shadow-lg border-0 bg-white", language === 'ar' && 'rtl')}>
-      <CardHeader className="pb-4">
-        <CardTitle className={cn("flex items-center gap-3 text-xl font-bold", language === 'ar' && 'flex-row-reverse text-right')}>
-          <div className="p-2 bg-[#2463EB] rounded-xl shadow-lg">
-            <CalendarRange className="w-6 h-6 text-white" />
-          </div>
-          {t('reports.selectDateRange')}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
+      
+      <CardContent className="pb-4 space-y-6">
         <div className={cn("grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-end", language === 'ar' && 'lg:grid-cols-reverse')}>
           {/* From Date */}
           <div className="space-y-2">

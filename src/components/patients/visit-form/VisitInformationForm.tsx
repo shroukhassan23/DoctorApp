@@ -7,6 +7,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import { visitStatusPatientUrl, visitTypesPatientUrl } from '@/components/constants.js';
 import { SimpleHistoryTextarea } from '@/components/prescriptions/SimpleHistoryTextarea';
+import { Calendar, Activity, Stethoscope, FileText, ClipboardList, AlertCircle } from 'lucide-react';
 
 interface VisitInformationFormProps {
   register: any;
@@ -42,38 +43,62 @@ export const VisitInformationForm = ({
     }
   }, [propVisitTypes, propVisitStatuses]);
 
-  // Debug effect to log current form values
-
   return (
-    <div className={cn("space-y-4", language === 'ar' && 'rtl')}>
-      <h3 className={cn("text-lg font-medium", language === 'ar' && 'text-right')}>{t('visit.details')}</h3>
-
-      <div className={cn("grid grid-cols-1 md:grid-cols-2 gap-4", language === 'ar' && 'rtl')}>
-        <div>
-          <Label htmlFor="visit_date" className={cn(language === 'ar' && 'text-right')}>{t('visit.date')}</Label>
+    <div className={cn("w-full space-y-6", language === 'ar' && 'rtl')}>
+      {/* Basic Information Grid */}
+      <div className={cn("grid grid-cols-1 lg:grid-cols-3 gap-6", language === 'ar' && 'rtl')}>
+        {/* Visit Date */}
+        <div className="space-y-2">
+          <Label 
+            htmlFor="visit_date" 
+            className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2", language === 'ar' && 'text-right flex-row-reverse')}
+          >
+            <Calendar className="w-4 h-4 text-[#2463EB]" />
+            {t('visit.date')} <span className="text-red-500">*</span>
+          </Label>
           <Input
             id="visit_date"
             type="date"
             {...register('visit_date', { required: t('form.required') })}
-            className={cn(language === 'ar' && 'text-right')}
+            className={cn(
+              "h-12 border-gray-300 bg-gray-50 focus:bg-white focus:border-[#2463EB] focus:ring-[#2463EB]/20 shadow-sm",
+              errors.visit_date && "border-red-500 focus:border-red-500 focus:ring-red-500/20",
+              language === 'ar' && 'text-right'
+            )}
           />
-          {errors.visit_date && <span className="text-red-500 text-sm">{errors.visit_date.message}</span>}
+          {errors.visit_date && (
+            <p className={cn("text-red-500 text-sm mt-1 flex items-center gap-1", language === 'ar' && 'text-right flex-row-reverse')}>
+              <AlertCircle className="w-3 h-3" />
+              {errors.visit_date.message}
+            </p>
+          )}
         </div>
 
-        <div>
-          <Label htmlFor="visit_type" className={cn(language === 'ar' && 'text-right')}>{t('visit.type')}</Label>
+        {/* Visit Type */}
+        <div className="space-y-2">
+          <Label 
+            htmlFor="visit_type" 
+            className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2", language === 'ar' && 'text-right flex-row-reverse')}
+          >
+            <Activity className="w-4 h-4 text-[#2463EB]" />
+            {t('visit.type')} <span className="text-red-500">*</span>
+          </Label>
           <Select
             value={(() => {
               const val = watch('visit_type') || '';
               return val;
             })()}
             onValueChange={(value) => {
-              if (value && value !== '') {  // Add this guard
+              if (value && value !== '') {
                 setValue('visit_type', value);
               }
             }}
           >
-            <SelectTrigger className={cn(language === 'ar' && 'text-right')}>
+            <SelectTrigger className={cn(
+              "h-12 border-gray-300 bg-gray-50 focus:bg-white focus:border-[#2463EB] focus:ring-[#2463EB]/20 shadow-sm",
+              errors.visit_type && "border-red-500 focus:border-red-500 focus:ring-red-500/20",
+              language === 'ar' && 'text-right'
+            )}>
               <SelectValue
                 placeholder={isLoadingTypes ? t('general.loading') : t('visit.selectType')}
               />
@@ -99,23 +124,39 @@ export const VisitInformationForm = ({
               )}
             </SelectContent>
           </Select>
-          {errors.visit_type && <span className="text-red-500 text-sm">{errors.visit_type.message}</span>}
+          {errors.visit_type && (
+            <p className={cn("text-red-500 text-sm mt-1 flex items-center gap-1", language === 'ar' && 'text-right flex-row-reverse')}>
+              <AlertCircle className="w-3 h-3" />
+              {errors.visit_type.message}
+            </p>
+          )}
         </div>
 
-        <div>
-          <Label htmlFor="status" className={cn(language === 'ar' && 'text-right')}>{t('visit.status')}</Label>
+        {/* Status */}
+        <div className="space-y-2">
+          <Label 
+            htmlFor="status" 
+            className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2", language === 'ar' && 'text-right flex-row-reverse')}
+          >
+            <ClipboardList className="w-4 h-4 text-[#2463EB]" />
+            {t('visit.status')} <span className="text-red-500">*</span>
+          </Label>
           <Select
             value={(() => {
               const val = watch('status') || '';
               return val;
             })()}
             onValueChange={(value) => {
-              if (value && value !== '') {  // Add this guard
+              if (value && value !== '') {
                 setValue('status', value);
               }
             }}
           >
-            <SelectTrigger className={cn(language === 'ar' && 'text-right')}>
+            <SelectTrigger className={cn(
+              "h-12 border-gray-300 bg-gray-50 focus:bg-white focus:border-[#2463EB] focus:ring-[#2463EB]/20 shadow-sm",
+              errors.status && "border-red-500 focus:border-red-500 focus:ring-red-500/20",
+              language === 'ar' && 'text-right'
+            )}>
               <SelectValue
                 placeholder={isLoadingStatuses ? t('general.loading') : t('visit.selectStatus')}
               />
@@ -141,45 +182,107 @@ export const VisitInformationForm = ({
               )}
             </SelectContent>
           </Select>
-          {errors.status && <span className="text-red-500 text-sm">{errors.status.message}</span>}
+          {errors.status && (
+            <p className={cn("text-red-500 text-sm mt-1 flex items-center gap-1", language === 'ar' && 'text-right flex-row-reverse')}>
+              <AlertCircle className="w-3 h-3" />
+              {errors.status.message}
+            </p>
+          )}
         </div>
       </div>
 
-      <div>
-        <Label htmlFor="chief_complaint" className={cn(language === 'ar' && 'text-right')}>{t('visit.chiefComplaint')}</Label>
+      {/* Chief Complaint */}
+      <div className="space-y-2">
+        <Label 
+          htmlFor="chief_complaint" 
+          className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2", language === 'ar' && 'text-right flex-row-reverse')}
+        >
+          <Stethoscope className="w-4 h-4 text-[#2463EB]" />
+          {t('visit.chiefComplaint')} <span className="text-red-500">*</span>
+        </Label>
         <Textarea
           id="chief_complaint"
           placeholder={t('visit.enterChiefComplaint')}
-          {...register('chief_complaint')}
-          className={cn(language === 'ar' && 'text-right')}
+          {...register('chief_complaint', { required: t('form.required') })}
+          className={cn(
+            "min-h-[100px] border-gray-300 bg-gray-50 focus:bg-white focus:border-[#2463EB] focus:ring-[#2463EB]/20 shadow-sm",
+            errors.chief_complaint && "border-red-500 focus:border-red-500 focus:ring-red-500/20",
+            language === 'ar' && 'text-right'
+          )}
         />
+        {errors.chief_complaint && (
+          <p className={cn("text-red-500 text-sm mt-1 flex items-center gap-1", language === 'ar' && 'text-right flex-row-reverse')}>
+            <AlertCircle className="w-3 h-3" />
+            {errors.chief_complaint.message}
+          </p>
+        )}
       </div>
 
-      <div>
-        <Label htmlFor="diagnosis" className={cn(language === 'ar' && 'text-right')}>{t('visit.diagnosis')}</Label>
-        <SimpleHistoryTextarea
-          id="diagnosis"
-          placeholder={t('visit.enterDiagnosis')}
-          value={watch('diagnosis')}
-          onChange={(value) => setValue('diagnosis', value)}
-          historyType="diagnosis"
-        />
-        {/* <Textarea
-          id="diagnosis"
-          placeholder={t('visit.enterDiagnosis')}
-          {...register('diagnosis')}
-          className={cn(language === 'ar' && 'text-right')}
-        /> */}
+      {/* Diagnosis */}
+      <div className="space-y-2">
+        <Label 
+          htmlFor="diagnosis" 
+          className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2", language === 'ar' && 'text-right flex-row-reverse')}
+        >
+          <FileText className="w-4 h-4 text-[#2463EB]" />
+          {t('visit.diagnosis')} <span className="text-red-500">*</span>
+        </Label>
+        <div className={cn(
+          "rounded-lg border border-gray-300 bg-gray-50 focus-within:bg-white focus-within:border-[#2463EB] focus-within:ring-2 focus-within:ring-[#2463EB]/20 shadow-sm transition-all duration-200",
+          errors.diagnosis && "border-red-500 focus-within:border-red-500 focus-within:ring-red-500/20"
+        )}>
+          <SimpleHistoryTextarea
+            id="diagnosis"
+            placeholder={t('visit.enterDiagnosis')}
+            value={watch('diagnosis')}
+            onChange={(value) => setValue('diagnosis', value)}
+            historyType="diagnosis"
+            className="border-0 bg-transparent focus:ring-0"
+            {...register('diagnosis', { required: t('form.required') })}
+          />
+        </div>
+        {errors.diagnosis && (
+          <p className={cn("text-red-500 text-sm mt-1 flex items-center gap-1", language === 'ar' && 'text-right flex-row-reverse')}>
+            <AlertCircle className="w-3 h-3" />
+            {errors.diagnosis.message}
+          </p>
+        )}
       </div>
 
-      <div>
-        <Label htmlFor="notes" className={cn(language === 'ar' && 'text-right')}>{t('visit.notes')}</Label>
+      {/* Notes */}
+      <div className="space-y-2">
+        <Label 
+          htmlFor="notes" 
+          className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2", language === 'ar' && 'text-right flex-row-reverse')}
+        >
+          <FileText className="w-4 h-4 text-gray-500" />
+          {t('visit.notes')} <span className="text-gray-400 text-xs">(Optional)</span>
+        </Label>
         <Textarea
           id="notes"
           placeholder={t('visit.enterNotes')}
           {...register('notes')}
-          className={cn(language === 'ar' && 'text-right')}
+          className={cn(
+            "min-h-[80px] border-gray-300 bg-gray-50 focus:bg-white focus:border-[#2463EB] focus:ring-[#2463EB]/20 shadow-sm",
+            language === 'ar' && 'text-right'
+          )}
         />
+      </div>
+
+      {/* Form Tips */}
+      <div className={cn("p-4 bg-blue-50 rounded-lg border border-blue-200", language === 'ar' && 'text-right')}>
+        <div className={cn("flex items-start gap-2 text-sm text-blue-800", language === 'ar' && 'flex-row-reverse')}>
+          <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+          <div>
+            <p className="font-medium mb-1">Form Guidelines:</p>
+            <ul className={cn("space-y-1 text-xs", language === 'ar' && 'text-right')}>
+              <li>• Fields marked with <span className="text-red-500">*</span> are required</li>
+              <li>• Chief complaint should describe the patient's main concern</li>
+              <li>• Diagnosis should include your clinical assessment</li>
+              <li>• Notes are optional but helpful for future reference</li>
+            </ul>
+          </div>
+        </div>
       </div>
     </div>
   );

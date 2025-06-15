@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import { managementMedicinesUrl, deleteMedicineUrl } from '@/components/constants.js';
-import { AddButton } from '../ui/enhanced-button';
+import { AddButton, DeleteButton, EditButton } from '../ui/enhanced-button';
 
 export const MedicinesPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -69,39 +69,44 @@ export const MedicinesPage = () => {
 
   return (
     <div className={cn("p-6", language === 'ar' && "rtl")}>
-      <div className={cn("flex justify-between items-center mb-6 p-6 bg-white rounded-xl shadow-md border border-gray-200", language === 'ar' && 'flex-row-reverse rtl')}>
-        <div className={cn("flex items-center gap-4", language === 'ar' && 'flex-row-reverse')}>
-          <div className="p-3 bg-[#2463EB] rounded-xl shadow-lg">
-            <Pill className="w-7 h-7 text-white" />
-          </div>
-          <h1 className={cn("text-3xl font-bold text-black", language === 'ar' && 'text-right')}>
-            {t('medicines.title')}
-          </h1>
-        </div>
+<div className={cn("flex justify-between items-center mb-8", language === 'ar' && 'flex-row-reverse rtl')}>
+  <div className={cn("flex items-center gap-4", language === 'ar' && 'flex-row-reverse')}>
+    <div className="p-3 bg-[#2463EB] rounded-xl shadow-lg">
+      <Pill className="w-7 h-7 text-white" />
+    </div>
+    <div>
+      <h1 className={cn("text-3xl font-bold text-gray-900", language === 'ar' && 'text-right')}>
+        {t('medicines.title')}
+      </h1>
+      <p className={cn("text-gray-600 mt-1", language === 'ar' && 'text-right')}>
+        Manage pharmaceutical inventory and medication database
+      </p>
+    </div>
+  </div>
 
-        <Dialog open={showForm} onOpenChange={setShowForm}>
-          <DialogTrigger asChild>
+  <Dialog open={showForm} onOpenChange={setShowForm}>
+    <DialogTrigger asChild>
+      <AddButton
+        size="sm"
+        onClick={() => { setSelectedMedicine(null) }}
+      >
+        {t('medicines.addNew')}
+      </AddButton>
+    </DialogTrigger>
+    <DialogContent className="max-w-2xl">
+      <DialogHeader>
+        <DialogTitle className={cn(language === 'ar' && 'text-right')}>
+          {selectedMedicine ? t('medicines.editMedicine') : t('medicines.addNew')}
+        </DialogTitle>
+      </DialogHeader>
+      <MedicineForm medicine={selectedMedicine} onSave={handleMedicineSaved} />
+    </DialogContent>
+  </Dialog>
+</div>
 
-            <AddButton
-              onClick={() => { setSelectedMedicine(null) }}
-            >
-              {t('medicines.addNew')}
-            </AddButton>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle className={cn(language === 'ar' && 'text-right')}>
-                {selectedMedicine ? t('medicines.editMedicine') : t('medicines.addNew')}
-              </DialogTitle>
-            </DialogHeader>
-            <MedicineForm medicine={selectedMedicine} onSave={handleMedicineSaved} />
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      <div className="mb-6 p-6 bg-white rounded-xl shadow-md border border-gray-200">
+<div className="mb-8 p-6 bg-white rounded-xl shadow-md border border-gray-200">
   <div className="space-y-3">
-    <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+    <label className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2", language === 'ar' && 'text-right flex-row-reverse')}>
       <Search className="w-4 h-4 text-[#2463EB]" />
       Search Medicines
     </label>
@@ -111,7 +116,7 @@ export const MedicinesPage = () => {
         language === 'ar' ? 'right-4' : 'left-4'
       )} />
       <Input
-        placeholder={t('medicines.searchPlaceholder')}
+        placeholder="Search by medicine name, manufacturer, or category..."
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
         className={cn(
@@ -122,7 +127,6 @@ export const MedicinesPage = () => {
     </div>
   </div>
 </div>
-
       <div className="bg-white rounded-lg shadow">
         <Table>
           <TableHeader>
@@ -147,15 +151,12 @@ export const MedicinesPage = () => {
                   <div className={cn("flex space-x-2", language === 'ar' ? 'justify-start flex-row-reverse space-x-reverse' : 'justify-end')}>
                     <Dialog>
                       <DialogTrigger asChild>
-                        <Button
-                          variant="outline"
+                        <EditButton
                           size="sm"
                           onClick={() => setSelectedMedicine(medicine)}
-                          className={cn(language === 'ar' && 'flex-row-reverse')}
                         >
-                          <Edit className="w-4 h-4 mr-2" />
                           {t('common.edit')}
-                        </Button>
+                        </EditButton>
                       </DialogTrigger>
                       <DialogContent className="max-w-2xl">
                         <DialogHeader>
@@ -167,10 +168,9 @@ export const MedicinesPage = () => {
 
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="outline" size="sm" className={cn(language === 'ar' && 'flex-row-reverse')}>
-                          <Trash2 className="w-4 h-4 mr-2" />
+                        <DeleteButton size="sm">
                           {t('common.delete')}
-                        </Button>
+                        </DeleteButton>
                       </AlertDialogTrigger>
                       <AlertDialogContent className={cn(language === 'ar' && 'rtl')}>
                         <AlertDialogHeader>
