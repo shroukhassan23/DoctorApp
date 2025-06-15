@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Plus, Search, Eye, Trash2 } from 'lucide-react';
+import { Plus, Search, Eye, Trash2, Users, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PatientForm } from './PatientForm';
@@ -82,9 +82,19 @@ export const PatientsPage = () => {
 
   return (
     <div className={cn("p-6", language === 'ar' && "rtl")}>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">{t('patients.title')}</h1>
-        <AddButton onClick={() => { setSelectedPatient(null); setShowForm(true); }}>
+      <div className="flex justify-between items-center mb-6 p-6 bg-white rounded-xl shadow-md border border-gray-200">
+        <div className="flex items-center gap-4">
+          <div className="p-3 bg-[#2463EB] rounded-xl shadow-lg">
+            <Users className="w-7 h-7 text-white" />
+          </div>
+          <h1 className="text-3xl font-bold text-black">
+            {t('patients.title')}
+          </h1>
+        </div>
+
+        <AddButton
+          onClick={() => { setSelectedPatient(null); setShowForm(true); }}
+        >
           {t('patients.addNew')}
         </AddButton>
       </div>
@@ -101,18 +111,28 @@ export const PatientsPage = () => {
         </DialogContent>
       </Dialog>
 
-      <div className="mb-6">
-        <div className="relative">
-          <Search className={cn(
-            "absolute top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4",
-            language === 'ar' ? 'right-3' : 'left-3'
-          )} />
-          <Input
-            placeholder={t('patients.searchPlaceholder')}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className={cn(language === 'ar' ? 'pr-10 text-right' : 'pl-10')}
-          />
+
+      <div className="mb-6 p-6 bg-white rounded-xl shadow-md border border-gray-200">
+        <div className="space-y-3">
+          <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+            <Search className="w-4 h-4 text-[#2463EB]" />
+            Search Patients
+          </label>
+          <div className="relative">
+            <Search className={cn(
+              "absolute top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5",
+              language === 'ar' ? 'right-4' : 'left-4'
+            )} />
+            <Input
+              placeholder={t('patients.searchPlaceholder')}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className={cn(
+                "h-12 border-gray-300 bg-gray-50 focus:bg-white focus:border-[#2463EB] focus:ring-[#2463EB]/20 shadow-sm",
+                language === 'ar' ? 'pr-12 text-right' : 'pl-12'
+              )}
+            />
+          </div>
         </div>
       </div>
 
