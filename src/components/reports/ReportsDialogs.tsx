@@ -49,10 +49,10 @@ export const ReportsDialogs = ({
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className={cn(language === 'ar' && 'text-right')}>
-                {t('reports.viewDetails')} - {selectedVisit.patients.name}
+                {t('reports.viewDetails')} - {selectedVisit.patient_name}
               </DialogTitle>
             </DialogHeader>
-            <VisitDetail visit={selectedVisit} patient={selectedVisit.patients} />
+            <VisitDetail visit={selectedVisit} patient={{ name: selectedVisit.patient_name, id: selectedVisit.patient_id }} />
           </DialogContent>
         </Dialog>
       )}
@@ -77,7 +77,7 @@ export const ReportsDialogs = ({
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className={cn(language === 'ar' && 'text-right')}>
-                {t('reports.editVisit')} - {editingVisit.patients.name}
+                {t('reports.editVisit')} - {editingVisit.patients_name}
               </DialogTitle>
             </DialogHeader>
             <VisitForm 
