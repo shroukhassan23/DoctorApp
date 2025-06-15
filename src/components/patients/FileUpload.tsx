@@ -33,8 +33,8 @@ export const FileUpload = ({ patientId, visitId, onUpload, isEmbedded = false }:
   const onSubmit = async (data: any) => {
     if (!selectedFile) {
       toast({ 
-        title: 'No file selected', 
-        description: 'Please select a file to upload.',
+        title: t('message.nofile'), 
+        description: t('message.pleaseSelectFile'),
         variant: 'destructive' 
       });
       return;
@@ -64,7 +64,7 @@ export const FileUpload = ({ patientId, visitId, onUpload, isEmbedded = false }:
         fileInput.value = '';
       }
       
-      toast({ title: 'File added successfully' });
+      toast({ title: t('message.fileAdded') });
       setIsUploading(false);
       return;
     }
@@ -89,7 +89,7 @@ export const FileUpload = ({ patientId, visitId, onUpload, isEmbedded = false }:
 
       const result = await response.json();
 
-      toast({ title: 'File uploaded successfully' });
+      toast({ title: t('message.fileUploaded') });
       reset();
       setSelectedFile(null);
       
@@ -103,7 +103,7 @@ export const FileUpload = ({ patientId, visitId, onUpload, isEmbedded = false }:
     } catch (error) {
       console.error('Error uploading file:', error);
       toast({ 
-        title: 'Error uploading file', 
+        title: t('message.fileUploadError'), 
         description: error instanceof Error ? error.message : 'Please try again.',
         variant: 'destructive' 
       });
@@ -164,7 +164,7 @@ export const FileUpload = ({ patientId, visitId, onUpload, isEmbedded = false }:
               className="flex items-center gap-2"
             >
               <Upload className="w-4 h-4" />
-              {isUploading ? 'Adding...' : t('visit.addFile')}
+              {isUploading ? t('message.add') : t('visit.addFile')}
             </Button>
           </div>
         </div>
@@ -202,7 +202,7 @@ export const FileUpload = ({ patientId, visitId, onUpload, isEmbedded = false }:
               className="flex items-center gap-2"
             >
               <Upload className="w-4 h-4" />
-              {isUploading ? 'Uploading...' : t('visit.uploadFile')}
+              {isUploading ? t('message.upload') : t('visit.uploadFile')}
             </Button>
           </div>
         </form>

@@ -88,7 +88,7 @@ useEffect(() => {
 
       if (!formData.name) {
         toast({
-          title: 'Validation Error',
+          title: t('message.validationError'),
           description: 'Patient name is required.',
           variant: 'destructive'
         });
@@ -97,7 +97,7 @@ useEffect(() => {
 
       if (!formData.date_of_birth) {
         toast({
-          title: 'Validation Error',
+          title: t('message.validationError'),
           description: 'Date of birth is required.',
           variant: 'destructive'
         });
