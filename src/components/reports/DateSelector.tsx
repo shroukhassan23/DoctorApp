@@ -2,7 +2,8 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
+import { SearchButton } from '@/components/ui/enhanced-button';
+import { Calendar, CalendarRange } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 
@@ -12,6 +13,7 @@ interface DateSelectorProps {
   onFromDateChange: (date: string) => void;
   onToDateChange: (date: string) => void;
   onSearch: () => void;
+  loading?: boolean;
 }
 
 export const DateSelector = ({
@@ -19,47 +21,103 @@ export const DateSelector = ({
   toDate,
   onFromDateChange,
   onToDateChange,
-  onSearch
+  onSearch,
+  loading = false
 }: DateSelectorProps) => {
   const { t, language } = useLanguage();
 
   return (
-    <Card className={cn(language === 'ar' && 'rtl')}>
-      <CardHeader>
-        <CardTitle className={cn(language === 'ar' && 'text-right')}>
+    <Card className={cn("shadow-lg border-0 bg-white", language === 'ar' && 'rtl')}>
+      <CardHeader className="pb-4">
+        <CardTitle className={cn("flex items-center gap-3 text-xl font-bold", language === 'ar' && 'flex-row-reverse text-right')}>
+          <div className="p-2 bg-[#2463EB] rounded-xl shadow-lg">
+            <CalendarRange className="w-6 h-6 text-white" />
+          </div>
           {t('reports.selectDateRange')}
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className={cn("flex gap-4 items-end flex-wrap", language === 'ar' && 'flex-row-reverse')}>
-          <div>
-            <Label htmlFor="from-date" className={cn(language === 'ar' && 'text-right')}>
+      <CardContent className="space-y-6">
+        <div className={cn("grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-end", language === 'ar' && 'lg:grid-cols-reverse')}>
+          {/* From Date */}
+          <div className="space-y-2">
+            <Label 
+              htmlFor="from-date" 
+              className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2", language === 'ar' && 'text-right flex-row-reverse')}
+            >
+              <Calendar className="w-4 h-4 text-[#2463EB]" />
               {t('reports.from')}
             </Label>
-            <Input
-              id="from-date"
-              type="date"
-              value={fromDate}
-              onChange={(e) => onFromDateChange(e.target.value)}
-              className="w-auto"
-            />
+            <div className="relative">
+              <Input
+                id="from-date"
+                type="date"
+                value={fromDate}
+                onChange={(e) => onFromDateChange(e.target.value)}
+                className={cn(
+                  "h-12 border-gray-300 bg-gray-50 focus:bg-white focus:border-[#2463EB] focus:ring-[#2463EB]/20 shadow-sm",
+                  language === 'ar' && 'text-right'
+                )}
+              />
+            </div>
           </div>
-          <div>
-            <Label htmlFor="to-date" className={cn(language === 'ar' && 'text-right')}>
+
+          {/* To Date */}
+          <div className="space-y-2">
+            <Label 
+              htmlFor="to-date" 
+              className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2", language === 'ar' && 'text-right flex-row-reverse')}
+            >
+              <Calendar className="w-4 h-4 text-[#2463EB]" />
               {t('reports.to')}
             </Label>
-            <Input
-              id="to-date"
-              type="date"
-              value={toDate}
-              onChange={(e) => onToDateChange(e.target.value)}
-              className="w-auto"
-            />
+            <div className="relative">
+              <Input
+                id="to-date"
+                type="date"
+                value={toDate}
+                onChange={(e) => onToDateChange(e.target.value)}
+                className={cn(
+                  "h-12 border-gray-300 bg-gray-50 focus:bg-white focus:border-[#2463EB] focus:ring-[#2463EB]/20 shadow-sm",
+                  language === 'ar' && 'text-right'
+                )}
+              />
+            </div>
           </div>
-          <Button onClick={onSearch}>
-            {t('common.search')}
-          </Button>
+
+          {/* Search Button */}
+          <div className="flex justify-start md:justify-end lg:justify-center">
+            <SearchButton 
+              onClick={onSearch}
+              loading={loading}
+              disabled={!fromDate || !toDate}
+              size="lg"
+              className="w-full md:w-auto px-8"
+            >
+              {t('common.search')}
+            </SearchButton>
+          </div>
         </div>
+
+        {/* Date Range Summary */}
+        {fromDate && toDate && (
+          <div className={cn("mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200", language === 'ar' && 'text-right')}>
+            <div className={cn("flex items-center gap-2 text-sm text-blue-800", language === 'ar' && 'flex-row-reverse')}>
+              <CalendarRange className="w-4 h-4" />
+              <span className="font-medium">
+                Selected Range: {fromDate} to {toDate}
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Validation Message */}
+        {fromDate && toDate && new Date(fromDate) > new Date(toDate) && (
+          <div className={cn("mt-2 p-3 bg-red-50 rounded-lg border border-red-200", language === 'ar' && 'text-right')}>
+            <p className="text-sm text-red-800 font-medium">
+              ⚠️ "From" date cannot be later than "To" date
+            </p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
