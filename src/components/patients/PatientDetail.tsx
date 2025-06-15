@@ -8,6 +8,8 @@ import { VisitHistory } from './patient-detail/VisitHistory';
 import { PatientFiles } from './patient-detail/PatientFiles';
 import { getPatientVisitsUrl, getPatientFilesUrl } from '@/components/constants.js';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { SectionLoading } from '@/components/ui/loading-spinner';
+
 interface PatientDetailProps {
   patient: any;
   onUpdate: () => void;
@@ -16,7 +18,7 @@ interface PatientDetailProps {
 export const PatientDetail = ({ patient, onUpdate }: PatientDetailProps) => {
   const [selectedVisit, setSelectedVisit] = useState<any>(null);
   const { t, language } = useLanguage();
-  const { data: visits, refetch: refetchVisits } = useQuery({
+  const { data: visits, isLoading: visitsLoading, refetch: refetchVisits } = useQuery({
     queryKey: ['patient-visits', patient.id],
     queryFn: async () => {
       const response = await fetch(getPatientVisitsUrl(patient.id));
@@ -26,7 +28,7 @@ export const PatientDetail = ({ patient, onUpdate }: PatientDetailProps) => {
     },
   });
 
-  const { data: files, refetch: refetchFiles } = useQuery({
+  const { data: files, isLoading: filesLoading, refetch: refetchFiles } = useQuery({
     queryKey: ['patient-files', patient.id],
     queryFn: async () => {
       const response = await fetch(getPatientFilesUrl(patient.id));
@@ -46,9 +48,9 @@ export const PatientDetail = ({ patient, onUpdate }: PatientDetailProps) => {
 
   return (
     <div className="space-y-6">
-      <PatientInformation 
-        patient={patient} 
-        onUpdate={onUpdate} 
+      <PatientInformation
+        patient={patient}
+        onUpdate={onUpdate}
         onVisitSaved={refetchVisits}
       />
 
@@ -57,25 +59,33 @@ export const PatientDetail = ({ patient, onUpdate }: PatientDetailProps) => {
           <TabsTrigger value="visits">{t('visit.visitHistory')}</TabsTrigger>
           <TabsTrigger value="files">{t('visit.visitDocuments')}</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="visits" className="space-y-4">
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-medium">{t('visit.visitHistory')}</h3>
           </div>
-          
-          <VisitHistory 
-            visits={visits} 
-            onVisitClick={handleVisitClick}
-            onVisitUpdated={handleVisitUpdated}
-          />
+
+          {visitsLoading ? (
+            <SectionLoading text={t('general.loading') || 'Loading visits...'}  variant="dots"  color="green" />
+          ) : (
+            <VisitHistory
+              visits={visits}
+              onVisitClick={handleVisitClick}
+              onVisitUpdated={handleVisitUpdated}
+            />
+          )}
         </TabsContent>
-        
+
         <TabsContent value="files" className="space-y-4">
-          <PatientFiles 
-            files={files} 
-            patientId={patient.id} 
-            onFileUploaded={refetchFiles}
-          />
+          {filesLoading ? (
+            <SectionLoading text={t('general.loading') || 'Loading files...'}  variant="dots"  color="green" />
+          ) : (
+            <PatientFiles
+              files={files}
+              patientId={patient.id}
+              onFileUploaded={refetchFiles}
+            />
+          )}
         </TabsContent>
       </Tabs>
 

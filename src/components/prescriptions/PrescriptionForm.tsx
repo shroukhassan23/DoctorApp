@@ -166,7 +166,7 @@ export const PrescriptionForm = ({
         <div>
           <Label htmlFor="patient">{t('patients.patient')}*</Label>
           {patientsLoading ? (
-            <SectionLoading text="Loading patients..." />
+            <SectionLoading text="Loading patients..." variant="pulse" color="orange"/>
           ) : (
             <Select
               value={selectedPatientId}
@@ -243,7 +243,7 @@ export const PrescriptionForm = ({
           onClick={isEmbedded ? handleSubmit(onSubmit) : undefined}
         >
           {isSubmitting ? (
-            <ButtonLoading text={prescription ? t('prescription.updating') : t('prescription.saving')} />
+            <ButtonLoading text={prescription ? t('prescription.updating') : t('prescription.saving')} variant="dots" color="green" />
           ) : (
             prescription ? t('prescription.update') : t('prescription.save')
           )}

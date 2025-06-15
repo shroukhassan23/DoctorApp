@@ -11,6 +11,8 @@ import { useVisitSubmission } from '@/hooks/useVisitSubmission';
 import { updateExistingPrescription, loadExistingPrescription } from './visit-form/PrescriptionUpdateHandler';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
+import { SectionLoading, ButtonLoading } from '@/components/ui/loading-spinner';
+
 import {
   addVisitUrl,
   getVisitPrescriptionUrl,
@@ -32,6 +34,7 @@ export const VisitForm = ({ patientId, visit, onSave }: VisitFormProps) => {
   const [currentPrescriptionData, setCurrentPrescriptionData] = useState<any>(null);
   const [visitTypes, setVisitTypes] = useState<any[]>([]);
   const [visitStatuses, setVisitStatuses] = useState<any[]>([]);
+  const [isLoadingVisitData, setIsLoadingVisitData] = useState(true);
   const { t, language } = useLanguage();
 
   const {
@@ -67,6 +70,7 @@ export const VisitForm = ({ patientId, visit, onSave }: VisitFormProps) => {
   // Fetch visit types and statuses
   useEffect(() => {
     const fetchVisitData = async () => {
+      setIsLoadingVisitData(true);
       try {
         const [typesResponse, statusesResponse] = await Promise.all([
           fetch(visitTypesPatientUrl),
@@ -84,18 +88,20 @@ export const VisitForm = ({ patientId, visit, onSave }: VisitFormProps) => {
         }
       } catch (error) {
         console.error('Error fetching visit data:', error);
+      } finally {
+        setIsLoadingVisitData(false);
       }
     };
 
     fetchVisitData();
   }, []);
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0'); // +1 because months are 0-based
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // +1 because months are 0-based
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
   // Populate form when editing
   useEffect(() => {
     if (visit && visitTypes.length > 0 && visitStatuses.length > 0) {
@@ -109,9 +115,9 @@ const formatDate = (dateString: string) => {
       }
 
       const formData = {
-        visit_date: visit.visit_date 
-    ?formatDate(visit.visit_date)
-    : formatDate(new Date().toISOString()),
+        visit_date: visit.visit_date
+          ? formatDate(visit.visit_date)
+          : formatDate(new Date().toISOString()),
         visit_type: String(visit.type_id || visit.visit_type || ''),
         chief_complaint: visit.chief_complaint || '',
         diagnosis: visit.diagnosis || '',
@@ -330,14 +336,18 @@ const formatDate = (dateString: string) => {
     <div className={cn(language === 'ar' && 'rtl')}>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Visit Details Section */}
-        <VisitInformationForm
-          register={register}
-          errors={errors}
-          setValue={setValue}
-          watch={watch}
-          visitTypes={visitTypes}
-          visitStatuses={visitStatuses}
-        />
+        {isLoadingVisitData ? (
+          <SectionLoading text={t('general.loading') || 'Loading visit form...'} variant="dots" color="blue" />
+        ) : (
+          <VisitInformationForm
+            register={register}
+            errors={errors}
+            setValue={setValue}
+            watch={watch}
+            visitTypes={visitTypes}
+            visitStatuses={visitStatuses}
+          />
+        )}
 
         {/* Prescription Section */}
         <VisitPrescriptionSection

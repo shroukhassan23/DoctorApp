@@ -14,6 +14,8 @@ import { formatDateToDDMMYYYY } from '@/lib/dateUtils';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import { patientUrl } from '@/components/constants.js'
+import { PageLoading, SectionLoading, TableLoading } from '@/components/ui/loading-spinner';
+
 export const PatientsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPatient, setSelectedPatient] = useState(null);
@@ -40,7 +42,12 @@ export const PatientsPage = () => {
     setShowForm(false);
   };
 
+  const [deletingPatient, setDeletingPatient] = useState<string | null>(null);
+
+
   const handleDelete = async (patientId: string) => {
+    setDeletingPatient(patientId);
+
     try {
       const response = await fetch(`http://localhost:3001/Patients/${patientId}`, {
         method: "DELETE",
@@ -63,11 +70,13 @@ export const PatientsPage = () => {
         description: t('message.error'),
         variant: 'destructive'
       });
+    } finally {
+      setDeletingPatient(null);
     }
   };
 
   if (isLoading) {
-    return <div className="p-6">{t('common.loading')}...</div>;
+    return <PageLoading text="Loading patients..." variant="pulse" color="blue" />;
   }
 
   return (
@@ -113,6 +122,9 @@ export const PatientsPage = () => {
       </div>
 
       <div className="bg-white rounded-lg shadow">
+      {isLoading ? (
+  <TableLoading rows={6} columns={7} />
+) : (
         <Table>
           <TableHeader>
             <TableRow>
@@ -151,7 +163,7 @@ export const PatientsPage = () => {
                         <DialogHeader>
                           <DialogTitle>{t('patients.viewDetails')} - {patient.name}</DialogTitle>
                           <DialogDescription>
-                           {t('patients.viewAndManage')}
+                            {t('patients.viewAndManage')}
                           </DialogDescription>
                         </DialogHeader>
                         <PatientDetail patient={patient} onUpdate={refetch} />
@@ -174,8 +186,16 @@ export const PatientsPage = () => {
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => handleDelete(patient.id)}>
-                            {t('common.delete')}
+                          <AlertDialogAction onClick={() => handleDelete(patient.id)}
+                            disabled={deletingPatient === patient.id} >
+                            {deletingPatient === patient.id ? (
+                              <div className="flex items-center gap-2">
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                {t('common.deleting')}
+                              </div>
+                            ) : (
+                              t('common.delete')
+                            )}
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
@@ -186,6 +206,7 @@ export const PatientsPage = () => {
             ))}
           </TableBody>
         </Table>
+        )}
 
         {filteredPatients.length === 0 && (
           <div className="text-center py-12">
