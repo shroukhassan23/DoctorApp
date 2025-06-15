@@ -98,6 +98,7 @@ const formatDate = (dateString: string) => {
 };
   // Populate form when editing
   useEffect(() => {
+    
     if (visit && visitTypes.length > 0 && visitStatuses.length > 0) {
 
       // Format date properly for input[type="date"]

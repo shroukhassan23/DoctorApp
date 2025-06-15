@@ -13,7 +13,10 @@ import { cn } from '@/lib/utils';
 import { searchText } from '@/lib/arabicUtils';
 
 export const ReportsPage = () => {
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+ const today = new Date().toISOString().split('T')[0];
+const [fromDate, setFromDate] = useState(today);
+const [toDate, setToDate] = useState(today);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [searchAllVisits, setSearchAllVisits] = useState(false);
   const [selectedVisit, setSelectedVisit] = useState<any>(null);
@@ -27,26 +30,27 @@ export const ReportsPage = () => {
   const { t, language } = useLanguage();
 
   const { data: visitStats, isLoading, refetch } = useQuery({
-    queryKey: ['visit-stats', selectedDate],
-    queryFn: async () => {
-      const response = await fetch(`http://localhost:3002/reports/visit-stats?date=${selectedDate}`);
-      if (!response.ok) throw new Error('Failed to fetch visit stats');
-      return await response.json();
-    }
-  });
+  queryKey: ['visit-stats', fromDate, toDate],
+  queryFn: async () => {
+    const response = await fetch(`http://localhost:3002/reports/visit-stats?from=${fromDate}&to=${toDate}`);
+    if (!response.ok) throw new Error('Failed to fetch visit stats');
+    return await response.json();
+  }
+});
 
-  const { data: visitDetails, refetch: refetchVisits } = useQuery({
-    queryKey: ['visit-details', selectedDate, searchAllVisits],
-    queryFn: async () => {
-      const url = searchAllVisits 
-        ? 'http://localhost:3002/reports/visits/all'
-        : `http://localhost:3002/reports/visits?date=${selectedDate}`;
-      
-      const response = await fetch(url);
-      if (!response.ok) throw new Error('Failed to fetch visit details');
-      return await response.json();
-    }
-  });
+
+const { data: visitDetails, refetch: refetchVisits } = useQuery({
+  queryKey: ['visit-details', fromDate, toDate, searchAllVisits],
+  queryFn: async () => {
+    const url = searchAllVisits
+      ? 'http://localhost:3002/reports/visits/all'
+      : `http://localhost:3002/reports/visits?from=${fromDate}&to=${toDate}`;
+
+    const response = await fetch(url);
+    if (!response.ok) throw new Error('Failed to fetch visit details');
+    return await response.json();
+  }
+});
 
   const filteredVisits = visitDetails?.filter(visit => {
     // Status filter
@@ -106,12 +110,20 @@ export const ReportsPage = () => {
 
   return (
     <div className={cn("container mx-auto p-6 space-y-6", language === 'ar' && 'rtl')}>
-      <ReportsPageHeader selectedDate={formatDateToDDMMYYYY(selectedDate)} />
+     <ReportsPageHeader selectedDate={`${formatDateToDDMMYYYY(fromDate)} - ${formatDateToDDMMYYYY(toDate)}`} />
 
-      <DateSelector 
-        selectedDate={selectedDate} 
-        onDateChange={setSelectedDate} 
-      />
+
+   <DateSelector 
+  fromDate={fromDate}
+  toDate={toDate}
+  onFromDateChange={setFromDate}
+  onToDateChange={setToDate}
+  onSearch={() => {
+    refetch();
+    refetchVisits();
+  }}
+/>
+
 
       <VisitStatsCards visitStats={visitStats} />
 
