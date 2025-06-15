@@ -104,7 +104,7 @@ export const PatientsPage = () => {
           <DialogHeader>
             <DialogTitle>{t('patients.addNew')}</DialogTitle>
             <DialogDescription>
-              Fill in the patient information below.
+              {t('patients.fill')}
             </DialogDescription>
           </DialogHeader>
           <PatientForm patient={selectedPatient} onSave={handlePatientSaved} />
@@ -116,7 +116,7 @@ export const PatientsPage = () => {
         <div className="space-y-3">
           <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
             <Search className="w-4 h-4 text-[#2463EB]" />
-            Search Patients
+            {t('patients.search')}
           </label>
           <div className="relative">
             <Search className={cn(

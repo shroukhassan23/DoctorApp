@@ -100,7 +100,7 @@ export const PatientFiles = ({ files, patientId, onFileUploaded }: PatientFilesP
       console.error('Error deleting file:', error);
       toast({
         title: t('message.fileDeleteError'),
-        description: error instanceof Error ? error.message : 'Please try again.',
+        description: error instanceof Error ? error.message : t('message.pleaseTryAgain'),
         variant: 'destructive'
       });
     } finally {
@@ -390,7 +390,7 @@ export const PatientFiles = ({ files, patientId, onFileUploaded }: PatientFilesP
           );
         })}
         {!files?.length && (
-          <p className="text-gray-500 text-center py-8">No general files uploaded yet.</p>
+          <p className="text-gray-500 text-center py-8">{t('patients.nogeneralFiles')}</p>
         )}
       </div>
 

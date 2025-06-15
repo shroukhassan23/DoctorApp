@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { formatDateToDDMMYYYY } from '@/lib/dateUtils';
-
+import { useLanguage } from '@/contexts/LanguageContext';
 export const PrescriptionsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPrescription, setSelectedPrescription] = useState(null);
@@ -30,7 +30,7 @@ export const PrescriptionsPage = () => {
       return await response.json();
     },
   });
-
+  const { t, language } = useLanguage();
   const filteredPrescriptions = prescriptions?.filter(prescription =>
     prescription.patient_name?.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
@@ -57,13 +57,13 @@ export const PrescriptionsPage = () => {
         throw new Error(errorData.error || 'Delete failed');
       }
 
-      toast({ title: 'Prescription deleted successfully' });
+      toast({ title: t('prescription.deleteSuccess') });
       refetch();
     } catch (error) {
       console.error('Error deleting prescription:', error);
       toast({ 
-        title: 'Error deleting prescription', 
-        description: 'Please try again.',
+        title: t('prescription.errorDelete'), 
+        description: t('message.pleaseTryAgain'),
         variant: 'destructive' 
       });
     }
@@ -97,7 +97,7 @@ export const PrescriptionsPage = () => {
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
-                {editingPrescription ? 'Edit Prescription' : 'Create New Prescription'}
+                {editingPrescription ? t('prescription.edit') : t('prescription.new')}
               </DialogTitle>
             </DialogHeader>
             <PrescriptionForm 
@@ -183,15 +183,15 @@ export const PrescriptionsPage = () => {
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                      <AlertDialogTitle> {t('common.areYouSure')}</AlertDialogTitle>
                       <AlertDialogDescription>
-                        This action cannot be undone. This will permanently delete the prescription.
+                        {t('common.areYouSure')} {t('common.cannotUndo')}
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
                       <AlertDialogAction onClick={() => handleDeletePrescription(prescription.id)}>
-                        Delete
+                      {t('common.delete')}
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
@@ -204,7 +204,7 @@ export const PrescriptionsPage = () => {
 
       {filteredPrescriptions.length === 0 && (
         <div className="text-center py-12">
-          <p className="text-gray-500">No prescriptions found. Create your first prescription to get started.</p>
+          <p className="text-gray-500">t('prescription.notFound').</p>
         </div>
       )}
 

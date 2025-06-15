@@ -33,7 +33,7 @@ export const VisitHistory = ({ visits, onVisitClick, onVisitUpdated }: VisitHist
         throw new Error(errorData.error || 'Delete failed');
       }
 
-      toast({ title: 'Visit deleted successfully' });
+      toast({ title: t('visit.deletedSuccess')});
       onVisitUpdated();
     } catch (error) {
       console.error('Error deleting visit:', error);
@@ -48,7 +48,7 @@ export const VisitHistory = ({ visits, onVisitClick, onVisitUpdated }: VisitHist
   const handleVisitUpdated = () => {
     onVisitUpdated();
     setEditingVisit(null);
-    toast({ title: 'Visit updated successfully' });
+    toast({ title: t('visit.updatedSuccess') });
   };
 
   const formatDate = (dateString: string) => {
@@ -128,15 +128,15 @@ export const VisitHistory = ({ visits, onVisitClick, onVisitUpdated }: VisitHist
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                      <AlertDialogTitle>{t('common.areYouSure')} </AlertDialogTitle>
                       <AlertDialogDescription>
-                        This action cannot be undone. This will permanently delete the visit record and all associated data.
+{t('common.cannotUndo')}
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
                       <DeleteButton onClick={() => handleDeleteVisit(visit.id)}>
-                        Delete
+                        {t('common.delete')}
                       </DeleteButton>
                     </AlertDialogFooter>
                   </AlertDialogContent>

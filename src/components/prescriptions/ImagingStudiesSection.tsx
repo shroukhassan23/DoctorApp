@@ -87,12 +87,12 @@ export const ImagingStudiesSection = ({ selectedImagingStudies, setSelectedImagi
           </div>
           {isStudySelected(study.id) && (
             <div className="ml-6">
-              <Label htmlFor={`notes-${study.id}`} className="text-xs text-gray-600">Comments</Label>
+              <Label htmlFor={`notes-${study.id}`} className="text-xs text-gray-600">{t('imaging.comment')}</Label>
               <Textarea
                 id={`notes-${study.id}`}
                 value={getStudyNotes(study.id)}
                 onChange={(e) => handleNotesChange(study.id, e.target.value)}
-                placeholder="Add comments for this imaging study..."
+                placeholder= {t('imaging.addComment')}
                 className="mt-1 min-h-[60px]"
               />
             </div>

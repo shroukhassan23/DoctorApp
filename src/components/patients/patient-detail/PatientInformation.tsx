@@ -77,7 +77,7 @@ export const PatientInformation = ({ patient, onUpdate, onVisitSaved }: PatientI
           <div className="col-span-2"><span className="font-medium">{t('patients.address')}:</span> {patient.address || 'N/A'}</div>
           <div className="col-span-2">
             <span className="font-medium">{t('patients.medicalHistory')}</span>
-            <p className="mt-1 text-gray-600">{patient.medical_history || 'No medical history recorded'}</p>
+            <p className="mt-1 text-gray-600">{patient.medical_history || t('patients.noMedicalhistory')}</p>
           </div>
         </div>
       </CardContent>

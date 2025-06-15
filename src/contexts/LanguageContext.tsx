@@ -54,6 +54,7 @@ const translations = {
      'patients.add':'Add Patient',
     'patients.age': 'Age',
     'patients.gender': 'Gender',
+    'patients.search':'Search Patients',
     'patients.dateOfBirth': 'Date of Birth',
 'patients.viewAndManage':'View and manage patient information, visits, and medical records.',
   'patients.phone': 'Phone',
@@ -72,17 +73,23 @@ const translations = {
     'patients.patient': 'Patient',
 'patients.generalFiles':'General Files & Documents',
 'patients.uploadFiles':'Upload General Files',
+'patients.nogeneralFiles':"No general files uploaded yet.",
+'patients.noMedicalhistory':'No medical history recorded',
     'patients.updatedSuccess': 'Patient data updated successfuly',
 'patients.errorSaving':'Error saving patient',
      'patients.addSuccess': 'Patient added successfuly',
      'patients.enterPhone':'Enter phone number' ,
      'patients.enterAddress':'Enter address',
      'patients.enterMedicalHistory':"Enter medical history, allergies, chronic conditions, etc.",
+     'patients.loading':"Loading patients...",
+     'patients.fill':'Fill in the patient information below.',
     // Medicines
     'medicines.title': 'Medicine Management',
     'medicines.medicine': 'Medicine',
     'medicines.addNew': 'Add New Medicine',
     'medicines.searchPlaceholder': 'Search medicines by name or manufacturer...',
+    'medicines.search': 'Search medicines',
+
     'medicines.dosage': 'Dosage',
     'medicines.form': 'Form',
     'medicines.manufacturer': 'Manufacturer',
@@ -116,6 +123,8 @@ const translations = {
     'labTests.tests':'Lab Tests',
 
     'labTests.searchPlaceholder': 'Search lab tests by name...',
+    'labTests.search': 'Search lab tests',
+
     'labTests.testName': 'Lab Test Name',
     'labTests.enterName': 'Enter lab test name',
     'labTests.enterDescription': 'Enter lab test description',
@@ -136,6 +145,8 @@ const translations = {
     'imaging.imaging':'Imaging Studies',
     'imaging.addNew': 'Add New Imaging Study',
     'imaging.searchPlaceholder': 'Search imaging studies by name...',
+    'imaging.search': 'Search imaging studies',
+
     'imaging.studyName': 'Imaging Study Name',
     'imaging.enterName': 'Enter imaging study name',
     'imaging.enterDescription': 'Enter imaging study description',
@@ -150,7 +161,8 @@ const translations = {
     'imaging.deletedSuccess': 'Imaging study deleted successfully',
     'imaging.errorSaving': 'Error saving imaging study',
     'imaging.errorDeleting': 'Error deleting imaging study',
-    
+    'imaging.addComment':"Add comments for this imaging study...",
+    'imaging.comment':"Comments",
     // Reports
     'reports.title': 'Daily Reports',
     'reports.selectDate': 'Select Date',
@@ -177,7 +189,9 @@ const translations = {
     'reports.deleteConfirm': 'This action cannot be undone. This will permanently delete this visit record and all associated data.',
     'reports.editVisit': 'Edit Visit',
     'reports.viewDetails': 'Visit Details',
-    
+    "reports.to":'to',
+    "reports.from":'from',
+    'reports.selectDateRange':'Date range',
     // Doctor Profile
     'profile.doctorProfile': 'Doctor Profile',
     'profile.createProfile': 'Create Profile',
@@ -188,6 +202,7 @@ const translations = {
     'profile.doctorTitle': 'Title',
     'profile.qualification': 'Qualification',
     'profile.specialization': 'Specialization',
+    'profile.clinicInfo':'Clinc info',
     'profile.clinicName': 'Clinic Name',
     'profile.clinicAddress': 'Clinic Address',
     'profile.phone': 'Phone',
@@ -209,7 +224,11 @@ const translations = {
     'profile.errorSaving': 'Error saving profile',
     'profile.loadingProfile': 'Loading profile...',
     'profile.title':"Doctor",
-    
+    'profile.clinicInformation':"Clinic information",
+    'profile.summary':"Profile Summary",
+    'profile.status':'Profile Status',
+   'profile.manageInfo':'Manage your professional information',
+   'profile.create':'Create your professional profile',
     // Visit Details
     'visit.information': 'Visit Information',
     'visit.date': 'Date',
@@ -261,6 +280,7 @@ const translations = {
     'visit.recordeSuccess':'Visit recorded successfully',
      'visit.saveFail':'Error saving visit',
      'visit.loading':'Loading visit form...',
+     'visit.deletedSuccess':'Visit deleted successfully' ,
     // Prescription
     'prescription.date': 'Prescription Date',
     'prescription.diagnosis': 'Diagnosis',
@@ -277,6 +297,9 @@ const translations = {
      'prescription.enterNotes': "Enter prescription notes...",
     'prescription.updateSuccess':'Prescription updated successfully',
     'prescription.savedSuccess':'Prescription saved successfully',
+    'prescription.deleteSuccess':'Prescription deleted successfully',
+ 'prescription.errorDelete':'Error deleting prescription',
+    'prescription.notFound':'No prescriptions found. Create your first prescription to get started',
     'prescription.notSavedSuccess':'Error saving prescription',
 
 
@@ -291,7 +314,7 @@ const translations = {
     'message.success': 'Operation completed successfully',
     'message.error': 'An error occurred. Please try again.',
     'message.fileDownloaded': 'File downloaded successfully',
-    
+    'message.pleaseSelectPatient':'Please select a patient.',
     'message.fileUploadError': 'Error uploading file',
     'message.patientDeleted': 'Patient deleted successfully',
     'message.patientDeleteError': 'Error deleting patient',
@@ -349,6 +372,7 @@ const translations = {
     // Patients
     'patients.title': 'إدارة المرضى',
     'patients.addNew': 'إضافة مريض جديد',
+    'patients.search':'البحث عن مريض',
     'patients.searchPlaceholder': 'البحث عن المرضى بالاسم أو الهاتف...',
     'patients.name': 'الاسم',
     'patients.enterFullName':"ادخل اسم المريض بالكامل",
@@ -357,7 +381,7 @@ const translations = {
     'patients.dateOfBirth': 'تاريخ الميلاد',
     'patients.phone': 'الهاتف',
     'patients.address': 'العنوان',
-     'patients.medicalHistory': 'التاريخ المرضي',
+     'patients.medicalHistory': 'التاريخ الطبي',
     'patients.viewDetails': 'عرض التفاصيل',
     'patients.noPatients': 'لم يتم العثور على مرضى. أضف أول مريض للبدء.',
     'patients.deleteConfirm': 'هل أنت متأكد؟',
@@ -371,7 +395,9 @@ const translations = {
      'patients.editInfo':'تعديل بيانات المريض',
     'patients.fullName': 'الاسم بالكامل',
     'patients.patient': 'مريض',
+    'patients.noMedicalhistory':'لا يوجد تاريخ طبي',
 'patients.generalFiles':'الملفات و المستندات',
+'patients.nogeneralFiles':'لا يوجد ملفات',
 'patients.uploadFiles':'تحميل الملفات ',
 'patients.viewAndManage':'عرض و إدارة معلومات المريض ,الزيارات و السجلات الطبيه ',
     'patients.updatedSuccess': 'تم تحديث بيانات المريض  بنجاح',
@@ -380,7 +406,8 @@ const translations = {
      'patients.enterPhone':'ادخل رقم التليفون' ,
      'patients.enterAddress':'ادخل العنوان',
      'patients.enterMedicalHistory':"ادخل التاريخ الطبي",
-
+'patients.loading':'جاري تحميل المرضى',
+'patients.fill':'املأ معلومات المريض في الأسفل',
   // Medicines
     
     'medicines.title': 'إدارة الأدوية',
@@ -414,7 +441,7 @@ const translations = {
     'medicines.errorDeleting': 'خطأ في حذف الدواء',
    'medicines.instructions':'التعليمات',
    'medicines.select':'أختر الدواء',
-
+    'medicines.search': 'البحث عن الأدويه',
     
     // Lab Tests
     'labTests.title': 'إدارة التحاليل المخبرية',
@@ -435,6 +462,7 @@ const translations = {
     'labTests.deletedSuccess': 'تم حذف التحليل المخبري بنجاح',
     'labTests.errorSaving': 'خطأ في حفظ التحليل المخبري',
     'labTests.errorDeleting': 'خطأ في حذف التحليل المخبري',
+    'labTests.search': 'البحث عن التحاليل',
     
     // Imaging Studies
     'imaging.title': 'إدارة الأشعة',
@@ -455,9 +483,13 @@ const translations = {
     'imaging.deletedSuccess': 'تم حذف الأشعة بنجاح',
     'imaging.errorSaving': 'خطأ في حفظ الأشعة',
     'imaging.errorDeleting': 'خطأ في حذف الأشعة',
-    
+    'imaging.addComment':'اضف تعليق لهذه الاشعه',
+    'imaging.comment':"تعليقات",
+    'imaging.search': "البحث عن الأشعه",
     // Reports
     'reports.title': 'التقارير اليومية',
+    "reports.to":'من',
+    "reports.from":'إلى',
     'reports.selectDate': 'اختيار التاريخ',
     'reports.reportDate': 'تاريخ التقرير',
     'reports.totalVisits': 'إجمالي الزيارات',
@@ -482,13 +514,17 @@ const translations = {
     'reports.deleteConfirm': 'لا يمكن التراجع عن هذا الإجراء. سيؤدي هذا إلى حذف سجل الزيارة نهائياً وجميع البيانات المرتبطة بها.',
     'reports.editVisit': 'تعديل الزيارة',
     'reports.viewDetails': 'تفاصيل الزيارة',
-    
+    'reports.selectDateRange':'تحديد التاريخ',
     // Doctor Profile
     'profile.doctorProfile': 'ملف الطبيب',
     'profile.createProfile': 'إنشاء ملف شخصي',
     'profile.editProfile': 'تعديل الملف الشخصي',
     'profile.updateProfile': 'تحديث الملف الشخصي',
     'profile.doctorInformation': 'معلومات الطبيب',
+    'profile.clinicInformation': 'معلومات العياده',
+    'profile.clinicInfo':'معلومات العياده',
+'profile.manageInfo':"تحكم في ادارة معلوماتك الشخصيه",
+
     'profile.fullName': 'الاسم الكامل',
     'profile.doctorTitle': 'اللقب',
     'profile.qualification': 'المؤهل',
@@ -507,6 +543,10 @@ const translations = {
     'profile.enterEmail': 'أدخل عنوان البريد الإلكتروني',
     'profile.nameRequired': 'الاسم مطلوب',
     'profile.titleRequired': 'اللقب مطلوب',
+    'profile.summary':"ملخص الصفحه الشخصيه",
+    'profile.status':'حاله الصفحه الشخصيه',
+   'profile.create':'إنشئ ملفك الشخصي',
+    
     'profile.noProfile': 'لم يتم إنشاء ملف شخصي',
     'profile.noProfileDescription': 'أنشئ ملفك الشخصي للظهور في الوصفات الطبية',
     'profile.createdSuccess': 'تم إنشاء الملف الشخصي بنجاح',
@@ -562,6 +602,7 @@ const translations = {
     'visit.updatePatientDetails':'تحديث بيانات المريض و المعلومات الطبيه ',
  'visit.previewFile':'عرض',
      'visit.updatedSuccess':'تم تحديث الزياره بنجاح',
+     'visit.deletedSuccess':'تم حذف الزياره بنجاح',
      'visit.recordeSuccess':'تم تسجيل الزياره بنجاح',
      'visit.saveFail':'خطأ في حفظ الزياره',
      'visit.loading':'تحميل الزياره من...',
@@ -581,9 +622,10 @@ const translations = {
      'prescription.enterNotes': "أدخل الملاحظات",
     'prescription.updateSuccess':'تم تعديل الوصفه الطبيه بنجاح',
     'prescription.savedSuccess':'تم حفظ الوصفه الطبيه بنجاح',
-    'prescription.notSavedSuccess':'لم يتم حفظ الوصفه الطبيه ',
-
-    
+    'prescription.notSavedSuccess':'خطأ في حفظ الوصفه الطبيه ',
+ 'prescription.deleteSuccess':"تم حذف الوصفه الطبيه بنجاح",
+    'prescription.errorDelete':"خطأ في حذف الوصفه الطبيه",
+    'prescription.notFound':'إنشئ وصفه للبدء,لا يوجد وصفات طبيه',
     // Forms
     'form.required': 'هذا الحقل مطلوب',
     'form.selectFile': 'اختر ملف',
@@ -612,6 +654,8 @@ const translations = {
 'message.prepared':'تم تجهيز الملف للرفع',
 'message.savePrescription':'احفظ الوصف الطبيه اولا',
 'message.fileDeleteError':'خطأ في حذف الملف',
+    'message.pleaseSelectPatient':'اختر مريض',
+
   },
 };
 

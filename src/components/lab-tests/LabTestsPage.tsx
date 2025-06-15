@@ -110,7 +110,7 @@ export const LabTestsPage = () => {
         <div className="space-y-3">
           <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
             <Search className="w-4 h-4 text-[#2463EB]" />
-            Search Lab Tests
+            {t('labTests.search')}
           </label>
           <div className="relative">
             <Search className={cn(

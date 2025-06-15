@@ -123,8 +123,8 @@ reset({
 
     if (!targetPatientId) {
       toast({
-        title: 'Error',
-        description: 'Please select a patient.',
+        title: t('message.error'),
+        description: t('message.pleaseSelectPatient'),
         variant: 'destructive'
       });
       return;
@@ -151,8 +151,8 @@ reset({
     } catch (error) {
       console.error('Error saving prescription:', error);
       toast({
-        title: 'Error saving prescription',
-        description: 'Please try again.',
+        title: t('prescription.notSavedSuccess'),
+        description: t('message.pleaseTryAgain'),
         variant: 'destructive'
       });
     } finally {
@@ -167,7 +167,7 @@ reset({
         <div>
           <Label htmlFor="patient">{t('patients.patient')}*</Label>
           {patientsLoading ? (
-            <SectionLoading text="Loading patients..." variant="pulse" color="orange"/>
+            <SectionLoading text={t('patients.loading')}variant="pulse" color="orange"/>
           ) : (
             <Select
               value={selectedPatientId}
