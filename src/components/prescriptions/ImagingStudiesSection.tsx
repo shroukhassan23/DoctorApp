@@ -6,6 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {visitImagingStudiesPatientUrl } from '@/components/constants.js';
+import { SectionLoading } from '@/components/ui/loading-spinner';
 
 interface ImagingStudiesSectionProps {
   selectedImagingStudies: Array<{ studyId: string; name?: string; notes?: string }>;
@@ -13,7 +14,7 @@ interface ImagingStudiesSectionProps {
 }
 
 export const ImagingStudiesSection = ({ selectedImagingStudies, setSelectedImagingStudies }: ImagingStudiesSectionProps) => {
-  const { data: imagingStudies } = useQuery({
+  const { data: imagingStudies, isLoading: imagingStudiesLoading } = useQuery({
     queryKey: ['imaging_studies'],
     queryFn: async () => {
      const response =  await fetch(visitImagingStudiesPatientUrl);
@@ -30,10 +31,7 @@ export const ImagingStudiesSection = ({ selectedImagingStudies, setSelectedImagi
   };
 
   const isStudySelected = (studyId: number | string) => {
-    const result = selectedImagingStudies.some(s => String(s.studyId) === String(studyId));
-    console.log(`🔍 isStudySelected(${studyId}):`, result, 'comparing with:', selectedImagingStudies.map(s => s.studyId));
-    return result;
-
+    return selectedImagingStudies.some(s => String(s.studyId) === String(studyId));
   };
 
   const onImagingStudyChange = (studyId: number | string, checked: boolean, notes?: string) => {
@@ -71,35 +69,39 @@ export const ImagingStudiesSection = ({ selectedImagingStudies, setSelectedImagi
         <CardTitle className="text-lg">{t('imaging.imaging')}</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          {imagingStudies?.map((study) => (
-            <div key={study.id} className="space-y-2">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id={`study-${study.id}`}
-                  checked={isStudySelected(study.id)}
-                  onCheckedChange={(checked) => onImagingStudyChange(study.id, checked as boolean, getStudyNotes(study.id))}
-                />
-                <Label htmlFor={`study-${study.id}`} className="text-sm">
-                  {study.name?.trim() || 'Unnamed Study'}
-                </Label>
-              </div>
-              {isStudySelected(study.id) && (
-                <div className="ml-6">
-                  <Label htmlFor={`notes-${study.id}`} className="text-xs text-gray-600">Comments</Label>
-                  <Textarea
-                    id={`notes-${study.id}`}
-                    value={getStudyNotes(study.id)}
-                    onChange={(e) => handleNotesChange(study.id, e.target.value)}
-                    placeholder="Add comments for this imaging study..."
-                    className="mt-1 min-h-[60px]"
-                  />
-                </div>
-              )}
+  {imagingStudiesLoading ? (
+    <SectionLoading text={t('general.loading') || 'Loading imaging studies...'} />
+  ) : (
+    <div className="space-y-4">
+      {imagingStudies?.map((study) => (
+        <div key={study.id} className="space-y-2">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id={`study-${study.id}`}
+              checked={isStudySelected(study.id)}
+              onCheckedChange={(checked) => onImagingStudyChange(study.id, checked as boolean, getStudyNotes(study.id))}
+            />
+            <Label htmlFor={`study-${study.id}`} className="text-sm">
+              {study.name?.trim() || 'Unnamed Study'}
+            </Label>
+          </div>
+          {isStudySelected(study.id) && (
+            <div className="ml-6">
+              <Label htmlFor={`notes-${study.id}`} className="text-xs text-gray-600">Comments</Label>
+              <Textarea
+                id={`notes-${study.id}`}
+                value={getStudyNotes(study.id)}
+                onChange={(e) => handleNotesChange(study.id, e.target.value)}
+                placeholder="Add comments for this imaging study..."
+                className="mt-1 min-h-[60px]"
+              />
             </div>
-          ))}
+          )}
         </div>
-      </CardContent>
+      ))}
+    </div>
+  )}
+</CardContent>
     </Card>
   );
 };
