@@ -196,7 +196,7 @@ export const PatientFiles = ({ files, patientId, onFileUploaded }: PatientFilesP
                 </Button>
               </>
             )}
-            <Button style={{marginRight: '30px'}} variant="outline" size="sm" onClick={() => handleDownload(file)}>
+            <Button style={{marginRight: '50px'}} variant="outline" size="sm" onClick={() => handleDownload(file)}>
               <Download className="w-4 h-4" />
             </Button>
           </div>
