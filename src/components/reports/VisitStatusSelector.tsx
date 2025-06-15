@@ -1,51 +1,40 @@
-
-import React from 'react';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import React, { useState } from 'react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { cn } from '@/lib/utils';
 
 interface VisitStatusSelectorProps {
-  visitId: string;
+  visitId: number;
   currentStatus: string;
   patientName: string;
-  onStatusChangeRequest: (visitId: string, newStatus: string, patientName: string) => void;
+  onStatusChangeRequest: (visitId: number, newStatus: string, patientName: string) => void;
 }
 
-export const VisitStatusSelector = ({ 
-  visitId, 
-  currentStatus, 
-  patientName, 
-  onStatusChangeRequest 
+export const VisitStatusSelector = ({
+  visitId,
+  currentStatus,
+  patientName,
+  onStatusChangeRequest,
 }: VisitStatusSelectorProps) => {
   const { t, language } = useLanguage();
+  const [selectedStatus, setSelectedStatus] = useState(currentStatus);
+
+  const handleStatusChange = (newStatus: string) => {
+    if (newStatus !== currentStatus) {
+      onStatusChangeRequest(visitId, newStatus, patientName);
+      setSelectedStatus(newStatus);
+    }
+  };
 
   return (
-    <div className={cn("flex flex-col items-center space-y-2", language === 'ar' && 'items-end')}>
-      <label className="text-xs text-gray-600">{t('visit.changeStatus')}</label>
-      <RadioGroup
-        value={currentStatus}
-        onValueChange={(value) => onStatusChangeRequest(visitId, value, patientName)}
-        className="flex flex-col space-y-1"
-      >
-        <div className="flex items-center space-x-2">
-          <RadioGroupItem value="waiting" id={`waiting-${visitId}`} />
-          <label htmlFor={`waiting-${visitId}`} className="text-xs cursor-pointer">
-            {t('visit.waiting')}
-          </label>
-        </div>
-        <div className="flex items-center space-x-2">
-          <RadioGroupItem value="completed" id={`completed-${visitId}`} />
-          <label htmlFor={`completed-${visitId}`} className="text-xs cursor-pointer">
-            {t('visit.completed')}
-          </label>
-        </div>
-        <div className="flex items-center space-x-2">
-          <RadioGroupItem value="cancelled" id={`cancelled-${visitId}`} />
-          <label htmlFor={`cancelled-${visitId}`} className="text-xs cursor-pointer">
-            {t('visit.cancelled')}
-          </label>
-        </div>
-      </RadioGroup>
-    </div>
+    <Select value={selectedStatus} onValueChange={handleStatusChange}>
+      <SelectTrigger className="w-[120px]">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent side={language === 'ar' ? 'left' : 'right'}>
+        <SelectItem value="waiting">{t('visit.waiting')}</SelectItem>
+        <SelectItem value="completed">{t('visit.completed')}</SelectItem>
+        <SelectItem value="cancelled">{t('visit.cancelled')}</SelectItem>
+      </SelectContent>
+    </Select>
   );
 };

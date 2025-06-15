@@ -32,7 +32,7 @@ const [toDate, setToDate] = useState(today);
   const { data: visitStats, isLoading, refetch } = useQuery({
   queryKey: ['visit-stats', fromDate, toDate],
   queryFn: async () => {
-    const response = await fetch(`http://localhost:3002/reports/visit-stats?from=${fromDate}&to=${toDate}`);
+    const response = await fetch(`http://localhost:3003/reports/visit-stats?from=${fromDate}&to=${toDate}`);
     if (!response.ok) throw new Error('Failed to fetch visit stats');
     return await response.json();
   }
@@ -43,8 +43,8 @@ const { data: visitDetails, refetch: refetchVisits } = useQuery({
   queryKey: ['visit-details', fromDate, toDate, searchAllVisits],
   queryFn: async () => {
     const url = searchAllVisits
-      ? 'http://localhost:3002/reports/visits/all'
-      : `http://localhost:3002/reports/visits?from=${fromDate}&to=${toDate}`;
+      ? 'http://localhost:3003/reports/visits/all'
+      : `http://localhost:3003/reports/visits?from=${fromDate}&to=${toDate}`;
 
     const response = await fetch(url);
     if (!response.ok) throw new Error('Failed to fetch visit details');
@@ -67,9 +67,15 @@ const { data: visitDetails, refetch: refetchVisits } = useQuery({
     return !searchTerm || matchesTextSearch;
   }) || [];
 
-  const handleEditVisit = (visit: any) => {
-    setEditingVisit(visit);
-  };
+const handleEditVisit = (visit: any) => {
+  setEditingVisit({
+    ...visit,
+    patient: {
+      name: visit.patient_name || '',
+    },
+  });
+};
+
 
   const handleVisitUpdated = () => {
     refetchVisits();
