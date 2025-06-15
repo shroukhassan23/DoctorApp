@@ -281,9 +281,20 @@ const translations = {
     'message.success': 'Operation completed successfully',
     'message.error': 'An error occurred. Please try again.',
     'message.fileDownloaded': 'File downloaded successfully',
+    
     'message.fileUploadError': 'Error uploading file',
     'message.patientDeleted': 'Patient deleted successfully',
     'message.patientDeleteError': 'Error deleting patient',
+    'message.fileUploaded':'File Uploaded Successfuly',
+    'message.nofile':'No file selected',
+    'message.pleaseSelectFile':'Please select a file to upload.',
+    'message.fileAdded':'File added successfully',
+    'message.add':'Adding...',
+'message.upload':'Uploading...',
+'message.validationError':'Validation Error',
+'message.patientNameRequired':'patient name is required',
+'message.dateRequired':'Date of birth is required',
+
   },
   ar: {
     // Navigation
@@ -554,6 +565,16 @@ const translations = {
     'message.fileUploadError': 'خطأ في رفع الملف',
     'message.patientDeleted': 'تم حذف المريض بنجاح',
     'message.patientDeleteError': 'خطأ في حذف المريض',
+    'message.nofile':'لم يتم تحديد ملف',
+    'message.pleaseSelectFile':'اختر ملف للرفع',
+    'message.fileAdded':'تم إضافة الملف بنجاح',
+    'message.add':'جاري الإضافه...',
+'message.upload':'جاري الرفع...',
+'message.validationError':'خطأ في التحقق',
+'message.patientNameRequired':'اسم المريض مطلوب',
+'message.dateRequired':'تاريخ الميلاد مطلوب',
+
+
   },
 };
 
