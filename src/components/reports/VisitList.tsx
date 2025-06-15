@@ -16,44 +16,47 @@ interface VisitListProps {
   onViewPatient: (patient: any) => void;
 }
 
-export const VisitList = ({ 
-  visits, 
-  isLoading, 
-  searchTerm, 
-  onViewVisit, 
+export const VisitList = ({
+  visits,
+  isLoading,
+  searchTerm,
+  onViewVisit,
   onEditVisit,
   onVisitUpdated,
-  onViewPatient 
+  onViewPatient
 }: VisitListProps) => {
   const { t, language } = useLanguage();
   const { toast } = useToast();
+
   const [statusChangeConfirm, setStatusChangeConfirm] = useState<{
-    visitId: string;
+    visitId: number;
     newStatus: string;
     patientName: string;
   } | null>(null);
 
   if (isLoading) {
-    return <div className={cn("text-center py-8", language === 'ar' && 'text-right')}>{t('reports.loadingVisits')}</div>;
-  }
-
-  if (visits.length === 0) {
-    if (searchTerm) {
-      return (
-        <div className={cn("text-center py-8", language === 'ar' && 'text-right')}>
-          <p className="text-gray-500">{t('reports.noVisitsSearch')}</p>
-        </div>
-      );
-    }
-
     return (
       <div className={cn("text-center py-8", language === 'ar' && 'text-right')}>
-        <p className="text-gray-500">{t('reports.noVisitsDate')}</p>
+        {t('reports.loadingVisits')}
       </div>
     );
   }
 
-  const handleStatusChangeRequest = (visitId: string, newStatus: string, patientName: string) => {
+  if (visits.length === 0) {
+    return (
+      <div className={cn("text-center py-8", language === 'ar' && 'text-right')}>
+        <p className="text-gray-500">
+          {searchTerm ? t('reports.noVisitsSearch') : t('reports.noVisitsDate')}
+        </p>
+      </div>
+    );
+  }
+
+  const handleStatusChangeRequest = (
+    visitId: number,
+    newStatus: string,
+    patientName: string
+  ) => {
     setStatusChangeConfirm({
       visitId,
       newStatus,
@@ -65,14 +68,14 @@ export const VisitList = ({
     if (!statusChangeConfirm) return;
 
     try {
+      const statusId = getStatusId(statusChangeConfirm.newStatus);
+
       const response = await fetch(updateVisitUrl(statusChangeConfirm.visitId), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          status_id: getStatusId(statusChangeConfirm.newStatus)
-        })
+        body: JSON.stringify({ status_id: statusId })
       });
 
       if (!response.ok) {
@@ -81,15 +84,14 @@ export const VisitList = ({
       }
 
       toast({ title: t('visit.statusUpdated') });
-      if (onVisitUpdated) {
-        onVisitUpdated();
-      }
+
+      if (onVisitUpdated) onVisitUpdated();
     } catch (error) {
       console.error('Error updating visit status:', error);
-      toast({ 
-        title: t('reports.errorUpdating'), 
+      toast({
+        title: t('reports.errorUpdating'),
         description: t('form.tryAgain'),
-        variant: 'destructive' 
+        variant: 'destructive'
       });
     } finally {
       setStatusChangeConfirm(null);
@@ -97,13 +99,16 @@ export const VisitList = ({
   };
 
   const getStatusId = (status: string) => {
-    // Map status names to IDs based on your database
+    const normalized = status.toLowerCase();
     const statusMap: Record<string, number> = {
       'waiting': 1,
       'completed': 2,
-      'cancelled': 3
+      'cancelled': 3,
+      'انتظار': 1,
+      'منتهية': 2,
+      'ملغاة': 3
     };
-    return statusMap[status] || 1;
+    return statusMap[normalized] || 1;
   };
 
   const handleViewPatientDetails = (patient: any) => {
@@ -122,8 +127,10 @@ export const VisitList = ({
             key={visit.id}
             visit={visit}
             onViewDetails={handleViewPatientDetails}
-            onEditVisit={onEditVisit}
-            onStatusChangeRequest={handleStatusChangeRequest}
+             onEditVisit={() => onEditVisit({ ...visit, patient: { name: visit.patient_name } })}
+            onStatusChangeRequest={(visitId: number, newStatus: string) =>
+              handleStatusChangeRequest(visitId, newStatus, visit.patient_name)
+            }
           />
         ))}
       </div>
