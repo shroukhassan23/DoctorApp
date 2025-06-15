@@ -194,7 +194,6 @@ export const PatientsPage = () => {
                         <AlertDialogTrigger asChild>
                           <DeleteButton
                             size="sm"
-                            onClick={() => handleDelete(patient.id)}
                             disabled={deletingPatient === patient.id}
                             loading={deletingPatient === patient.id}
                           >

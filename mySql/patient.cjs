@@ -8,7 +8,7 @@ app.use(express.json());
 // GET all Patients
 app.get('/Patients', async (req, res) => {
   try {
-    const [rows] = await db.query('SELECT * FROM patients');
+    const [rows] = await db.query('SELECT * FROM patients WHERE deleted_at IS NULL');
     res.send(rows);
   } catch (err) {
     res.status(500).send(err);
@@ -104,13 +104,16 @@ app.delete('/Patients/:id', async (req, res) => {
   console.log('Received DELETE request for patient ID:', id);
 console.log(res);
   try {
-    const [result] = await db.query('DELETE FROM patients WHERE id = ?', [id]);
+    const [result] = await db.query(
+      'UPDATE patients SET deleted_at = NOW() WHERE id = ? AND deleted_at IS NULL', 
+      [id]
+    );
 
     if (result.affectedRows === 0) {
       return res.status(404).send({ error: 'Patient not found' });
     }
 
-    res.sendStatus(200);
+    res.json({ success: true, message: 'Patient marked as deleted' });
   } catch (err) {
     res.status(500).send({ error: err.message });
   }
