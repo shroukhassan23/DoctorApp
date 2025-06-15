@@ -9,6 +9,8 @@ import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { deleteVisitUrl } from '@/components/constants.js';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { DeleteButton, EditButton } from '@/components/ui/enhanced-button';
+
 
 interface VisitHistoryProps {
   visits: any[];
@@ -30,15 +32,15 @@ export const VisitHistory = ({ visits, onVisitClick, onVisitUpdated }: VisitHist
         const errorData = await response.json();
         throw new Error(errorData.error || 'Delete failed');
       }
-      
+
       toast({ title: 'Visit deleted successfully' });
       onVisitUpdated();
     } catch (error) {
       console.error('Error deleting visit:', error);
-      toast({ 
-        title: 'Error deleting visit', 
+      toast({
+        title: 'Error deleting visit',
         description: 'Please try again.',
-        variant: 'destructive' 
+        variant: 'destructive'
       });
     }
   };
@@ -69,66 +71,60 @@ export const VisitHistory = ({ visits, onVisitClick, onVisitUpdated }: VisitHist
                     <Calendar className="w-4 h-4 mr-2" />
                     {formatDate(visit.visit_date)}
                   </div>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    visit.type_id === 1 || visit.visit_type === 'primary'
-                      ? 'bg-green-100 text-green-700' 
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${visit.type_id === 1 || visit.visit_type === 'primary'
+                      ? 'bg-green-100 text-green-700'
                       : 'bg-orange-100 text-orange-700'
-                  }`}>
+                    }`}>
                     {visit.type_name || (visit.type_id === 1 ? 'Primary' : 'Follow-up')}
                   </span>
                 </div>
-                
+
                 {visit.chief_complaint && visit.chief_complaint.trim() !== '' && (
                   <div className="text-sm">
                     <span className="font-medium">Chief Complaint:</span> {visit.chief_complaint.length > 100 ? `${visit.chief_complaint.substring(0, 100)}...` : visit.chief_complaint}
                   </div>
                 )}
-                
+
                 {visit.diagnosis && visit.diagnosis.trim() !== '' && (
                   <div className="text-sm">
                     <span className="font-medium">Diagnosis:</span> {visit.diagnosis.length > 100 ? `${visit.diagnosis.substring(0, 100)}...` : visit.diagnosis}
                   </div>
                 )}
-                
+
                 {visit.notes && visit.notes.trim() !== '' && (
                   <div className="text-sm">
                     <span className="font-medium">Notes:</span> {visit.notes.length > 100 ? `${visit.notes.substring(0, 100)}...` : visit.notes}
                   </div>
                 )}
-                
-                {(!visit.chief_complaint || visit.chief_complaint.trim() === '') && 
-                 (!visit.diagnosis || visit.diagnosis.trim() === '') && 
-                 (!visit.notes || visit.notes.trim() === '') && (
-                  <div className="text-sm text-gray-500 italic">
-                   {t('visit.noAdditionalDetails')}
-                  </div>
-                )}
+
+                {(!visit.chief_complaint || visit.chief_complaint.trim() === '') &&
+                  (!visit.diagnosis || visit.diagnosis.trim() === '') &&
+                  (!visit.notes || visit.notes.trim() === '') && (
+                    <div className="text-sm text-gray-500 italic">
+                      {t('visit.noAdditionalDetails')}
+                    </div>
+                  )}
               </div>
-              
+
               <div className="flex space-x-2 ml-4">
-                <Button 
-                  variant="outline" 
+                <EditButton
                   size="sm"
                   onClick={(e) => {
                     e.stopPropagation();
                     setEditingVisit(visit);
                   }}
                 >
-                  <Edit className="w-4 h-4 mr-2" />
-               {t('patients.edit')}
-                </Button>
-                
+                  {t('patients.edit')}
+                </EditButton>
+
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button 
-                      variant="outline" 
+                    <DeleteButton
                       size="sm"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                                    {t('visit.delete')}
-
-                    </Button>
+                      {t('visit.delete')}
+                    </DeleteButton>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
@@ -139,9 +135,9 @@ export const VisitHistory = ({ visits, onVisitClick, onVisitUpdated }: VisitHist
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => handleDeleteVisit(visit.id)}>
+                      <DeleteButton onClick={() => handleDeleteVisit(visit.id)}>
                         Delete
-                      </AlertDialogAction>
+                      </DeleteButton>
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
@@ -150,7 +146,7 @@ export const VisitHistory = ({ visits, onVisitClick, onVisitUpdated }: VisitHist
           </CardContent>
         </Card>
       ))}
-      
+
       {!visits?.length && (
         <p className="text-gray-500 text-center py-8">No visits recorded yet.</p>
       )}
@@ -162,10 +158,10 @@ export const VisitHistory = ({ visits, onVisitClick, onVisitUpdated }: VisitHist
             <DialogHeader>
               <DialogTitle>{t('reports.editVisit')} - {formatDate(editingVisit.visit_date)}</DialogTitle>
             </DialogHeader>
-            <VisitForm 
-              patientId={editingVisit.patient_id} 
+            <VisitForm
+              patientId={editingVisit.patient_id}
               visit={editingVisit}
-              onSave={handleVisitUpdated} 
+              onSave={handleVisitUpdated}
             />
           </DialogContent>
         </Dialog>

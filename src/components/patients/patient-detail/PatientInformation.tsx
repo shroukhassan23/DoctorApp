@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { PatientForm } from '../PatientForm';
 import { VisitForm } from '../VisitForm';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { AddButton, EditButton } from '@/components/ui/enhanced-button';
 interface PatientInformationProps {
   patient: any;
   onUpdate: () => void;
@@ -31,14 +32,12 @@ export const PatientInformation = ({ patient, onUpdate, onVisitSaved }: PatientI
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>{t('patients.info')}</CardTitle>
-        <div className="flex space-x-2">
+        <div className="flex gap-2">
           <Dialog open={showEditForm} onOpenChange={setShowEditForm}>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm">
-                <Edit className="w-4 h-4 mr-2" />
-                              {t('patients.edit')}
-
-              </Button>
+              <EditButton size="sm">
+                {t('patients.edit')}
+              </EditButton>
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
@@ -53,10 +52,9 @@ export const PatientInformation = ({ patient, onUpdate, onVisitSaved }: PatientI
 
           <Dialog open={showVisitForm} onOpenChange={setShowVisitForm}>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm">
-                <UserPlus className="w-4 h-4 mr-2" />
-               {t('patients.addVisit')}
-              </Button>
+              <AddButton size="sm">
+                {t('patients.addVisit')}
+              </AddButton>
             </DialogTrigger>
             <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
