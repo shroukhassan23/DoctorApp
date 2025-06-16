@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { VisitCard } from './VisitCard';
 import { StatusChangeConfirmDialog } from './StatusChangeConfirmDialog';
-import { updateVisitUrl } from '@/components/constants.js';
+import { updateVisitStatusUrl } from '@/components/constants.js';
 
 interface VisitListProps {
   visits: any[];
@@ -70,7 +70,7 @@ export const VisitList = ({
     try {
       const statusId = getStatusId(statusChangeConfirm.newStatus);
 
-      const response = await fetch(updateVisitUrl(statusChangeConfirm.visitId), {
+      const response = await fetch(updateVisitStatusUrl(statusChangeConfirm.visitId), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -112,6 +112,7 @@ export const VisitList = ({
   };
 
   const handleViewPatientDetails = (patient: any) => {
+    console.log('Viewing patient details:', patient);
     onViewPatient(patient);
   };
 
@@ -123,15 +124,25 @@ export const VisitList = ({
     <>
       <div className="space-y-4">
         {visits.map((visit) => (
-          <VisitCard
-            key={visit.id}
-            visit={visit}
-            onViewDetails={handleViewPatientDetails}
-             onEditVisit={() => onEditVisit({ ...visit, patient: { name: visit.patient_name } })}
-            onStatusChangeRequest={(visitId: number, newStatus: string) =>
-              handleStatusChangeRequest(visitId, newStatus, visit.patient_name)
-            }
-          />
+          // <VisitCard
+          //   key={visit.id}
+          //   visit={visit}
+          //   onViewDetails={handleViewPatientDetails}
+          //    onEditVisit={() => onEditVisit({ ...visit, patient: { name: visit.patient_name } })}
+          //   onStatusChangeRequest={(visitId: number, newStatus: string) =>
+          //     handleStatusChangeRequest(visitId, newStatus, visit.patient_name)
+          //   }
+          // />
+<VisitCard
+  key={visit.id}
+  visit={visit}
+  onViewDetails={onViewVisit}  // Shows visit details
+  onViewPatient={handleViewPatientDetails}  // Shows patient details  
+  onEditVisit={() => onEditVisit({ ...visit, patient: { name: visit.patient_name } })}
+  onStatusChangeRequest={(visitId: number, newStatus: string) =>
+    handleStatusChangeRequest(visitId, newStatus, visit.patient_name)
+  }
+/>
         ))}
       </div>
 

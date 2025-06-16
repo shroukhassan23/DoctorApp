@@ -15,6 +15,32 @@ app.get('/Patients', async (req, res) => {
 }
 });
 
+app.get('/Patients/search', async (req, res) => {
+  try {
+    const { q } = req.query;
+    
+    if (!q || q.trim().length === 0) {
+      return res.json([]);
+    }
+    
+    const searchTerm = `%${q.trim()}%`;
+    
+    const [rows] = await db.query(
+      `SELECT * FROM patients 
+       WHERE deleted_at IS NULL 
+       AND (name LIKE ? OR phone LIKE ? OR address LIKE ?)
+       ORDER BY name ASC
+       LIMIT 20`,
+      [searchTerm, searchTerm, searchTerm]
+    );
+    
+    res.json(rows);
+  } catch (err) {
+    console.error('Error searching patients:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 app.post('/Patients', async (req, res) => {
   try {

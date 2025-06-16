@@ -14,9 +14,10 @@ interface MedicineFormProps {
   medicine?: any;
   onSave: () => void;
   onCancel?: () => void;
+  isLoading?: boolean;
 }
 
-export const MedicineForm = ({ medicine, onSave, onCancel }: MedicineFormProps) => {
+export const MedicineForm = ({ medicine, onSave, onCancel, isLoading }: MedicineFormProps) => {
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
     defaultValues: medicine || {
       name: '',
@@ -26,7 +27,10 @@ export const MedicineForm = ({ medicine, onSave, onCancel }: MedicineFormProps) 
       price: ''
     }
   });
-  
+
+  const isFormLoading = isSubmitting || isLoading;
+
+
   const { toast } = useToast();
   const { t, language } = useLanguage();
 
@@ -39,7 +43,7 @@ export const MedicineForm = ({ medicine, onSave, onCancel }: MedicineFormProps) 
 
       const url = medicine ? updateMedicineUrl(medicine.id) : managementMedicinesUrl;
       const method = medicine ? 'PUT' : 'POST';
-      
+
       const response = await fetch(url, {
         method,
         headers: {
@@ -57,10 +61,10 @@ export const MedicineForm = ({ medicine, onSave, onCancel }: MedicineFormProps) 
       onSave();
     } catch (error) {
       console.error('Error saving medicine:', error);
-      toast({ 
-        title: t('medicines.errorSaving'), 
+      toast({
+        title: t('medicines.errorSaving'),
         description: t('form.tryAgain'),
-        variant: 'destructive' 
+        variant: 'destructive'
       });
     }
   };
@@ -76,26 +80,28 @@ export const MedicineForm = ({ medicine, onSave, onCancel }: MedicineFormProps) 
             {medicine ? 'Edit Medicine' : 'Add New Medicine'}
           </CardTitle>
         </CardHeader> */}
-        
+
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Medicine Name and Dosage */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label 
-                  htmlFor="name" 
+                <Label
+                  htmlFor="name"
                   className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2", language === 'ar' && 'text-right flex-row-reverse')}
                 >
                   <Package className="w-4 h-4 text-[#2463EB]" />
                   {t('medicines.medicineName')} *
                 </Label>
                 <Input
-                  id="name"
+                id="name"
                   {...register('name', { required: t('medicines.nameRequired') })}
                   placeholder={t('medicines.enterName')}
+                  disabled={isFormLoading}
                   className={cn(
                     "h-12 border-gray-300 bg-gray-50 focus:bg-white focus:border-[#2463EB] focus:ring-[#2463EB]/20 shadow-sm",
-                    language === 'ar' && 'text-right'
+                    language === 'ar' && 'text-right',
+                    isFormLoading && 'opacity-50 cursor-not-allowed'
                   )}
                 />
                 {errors.name && (
@@ -105,10 +111,10 @@ export const MedicineForm = ({ medicine, onSave, onCancel }: MedicineFormProps) 
                   </p>
                 )}
               </div>
-              
+
               <div className="space-y-2">
-                <Label 
-                  htmlFor="dosage" 
+                <Label
+                  htmlFor="dosage"
                   className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2", language === 'ar' && 'text-right flex-row-reverse')}
                 >
                   <Beaker className="w-4 h-4 text-[#2463EB]" />
@@ -129,8 +135,8 @@ export const MedicineForm = ({ medicine, onSave, onCancel }: MedicineFormProps) 
             {/* Form and Manufacturer */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label 
-                  htmlFor="form" 
+                <Label
+                  htmlFor="form"
                   className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2", language === 'ar' && 'text-right flex-row-reverse')}
                 >
                   <Package className="w-4 h-4 text-[#2463EB]" />
@@ -146,10 +152,10 @@ export const MedicineForm = ({ medicine, onSave, onCancel }: MedicineFormProps) 
                   )}
                 />
               </div>
-              
+
               <div className="space-y-2">
-                <Label 
-                  htmlFor="manufacturer" 
+                <Label
+                  htmlFor="manufacturer"
                   className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2", language === 'ar' && 'text-right flex-row-reverse')}
                 >
                   <Building2 className="w-4 h-4 text-[#2463EB]" />
@@ -169,8 +175,8 @@ export const MedicineForm = ({ medicine, onSave, onCancel }: MedicineFormProps) 
 
             {/* Price */}
             <div className="space-y-2">
-              <Label 
-                htmlFor="price" 
+              <Label
+                htmlFor="price"
                 className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2", language === 'ar' && 'text-right flex-row-reverse')}
               >
                 <DollarSign className="w-4 h-4 text-[#2463EB]" />
@@ -228,19 +234,19 @@ export const MedicineForm = ({ medicine, onSave, onCancel }: MedicineFormProps) 
             {/* Action Buttons */}
             <div className={cn("flex gap-4 pt-4", language === 'ar' ? 'justify-start flex-row-reverse' : 'justify-end')}>
               {onCancel && (
-                <CancelButton 
-                  type="button" 
+                <CancelButton
+                  type="button"
                   onClick={onCancel}
-                  disabled={isSubmitting}
+                  disabled={isFormLoading}
                 >
                   {t('common.cancel')}
                 </CancelButton>
               )}
-              
-              <SaveButton 
+
+              <SaveButton
                 type="submit"
-                loading={isSubmitting}
-                disabled={isSubmitting}
+                loading={isFormLoading}
+                disabled={isFormLoading}
               >
                 {medicine ? t('medicines.updateMedicine') : t('medicines.addMedicine')}
               </SaveButton>

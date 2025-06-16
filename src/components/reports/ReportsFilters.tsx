@@ -76,7 +76,7 @@ export const ReportsFilters = ({
         </CardTitle>
       </CardHeader>
       
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-6 relative overflow-visible">
         {/* Search Mode Toggle */}
         <div className="space-y-3">
           <Label className={cn("text-sm font-semibold text-gray-700", language === 'ar' && 'text-right')}>
@@ -256,15 +256,17 @@ export const ReportsFilters = ({
             </div>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div style={{marginBottom: "500px"}} className="space-y-2 relative">
             <Label className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2", language === 'ar' && 'text-right flex-row-reverse')}>
               <Users className="w-4 h-4 text-[#2463EB]" />
               Search Patients
             </Label>
-            <PatientSearchBar 
-              onPatientSelected={onPatientSelected}
-              onAddNewPatient={onAddNewPatient}
-            />
+            <div className="relative z-50">
+              <PatientSearchBar 
+                onPatientSelected={onPatientSelected}
+                onAddNewPatient={onAddNewPatient}
+              />
+            </div>
           </div>
         )}
       </CardContent>

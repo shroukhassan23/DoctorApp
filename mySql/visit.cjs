@@ -9,7 +9,7 @@ const app = express();
 app.use(express.json());
 
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:4173','http://localhost:8081'], // Add your frontend URLs
+  origin: ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:4173','http://localhost:8081', 'http://localhost:8080'], // Add your frontend URLs
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
@@ -1286,6 +1286,28 @@ async function updateHistory(table, text) {
     console.error(`Error updating ${table}:`, error);
   }
 }
+
+// Update visit status only
+app.put('/visits/:id/status', async (req, res) => {
+  const { id } = req.params;
+  const { status_id } = req.body;
+  
+  try {
+    const [result] = await db.query(
+      'UPDATE visits SET status_id = ? WHERE id = ?',
+      [status_id, id]
+    );
+    
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Visit not found' });
+    }
+    
+    res.json({ message: 'Visit status updated successfully' });
+  } catch (err) {
+    console.error('Error updating visit status:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 
 

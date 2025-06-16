@@ -15,6 +15,12 @@ export const SearchBar = ({ searchTerm, onSearchChange, placeholder }: SearchBar
   const { t, language } = useLanguage();
   const defaultPlaceholder = t('common.search');
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    console.log('SearchBar: Input changed to:', value); // Debug log
+    onSearchChange(value);
+  };
+
   return (
     <div className="mb-6">
       <div className={cn("relative", language === 'ar' && 'rtl')}>
@@ -23,7 +29,7 @@ export const SearchBar = ({ searchTerm, onSearchChange, placeholder }: SearchBar
         <Input
           placeholder={placeholder || defaultPlaceholder}
           value={searchTerm}
-          onChange={(e) => onSearchChange(e.target.value)}
+          onChange={handleChange}
           className={cn(language === 'ar' ? 'pr-10 text-right' : 'pl-10')}
         />
       </div>

@@ -14,7 +14,7 @@ import { formatDateToDDMMYYYY } from '@/lib/dateUtils';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import { patientUrl } from '@/components/constants.js'
-import { PageLoading, SectionLoading, TableLoading } from '@/components/ui/loading-spinner';
+import { CardLoading, PageLoading, SectionLoading, TableLoading } from '@/components/ui/loading-spinner';
 import { AddButton, DeleteButton, ViewButton } from '../ui/enhanced-button';
 
 export const PatientsPage = () => {
@@ -23,6 +23,8 @@ export const PatientsPage = () => {
   const [showForm, setShowForm] = useState(false);
   const { toast } = useToast();
   const { t, language } = useLanguage();
+  const [formLoading, setFormLoading] = useState(false);
+
 
   const { data: patients, isLoading, refetch } = useQuery({
     queryKey: ['patients'],
@@ -39,8 +41,12 @@ export const PatientsPage = () => {
   ) || [];
 
   const handlePatientSaved = () => {
+    setFormLoading(true);
+
     refetch();
     setShowForm(false);
+    setFormLoading(false);
+
   };
 
   const [deletingPatient, setDeletingPatient] = useState<string | null>(null);
@@ -77,7 +83,23 @@ export const PatientsPage = () => {
   };
 
   if (isLoading) {
-    return <PageLoading text="Loading patients..." variant="dots" color="blue" />;
+    return (
+      <div className={cn("p-6", language === 'ar' && "rtl")}>
+        {/* Header skeleton */}
+        <div className={cn("flex justify-between items-center mb-8", language === 'ar' && 'flex-row-reverse rtl')}>
+          <CardLoading lines={2} showAvatar />
+          <div className="w-32 h-10 bg-gray-200 rounded-lg animate-pulse"></div>
+        </div>
+
+        {/* Search bar skeleton */}
+        <CardLoading lines={1} />
+
+        {/* Table loading */}
+        <div className="bg-white rounded-lg shadow">
+          <TableLoading rows={6} columns={7} />
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -99,6 +121,8 @@ export const PatientsPage = () => {
 
         <AddButton
           size="sm"
+          loading={formLoading}
+          disabled={formLoading}
           onClick={() => { setSelectedPatient(null); setShowForm(true); }}
         >
           {t('patients.addNew')}
@@ -144,97 +168,96 @@ export const PatientsPage = () => {
       </div>
 
       <div className="bg-white rounded-lg shadow">
-        {isLoading ? (
-          <TableLoading rows={6} columns={7} />
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className={cn(language === 'ar' && 'text-right')}>{t('patients.name')}</TableHead>
-                <TableHead className={cn(language === 'ar' && 'text-right')}>{t('patients.age')}</TableHead>
-                <TableHead className={cn(language === 'ar' && 'text-right')}>{t('patients.gender')}</TableHead>
-                <TableHead className={cn(language === 'ar' && 'text-right')}>{t('patients.dateOfBirth')}</TableHead>
-                <TableHead className={cn(language === 'ar' && 'text-right')}>{t('patients.phone')}</TableHead>
-                <TableHead className={cn(language === 'ar' && 'text-right')}>{t('patients.address')}</TableHead>
-                <TableHead className={cn(language === 'ar' ? 'text-left' : 'text-right')}>{t('common.actions')}</TableHead>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className={cn(language === 'ar' && 'text-right')}>{t('patients.name')}</TableHead>
+              <TableHead className={cn(language === 'ar' && 'text-right')}>{t('patients.age')}</TableHead>
+              <TableHead className={cn(language === 'ar' && 'text-right')}>{t('patients.gender')}</TableHead>
+              <TableHead className={cn(language === 'ar' && 'text-right')}>{t('patients.dateOfBirth')}</TableHead>
+              <TableHead className={cn(language === 'ar' && 'text-right')}>{t('patients.phone')}</TableHead>
+              <TableHead className={cn(language === 'ar' && 'text-right')}>{t('patients.address')}</TableHead>
+              <TableHead className={cn(language === 'ar' ? 'text-left' : 'text-right')}>{t('common.actions')}</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredPatients.map((patient) => (
+              <TableRow key={patient.id}>
+                <TableCell className={cn("font-medium", language === 'ar' && 'text-right')}>{patient.name}</TableCell>
+                <TableCell className={cn(language === 'ar' && 'text-right')}>{patient.age}</TableCell>
+                <TableCell className={cn(language === 'ar' && 'text-right')}>{patient.gender}</TableCell>
+                <TableCell className={cn(language === 'ar' && 'text-right')}>{formatDateToDDMMYYYY(patient.date_of_birth)}</TableCell>
+                <TableCell className={cn(language === 'ar' && 'text-right')}>{patient.phone || 'N/A'}</TableCell>
+                <TableCell className={cn(language === 'ar' && 'text-right')}>{patient.address || 'N/A'}</TableCell>
+                <TableCell className={cn(language === 'ar' ? 'text-left' : 'text-right')}>
+                  <div className={cn("flex gap-2", language === 'ar' ? 'justify-start flex-row-reverse gap-reverse' : 'justify-end')}>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <ViewButton
+                          size="sm"
+                          onClick={() => setSelectedPatient(patient)}
+                        >
+                          {t('patients.viewDetails')}
+                        </ViewButton>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                        <DialogHeader>
+                          <DialogTitle>{t('patients.viewDetails')} - {patient.name}</DialogTitle>
+                          <DialogDescription>
+                            {t('patients.viewAndManage')}
+                          </DialogDescription>
+                        </DialogHeader>
+                        <PatientDetail patient={patient} onUpdate={refetch} />
+                      </DialogContent>
+                    </Dialog>
+
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <DeleteButton
+                          size="sm"
+                          disabled={deletingPatient === patient.id}
+                          loading={deletingPatient === patient.id}
+                        >
+                          {t('common.delete')}
+                        </DeleteButton>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>{t('patients.deleteConfirm')}</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            {t('patients.deleteDescription').replace('"{patient.name}"', `"${patient.name}"`)}
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleDelete(patient.id)}
+                            disabled={deletingPatient === patient.id} >
+                            {deletingPatient === patient.id ? (
+                              <div className="flex items-center gap-2">
+                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                {t('common.deleting')}
+                              </div>
+                            ) : (
+                              t('common.delete')
+                            )}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredPatients.map((patient) => (
-                <TableRow key={patient.id}>
-                  <TableCell className={cn("font-medium", language === 'ar' && 'text-right')}>{patient.name}</TableCell>
-                  <TableCell className={cn(language === 'ar' && 'text-right')}>{patient.age}</TableCell>
-                  <TableCell className={cn(language === 'ar' && 'text-right')}>{patient.gender}</TableCell>
-                  <TableCell className={cn(language === 'ar' && 'text-right')}>{formatDateToDDMMYYYY(patient.date_of_birth)}</TableCell>
-                  <TableCell className={cn(language === 'ar' && 'text-right')}>{patient.phone || 'N/A'}</TableCell>
-                  <TableCell className={cn(language === 'ar' && 'text-right')}>{patient.address || 'N/A'}</TableCell>
-                  <TableCell className={cn(language === 'ar' ? 'text-left' : 'text-right')}>
-                    <div className={cn("flex gap-2", language === 'ar' ? 'justify-start flex-row-reverse gap-reverse' : 'justify-end')}>
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <ViewButton
-                            size="sm"
-                            onClick={() => setSelectedPatient(patient)}
-                          >
-                            {t('patients.viewDetails')}
-                          </ViewButton>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                          <DialogHeader>
-                            <DialogTitle>{t('patients.viewDetails')} - {patient.name}</DialogTitle>
-                            <DialogDescription>
-                              {t('patients.viewAndManage')}
-                            </DialogDescription>
-                          </DialogHeader>
-                          <PatientDetail patient={patient} onUpdate={refetch} />
-                        </DialogContent>
-                      </Dialog>
+            ))}
+          </TableBody>
+        </Table>
 
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <DeleteButton
-                            size="sm"
-                            disabled={deletingPatient === patient.id}
-                            loading={deletingPatient === patient.id}
-                          >
-                            {t('common.delete')}
-                          </DeleteButton>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>{t('patients.deleteConfirm')}</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              {t('patients.deleteDescription').replace('"{patient.name}"', `"${patient.name}"`)}
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDelete(patient.id)}
-                              disabled={deletingPatient === patient.id} >
-                              {deletingPatient === patient.id ? (
-                                <div className="flex items-center gap-2">
-                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                                  {t('common.deleting')}
-                                </div>
-                              ) : (
-                                t('common.delete')
-                              )}
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-
-        {filteredPatients.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-gray-500">{t('patients.noPatients')}</p>
-          </div>
+        {filteredPatients.length === 0 && !isLoading && (
+          <SectionLoading
+            text={searchTerm ? t('patients.noPatientsFound') : t('patients.noPatients')}
+            variant="pulse"
+            color="gray"
+            className="min-h-[200px]"
+          />
         )}
       </div>
     </div>

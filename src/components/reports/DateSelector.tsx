@@ -60,7 +60,7 @@ export const DateSelector = ({
       </CardHeader>
 
       <CardContent className="pb-4 space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 items-end">
           {/* From Date */}
           <div className="space-y-2">
             <Label
@@ -111,7 +111,7 @@ export const DateSelector = ({
           </div>
 
           {/* Search Button */}
-          <div className="flex justify-start md:justify-end lg:justify-center">
+          {/* <div className="flex justify-start md:justify-end lg:justify-center">
             <SearchButton
               onClick={onSearch}
               loading={loading}
@@ -121,7 +121,7 @@ export const DateSelector = ({
             >
               {t('common.search')}
             </SearchButton>
-          </div>
+          </div> */}
         </div>
 
         {/* Date Range Summary */}

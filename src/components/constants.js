@@ -94,3 +94,4 @@ export const durationHistoryUrl = `${historyBaseUrl}/duration`;
 export const diagnosisHistoryUrl = `${historyBaseUrl}/diagnosis`;
 export const notesHistoryUrl = `${historyBaseUrl}/notes`;
 export const instructionHistoryUrl = `${historyBaseUrl}/instruction`;
+export const updateVisitStatusUrl = (visitId) => `http://localhost:3002/visits/${visitId}/status`;

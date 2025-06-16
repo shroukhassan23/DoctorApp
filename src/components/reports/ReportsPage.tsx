@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { ReportsPageHeader } from './ReportsPageHeader';
@@ -11,11 +11,13 @@ import { formatDateToDDMMYYYY } from '@/lib/dateUtils';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import { searchText } from '@/lib/arabicUtils';
+import { SectionLoading, CardLoading } from '@/components/ui/loading-spinner';
+
 
 export const ReportsPage = () => {
- const today = new Date().toISOString().split('T')[0];
-const [fromDate, setFromDate] = useState(today);
-const [toDate, setToDate] = useState(today);
+  const today = new Date().toISOString().split('T')[0];
+  const [fromDate, setFromDate] = useState(today);
+  const [toDate, setToDate] = useState(today);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [searchAllVisits, setSearchAllVisits] = useState(false);
@@ -29,40 +31,44 @@ const [toDate, setToDate] = useState(today);
   const { toast } = useToast();
   const { t, language } = useLanguage();
 
+  useEffect(() => {
+    console.log('ReportsPage: searchTerm changed to:', searchTerm);
+  }, [searchTerm]);
+
   const { data: visitStats, isLoading, refetch } = useQuery({
-  queryKey: ['visit-stats', fromDate, toDate],
-  queryFn: async () => {
-    const response = await fetch(`http://localhost:3003/reports/visit-stats?from=${fromDate}&to=${toDate}`);
-    if (!response.ok) throw new Error('Failed to fetch visit stats');
-    return await response.json();
-  }
-});
+    queryKey: ['visit-stats', fromDate, toDate],
+    queryFn: async () => {
+      const response = await fetch(`http://localhost:3003/reports/visit-stats?from=${fromDate}&to=${toDate}`);
+      if (!response.ok) throw new Error('Failed to fetch visit stats');
+      return await response.json();
+    }
+  });
 
 
-const { data: visitDetails, refetch: refetchVisits } = useQuery({
-  queryKey: ['visit-details', fromDate, toDate, searchAllVisits],
-  queryFn: async () => {
-    const url = searchAllVisits
-      ? 'http://localhost:3003/reports/visits/all'
-      : `http://localhost:3003/reports/visits?from=${fromDate}&to=${toDate}`;
+  const { data: visitDetails, refetch: refetchVisits } = useQuery({
+    queryKey: ['visit-details', fromDate, toDate, searchAllVisits],
+    queryFn: async () => {
+      const url = searchAllVisits
+        ? 'http://localhost:3003/reports/visits/all'
+        : `http://localhost:3003/reports/visits?from=${fromDate}&to=${toDate}`;
 
-    const response = await fetch(url);
-    if (!response.ok) throw new Error('Failed to fetch visit details');
-    return await response.json();
-  }
-});
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Failed to fetch visit details');
+      return await response.json();
+    }
+  });
 
-const statusMap: Record<number, string> = {
-  1: 'waiting',
-  2: 'completed',
-  3: 'cancelled'
-};
+  const statusMap: Record<number, string> = {
+    1: 'waiting',
+    2: 'completed',
+    3: 'cancelled'
+  };
 
-const filteredVisits = visitDetails?.filter(visit => {
-  const statusText = statusMap[visit.status_id] || 'waiting';
-  if (statusFilter !== 'all' && statusText !== statusFilter) {
-    return false;
-  }
+  const filteredVisits = visitDetails?.filter(visit => {
+    const statusText = statusMap[visit.status_id] || 'waiting';
+    if (statusFilter !== 'all' && statusText !== statusFilter) {
+      return false;
+    }
 
     // Enhanced search filters - includes name, diagnosis, notes, and phone
     const matchesTextSearch = searchText(searchTerm, visit.name || '') ||
@@ -70,7 +76,13 @@ const filteredVisits = visitDetails?.filter(visit => {
       searchText(searchTerm, visit.notes || '') ||
       (visit.phone && visit.phone.includes(searchTerm));
 
-    return !searchTerm || matchesTextSearch;
+    const result = !searchTerm || matchesTextSearch;
+
+    if (searchTerm) {
+      console.log('Filtering visit:', visit.name, 'searchTerm:', searchTerm, 'matches:', result);
+    }
+
+    return result;
   }) || [];
 
   const handleEditVisit = (visit: any) => {
@@ -116,38 +128,57 @@ const filteredVisits = visitDetails?.filter(visit => {
 
   return (
     <div className={cn("p-6", language === 'ar' && "rtl")}>
-     <ReportsPageHeader selectedDate={`${formatDateToDDMMYYYY(fromDate)} - ${formatDateToDDMMYYYY(toDate)}`} />
+      <ReportsPageHeader fromDate={fromDate} toDate={toDate} />
 
 
-   <DateSelector 
-  fromDate={fromDate}
-  toDate={toDate}
-  onFromDateChange={setFromDate}
-  onToDateChange={setToDate}
-  onSearch={() => {
-    refetch();
-    refetchVisits();
-  }}
-/>
-
-
-      <VisitStatsCards visitStats={visitStats} />
-
-      <ReportsFilters
-        searchMode={searchMode}
-        setSearchMode={setSearchMode}
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        searchAllVisits={searchAllVisits}
-        setSearchAllVisits={setSearchAllVisits}
-        statusFilter={statusFilter}
-        setStatusFilter={setStatusFilter}
-        onPatientSelected={handlePatientSelected}
-        onAddNewPatient={handleAddNewPatient}
+      <DateSelector
+        fromDate={fromDate}
+        toDate={toDate}
+        onFromDateChange={setFromDate}
+        onToDateChange={setToDate}
+        onSearch={() => {
+          refetch();
+          refetchVisits();
+        }}
       />
 
+
+      <div className="mb-8">
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <CardLoading key={i} lines={2} />
+            ))}
+          </div>
+        ) : (
+          <VisitStatsCards visitStats={visitStats} />
+        )}
+      </div>
+
+
+      {isLoading ? (
+        <div className="mb-6">
+          <CardLoading lines={4}  />
+        </div>
+      ) : (
+        <div className="mb-6">
+        <ReportsFilters
+          searchMode={searchMode}
+          setSearchMode={setSearchMode}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          searchAllVisits={searchAllVisits}
+          setSearchAllVisits={setSearchAllVisits}
+          statusFilter={statusFilter}
+          setStatusFilter={setStatusFilter}
+          onPatientSelected={handlePatientSelected}
+          onAddNewPatient={handleAddNewPatient}
+        />
+        </div>
+      )}
+
       {searchMode === 'visits' && (
-        <VisitList 
+        <VisitList
           visits={filteredVisits}
           isLoading={isLoading}
           searchTerm={searchTerm}
