@@ -89,7 +89,7 @@ export const ImagingStudiesPage = () => {
         {t('imaging.title')}
       </h1>
       <p className={cn("text-gray-600 mt-1", language === 'ar' && 'text-right')}>
-        Manage medical imaging studies and diagnostic procedures
+       {t('imaging.manage')}
       </p>
     </div>
   </div>
@@ -116,7 +116,7 @@ export const ImagingStudiesPage = () => {
   <div className="space-y-3">
     <label className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2", language === 'ar' && 'text-right flex-row-reverse')}>
       <Scan className="w-4 h-4 text-[#2463EB]" />
-      Search Imaging Studies
+      {t('imaging.search')}
     </label>
     <div className="relative">
       <Search className={cn(
@@ -124,7 +124,7 @@ export const ImagingStudiesPage = () => {
         language === 'ar' ? 'right-4' : 'left-4'
       )} />
       <Input
-        placeholder="Search by study name, modality, or body part (X-Ray, MRI, CT)..."
+        placeholder=    {t('imaging.searchPlaceholder')}
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
         className={cn(

@@ -14,14 +14,14 @@ app.get('/reports/visits', async (req, res) => {
   }
 
   try {
-   const [rows] = await db.execute(
-  `SELECT v.*, p.name AS patient_name
-   FROM visits v
-   JOIN patients p ON v.patient_id = p.id
-   WHERE v.visit_date BETWEEN ? AND ?
-   ORDER BY v.visit_date DESC`,
-  [from, to]
-);
+    const [rows] = await db.execute(
+      `SELECT v.id AS visit_id, p.*, p.id AS patient_id, v.*
+       FROM visits v
+       JOIN patients p ON v.patient_id = p.id
+       WHERE v.visit_date BETWEEN ? AND ?
+       ORDER BY v.visit_date DESC`,
+      [from, to]
+    );
 
     res.json(rows);
   } catch (error) {
@@ -29,6 +29,7 @@ app.get('/reports/visits', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch visits' });
   }
 });
+
 app.get('/reports/visit-stats', async (req, res) => {
   const { from, to } = req.query;
 

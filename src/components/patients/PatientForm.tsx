@@ -24,6 +24,7 @@ import {
   Info,
   Baby
 } from 'lucide-react';
+import { PatientsPage } from './PatientsPage';
 
 interface PatientFormProps {
   patient?: any;
@@ -192,17 +193,17 @@ export const PatientForm = ({ patient, onSave, onCancel }: PatientFormProps) => 
           </div>
           <div className="flex-1">
             <h2 className={cn("text-lg font-bold text-gray-900", language === 'ar' && 'text-right')}>
-              {patient ? 'Edit Patient Information' : 'Add New Patient'}
+              {patient ? t('patients.editInfo') : t('patients.addNew')}
             </h2>
             <p className={cn("text-sm text-gray-600", language === 'ar' && 'text-right')}>
-              {patient ? 'Update patient details and medical information' : 'Enter patient details to create a new record'}
+              {patient ? t('patients.updateDetails') : t('patients.enterDetails')}
             </p>
           </div>
           <Badge variant="secondary" className={cn(
             "px-2 py-1 text-xs",
             completionPercentage === 100 ? "bg-green-100 text-green-800" : "bg-orange-100 text-orange-800"
           )}>
-            {completionPercentage}% Complete
+            {completionPercentage}% {t('common.completed')}
           </Badge>
         </div>
         
@@ -352,7 +353,7 @@ export const PatientForm = ({ patient, onSave, onCancel }: PatientFormProps) => 
                 <Input
                   id="phone"
                   {...register('phone')}
-                  placeholder="Enter phone number"
+                  placeholder={t('patients.enterPhone')}
                   className={cn(
                     "h-9 border-gray-300 bg-gray-50 focus:bg-white focus:border-[#2463EB] focus:ring-[#2463EB]/20 shadow-sm text-sm",
                     language === 'ar' ? 'pr-10 text-right' : 'pl-10'
@@ -373,7 +374,7 @@ export const PatientForm = ({ patient, onSave, onCancel }: PatientFormProps) => 
               <Textarea
                 id="address"
                 {...register('address')}
-                placeholder="Enter patient's address"
+                placeholder={t('patients.enterAddress')}
                 rows={2}
                 className={cn(
                   "border-gray-300 bg-gray-50 focus:bg-white focus:border-[#2463EB] focus:ring-[#2463EB]/20 shadow-sm resize-none text-sm",
@@ -394,7 +395,7 @@ export const PatientForm = ({ patient, onSave, onCancel }: PatientFormProps) => 
               <Textarea
                 id="medical_history"
                 {...register('medical_history')}
-                placeholder="Enter medical history, allergies, chronic conditions, etc."
+                placeholder={t('patients.enterMedicalHistory')}
                 rows={2}
                 className={cn(
                   "border-gray-300 bg-gray-50 focus:bg-white focus:border-[#2463EB] focus:ring-[#2463EB]/20 shadow-sm resize-none text-sm",

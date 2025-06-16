@@ -82,7 +82,7 @@ export const DoctorProfilePage = () => {
         {t('profile.title')}
       </h1>
       <p className={cn("text-gray-600", language === 'ar' && 'text-right')}>
-        {doctorProfile ? 'Manage your professional information' : 'Create your professional profile'}
+        {doctorProfile ? t('profile.manageInfo') : t('profile.create')}
       </p>
     </div>
   </div>
@@ -253,7 +253,7 @@ export const DoctorProfilePage = () => {
                       <span className="text-sm font-medium text-gray-700">{t('profile.status')}</span>
                     </div>
                     <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-200">
-                      Complete
+                     {t('common.completed')} 
                     </Badge>
                   </div>
 

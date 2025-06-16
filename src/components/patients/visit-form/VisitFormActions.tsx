@@ -158,7 +158,7 @@ export const VisitFormActions = ({
               size="lg"
               className="min-w-[140px]"
             >
-              {isSubmitting ? 'Saving...' : (t('visit.saveVisit') || 'Save Visit')}
+              {isSubmitting ? 'Saving...' : (t('visit.saveVisit'))}
             </SaveButton>
           )}
         </div>
@@ -167,10 +167,8 @@ export const VisitFormActions = ({
       {/* Help Text */}
       <div className={cn("text-center text-xs text-gray-500", language === 'ar' && 'text-right')}>
         {isEditing ? (
-          "Click 'Update Visit' to save your changes to this visit record."
-        ) : (
-          "Click 'Save Visit' to create this visit record. You can add or edit prescriptions later."
-        )}
+          t('visit.clickupdate')
+        ) : t('visit.clickSave')}
       </div>
     </div>
   );

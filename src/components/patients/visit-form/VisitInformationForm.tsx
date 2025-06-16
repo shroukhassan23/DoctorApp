@@ -231,15 +231,17 @@ export const VisitInformationForm = ({
           "rounded-lg border border-gray-300 bg-gray-50 focus-within:bg-white focus-within:border-[#2463EB] focus-within:ring-2 focus-within:ring-[#2463EB]/20 shadow-sm transition-all duration-200",
           errors.diagnosis && "border-red-500 focus-within:border-red-500 focus-within:ring-red-500/20"
         )}>
-          <SimpleHistoryTextarea
-            id="diagnosis"
-            placeholder={t('visit.enterDiagnosis')}
-            value={watch('diagnosis')}
-            onChange={(value) => setValue('diagnosis', value)}
-            historyType="diagnosis"
-            className="border-0 bg-transparent focus:ring-0"
-            {...register('diagnosis', { required: t('form.required') })}
-          />
+       <Textarea
+  id="diagnosis"
+  name="diagnosis"
+  placeholder={t('visit.enterDiagnosis')}
+  value={watch('diagnosis') || ''}
+  onChange={(e) => setValue('diagnosis', e.target.value, { shouldValidate: true })}
+  className={cn(
+    "min-h-[100px] border-0 bg-transparent focus:ring-0",
+    language === 'ar' && 'text-right'
+  )}
+/>
         </div>
         {errors.diagnosis && (
           <p className={cn("text-red-500 text-sm mt-1 flex items-center gap-1", language === 'ar' && 'text-right flex-row-reverse')}>

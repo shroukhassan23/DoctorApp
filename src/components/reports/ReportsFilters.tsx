@@ -72,7 +72,7 @@ export const ReportsFilters = ({
           <div className="p-2 bg-[#2463EB] rounded-xl shadow-lg">
             <Filter className="w-6 h-6 text-white" />
           </div>
-          Search & Filter Options
+          {t('reports.search')}
         </CardTitle>
       </CardHeader>
       
@@ -191,7 +191,7 @@ export const ReportsFilters = ({
               <div className="space-y-2">
                 <Label className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2", language === 'ar' && 'text-right flex-row-reverse')}>
                   <Search className="w-4 h-4 text-[#2463EB]" />
-                  Search Visits
+                  {t('visit.searchVisit')}
                 </Label>
                 <SearchBar 
                   searchTerm={searchTerm} 

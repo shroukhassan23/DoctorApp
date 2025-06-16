@@ -113,10 +113,10 @@ export const ImagingStudyForm = ({ imagingStudy, onSave, onCancel }: ImagingStud
           </div>
           <div className="flex-1">
             <h2 className={cn("text-lg font-bold text-gray-900", language === 'ar' && 'text-right')}>
-              {imagingStudy ? 'Edit Imaging Study' : 'Add New Imaging Study'}
+              {imagingStudy ? t('imaging.editStudy') : t('imaging.addNew')}
             </h2>
             <p className={cn("text-sm text-gray-600", language === 'ar' && 'text-right')}>
-              {imagingStudy ? 'Update imaging study details and description' : 'Create a new medical imaging study for diagnostics'}
+              {imagingStudy ? t('imaging.updateDetails') : t('imaging.create')}
             </p>
           </div>
           <Badge variant="secondary" className={cn(
@@ -146,7 +146,7 @@ export const ImagingStudyForm = ({ imagingStudy, onSave, onCancel }: ImagingStud
             <div className="p-2 bg-blue-100 rounded-lg">
               <Scan className="w-4 h-4 text-[#2463EB]" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900">Imaging Study Details</h3>
+            <h3 className="text-lg font-semibold text-gray-900">{t('imaging.detail')}</h3>
             {errors && Object.keys(errors).length > 0 && (
               <Badge variant="destructive" className="ml-auto">
                 <AlertCircle className="w-3 h-3 mr-1" />
@@ -167,7 +167,7 @@ export const ImagingStudyForm = ({ imagingStudy, onSave, onCancel }: ImagingStud
             <Input
               id="name"
               {...register('name', { required: 'Imaging study name is required' })}
-              placeholder="Enter imaging study name (e.g., Chest X-Ray, Brain MRI, Abdominal CT)"
+              placeholder={t('imaging.enterName')}
               className={cn(
                 "h-9 border-gray-300 bg-gray-50 focus:bg-white focus:border-[#2463EB] focus:ring-[#2463EB]/20 shadow-sm text-sm",
                 errors.name && "border-red-500 focus:border-red-500 focus:ring-red-500/20",
@@ -194,7 +194,7 @@ export const ImagingStudyForm = ({ imagingStudy, onSave, onCancel }: ImagingStud
             <Textarea
               id="description"
               {...register('description')}
-              placeholder="Enter study description, indications, or additional clinical notes..."
+              placeholder={t('imaging.enterStudyDescription')}
               rows={3}
               className={cn(
                 "border-gray-300 bg-gray-50 focus:bg-white focus:border-[#2463EB] focus:ring-[#2463EB]/20 shadow-sm resize-none text-sm",

@@ -148,7 +148,7 @@ export const VisitHistory = ({ visits, onVisitClick, onVisitUpdated }: VisitHist
       ))}
 
       {!visits?.length && (
-        <p className="text-gray-500 text-center py-8">No visits recorded yet.</p>
+        <p className="text-gray-500 text-center py-8">{t('visit.noVisits')}</p>
       )}
 
       {/* Edit Visit Dialog */}

@@ -110,10 +110,10 @@ export const LabTestForm = ({ labTest, onSave, onCancel }: LabTestFormProps) => 
           </div>
           <div className="flex-1">
             <h2 className={cn("text-lg font-bold text-gray-900", language === 'ar' && 'text-right')}>
-              {labTest ? 'Edit Lab Test' : 'Add New Lab Test'}
+              {labTest ? t('labTests.editTest') : t('labTests.addNew')}
             </h2>
             <p className={cn("text-sm text-gray-600", language === 'ar' && 'text-right')}>
-              {labTest ? 'Update lab test details and description' : 'Create a new laboratory test for medical diagnostics'}
+              {labTest ? t('labTests.updateDetails') : t('labTests.addNew')}
             </p>
           </div>
           <Badge variant="secondary" className={cn(
@@ -143,7 +143,7 @@ export const LabTestForm = ({ labTest, onSave, onCancel }: LabTestFormProps) => 
             <div className="p-2 bg-blue-100 rounded-lg">
               <TestTube className="w-4 h-4 text-[#2463EB]" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900">Lab Test Details</h3>
+            <h3 className="text-lg font-semibold text-gray-900">{t('labTests.details')}</h3>
             {errors && Object.keys(errors).length > 0 && (
               <Badge variant="destructive" className="ml-auto">
                 <AlertCircle className="w-3 h-3 mr-1" />
@@ -191,7 +191,7 @@ export const LabTestForm = ({ labTest, onSave, onCancel }: LabTestFormProps) => 
             <Textarea
               id="description"
               {...register('description')}
-              placeholder="Enter test description, purpose, or additional notes..."
+              placeholder={t('labTests.enterDetails')}
               rows={3}
               className={cn(
                 "border-gray-300 bg-gray-50 focus:bg-white focus:border-[#2463EB] focus:ring-[#2463EB]/20 shadow-sm resize-none text-sm",

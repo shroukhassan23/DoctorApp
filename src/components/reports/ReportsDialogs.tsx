@@ -80,11 +80,16 @@ export const ReportsDialogs = ({
                 {t('reports.editVisit')} - {editingVisit.patients_name}
               </DialogTitle>
             </DialogHeader>
-            <VisitForm 
-              patientId={editingVisit.patients.id || editingVisit.patient_id} 
-              visit={editingVisit}
-              onSave={onVisitUpdated} 
-            />
+           <VisitForm 
+  patientId={
+    editingVisit.patient?.id || 
+    editingVisit.patients?.id || 
+    editingVisit.patient_id
+  } 
+  visit={editingVisit}
+  onSave={onVisitUpdated} 
+/>
+
           </DialogContent>
         </Dialog>
       )}

@@ -35,10 +35,10 @@ export const VisitCard = ({
       }`}
     >
       <p className="mb-1">
-        <strong>{t('visit.visitId')}:</strong> {visit.id}
+        <strong>{t('visit.visitId')}:</strong> {visit.visit_id}
       </p>
       <p className="mb-1">
-        <strong>{t('patient.name')}:</strong> {visit.patient_name || t('patient.unknown')}
+        <strong>{t('patients.name')}:</strong> {visit.name || t('patient.unknown')}
       </p>
       <p className="mb-1">
         <strong>{t('visit.date')}:</strong>{' '}
@@ -47,7 +47,7 @@ export const VisitCard = ({
       <p className="mb-3">
         <strong>{t('visit.status')}:</strong>{' '}
         <VisitStatusSelector
-          visitId={visit.id}
+          visitId={visit.visit_id}
           currentStatus={statusText(visit.status_id)}
           patientName={visit.patient_name || ''}
           onStatusChangeRequest={onStatusChangeRequest}
@@ -55,13 +55,13 @@ export const VisitCard = ({
       </p>
       <div className="flex gap-2 flex-wrap">
         <Button size="sm" onClick={() => onViewDetails(visit)}>
-          {t('buttons.view')}
+          {t('common.view')}
         </Button>
         <Button size="sm" variant="outline" onClick={() => {onEditVisit(visit)
            console.log('Edit clicked', visit);
         }}>
           
-          {t('buttons.edit')}
+          {t('common.edit')}
         </Button>
       </div>
     </Card>

@@ -92,7 +92,7 @@ export const PatientsPage = () => {
               {t('patients.title')}
             </h1>
             <p className={cn("text-gray-600 mt-1", language === 'ar' && 'text-right')}>
-              Manage patient records and medical information
+              {t('patients.viewAndManage')}
             </p>
           </div>
         </div>
@@ -131,7 +131,7 @@ export const PatientsPage = () => {
               language === 'ar' ? 'right-4' : 'left-4'
             )} />
             <Input
-              placeholder="Search by name, phone, or medical record..."
+              placeholder={t('patients.searchPlaceholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className={cn(

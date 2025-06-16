@@ -214,12 +214,12 @@ export const MedicineForm = ({ medicine, onSave, onCancel }: MedicineFormProps) 
               <div className={cn("flex items-start gap-2 text-sm text-blue-800", language === 'ar' && 'flex-row-reverse')}>
                 <Pill className="w-4 h-4 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="font-medium mb-1">Medicine Information Tips:</p>
+                  <p className="font-medium mb-1">{t('medicines.infotip')}</p>
                   <ul className={cn("space-y-1 text-xs", language === 'ar' && 'text-right')}>
-                    <li>• Name is required for all medicines</li>
-                    <li>• Include dosage strength (e.g., 500mg, 10ml)</li>
-                    <li>• Form refers to tablet, capsule, syrup, etc.</li>
-                    <li>• Price should be in USD</li>
+                    <li>• {t('medicines.nameRequiredTip')}</li>
+                    <li>• {t('medicines.includeDosage')}</li>
+                    <li>• {t('medicines.formRefer')}</li>
+                    <li>• {t('medicines.priceTip')}</li>
                   </ul>
                 </div>
               </div>

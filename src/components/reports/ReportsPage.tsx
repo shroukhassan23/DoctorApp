@@ -65,10 +65,10 @@ const filteredVisits = visitDetails?.filter(visit => {
   }
 
     // Enhanced search filters - includes name, diagnosis, notes, and phone
-    const matchesTextSearch = searchText(searchTerm, visit.patient_name || '') ||
+    const matchesTextSearch = searchText(searchTerm, visit.name || '') ||
       searchText(searchTerm, visit.diagnosis || '') ||
       searchText(searchTerm, visit.notes || '') ||
-      (visit.patient_phone && visit.patient_phone.includes(searchTerm));
+      (visit.phone && visit.phone.includes(searchTerm));
 
     return !searchTerm || matchesTextSearch;
   }) || [];

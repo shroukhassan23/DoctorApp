@@ -87,7 +87,7 @@ export const LabTestsPage = () => {
         {t('labTests.title')}
       </h1>
       <p className={cn("text-gray-600 mt-1", language === 'ar' && 'text-right')}>
-        Manage laboratory tests and diagnostic procedures
+        {t('labtests.manage')}
       </p>
     </div>
   </div>
@@ -114,7 +114,7 @@ export const LabTestsPage = () => {
   <div className="space-y-3">
     <label className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2", language === 'ar' && 'text-right flex-row-reverse')}>
       <TestTube className="w-4 h-4 text-[#2463EB]" />
-      Search Lab Tests
+      {t('labTests.search')}
     </label>
     <div className="relative">
       <Search className={cn(
@@ -122,7 +122,7 @@ export const LabTestsPage = () => {
         language === 'ar' ? 'right-4' : 'left-4'
       )} />
       <Input
-        placeholder="Search by test name, category, or procedure type..."
+        placeholder={t('labTests.searchPlaceholder')}
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
         className={cn(

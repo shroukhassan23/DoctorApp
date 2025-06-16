@@ -149,7 +149,8 @@ export const VisitForm = ({ patientId, visit, onSave }: VisitFormProps) => {
     if (!visit?.id) return;
 
     try {
-      const response = await fetch(getVisitPrescriptionUrl(visit.id));
+      console.log('load existing visit',visit)
+      const response = await fetch(getVisitPrescriptionUrl(visit.visit_id));
       if (response.ok) {
         const prescription = await response.json();
         setExistingPrescriptionData(prescription);
@@ -361,10 +362,10 @@ export const VisitForm = ({ patientId, visit, onSave }: VisitFormProps) => {
               </div>
               <div>
                 <CardTitle className={cn("text-2xl font-bold text-gray-900", language === 'ar' && 'text-right')}>
-                  {isEditing ? 'Edit Visit Record' : 'New Patient Visit'}
+                  {isEditing ? t('visit.editRecord') : t('visit.new')}
                 </CardTitle>
                 <p className={cn("text-gray-600", language === 'ar' && 'text-right')}>
-                  {isEditing ? 'Update visit information and prescription' : 'Record patient consultation details'}
+                  {isEditing ? t('visit.updateInfo') : t('patients.recordDetails')}
                 </p>
               </div>
             </div>
@@ -376,7 +377,7 @@ export const VisitForm = ({ patientId, visit, onSave }: VisitFormProps) => {
                 completionPercentage === 100 ? "bg-green-100 text-green-800 border-green-200" : "bg-orange-100 text-orange-800 border-orange-200"
               )}>
                 <CheckCircle className="w-3 h-3 mr-1" />
-                {completionPercentage}% Complete
+                {completionPercentage}% {t('common.completed')}
               </Badge>
               
               {shouldShowPrintButton && (
@@ -408,7 +409,7 @@ export const VisitForm = ({ patientId, visit, onSave }: VisitFormProps) => {
               <div className="p-2 bg-blue-100 rounded-lg">
                 <Calendar className="w-5 h-5 text-[#2463EB]" />
               </div>
-              Visit Information
+              {t('visit.information')}
               {errors && Object.keys(errors).length > 0 && (
                 <Badge variant="destructive" className="ml-auto">
                   <AlertTriangle className="w-3 h-3 mr-1" />
@@ -455,7 +456,7 @@ export const VisitForm = ({ patientId, visit, onSave }: VisitFormProps) => {
               <div className="p-2 bg-green-100 rounded-lg">
                 <FileText className="w-5 h-5 text-green-600" />
               </div>
-              Prescription & Treatment
+              {t('prescription.treatment')}
               {shouldShowPrintButton && (
                 <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-200 ml-auto">
                   <CheckCircle className="w-3 h-3 mr-1" />
@@ -487,7 +488,7 @@ export const VisitForm = ({ patientId, visit, onSave }: VisitFormProps) => {
                 <div className="p-2 bg-purple-100 rounded-lg">
                   <Upload className="w-5 h-5 text-purple-600" />
                 </div>
-                File Attachments
+                {t('common.attach')}
                 <Badge variant="secondary" className="ml-auto">
                   Optional
                 </Badge>
@@ -496,7 +497,7 @@ export const VisitForm = ({ patientId, visit, onSave }: VisitFormProps) => {
             <CardContent className="px-8 pb-8">
               <div className="w-full space-y-6">
                 <p className={cn("text-gray-600 text-sm", language === 'ar' && 'text-right')}>
-                  Upload relevant documents, images, or test results for this visit.
+                  {t('common.uploadFile')}
                 </p>
                 <div className="w-full">
                   <FileUpload

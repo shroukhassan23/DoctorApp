@@ -79,7 +79,7 @@ export const MedicinesPage = () => {
         {t('medicines.title')}
       </h1>
       <p className={cn("text-gray-600 mt-1", language === 'ar' && 'text-right')}>
-        Manage pharmaceutical inventory and medication database
+        {t('medicines.manage')}
       </p>
     </div>
   </div>
@@ -116,7 +116,7 @@ export const MedicinesPage = () => {
         language === 'ar' ? 'right-4' : 'left-4'
       )} />
       <Input
-        placeholder="Search by medicine name, manufacturer, or category..."
+        placeholder={t('medicines.searchPlaceholder')}
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
         className={cn(
