@@ -56,7 +56,7 @@ export const ReportsPageHeader = ({ fromDate, toDate }: ReportsPageHeaderProps) 
             {t('reports.title')}
           </h1>
           <p className={cn("text-gray-600 mt-1", language === 'ar' && 'text-right')}>
-            Generate and view medical reports and analytics
+            {t('reports.generate')}
           </p>
         </div>
       </div>

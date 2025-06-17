@@ -120,7 +120,7 @@ export const LabTestForm = ({ labTest, onSave, onCancel }: LabTestFormProps) => 
             "px-2 py-1 text-xs",
             completionPercentage === 100 ? "bg-green-100 text-green-800" : "bg-orange-100 text-orange-800"
           )}>
-            {completionPercentage}% Complete
+            {completionPercentage}%{t('common.completed')}
           </Badge>
         </div>
         
