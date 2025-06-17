@@ -24,15 +24,18 @@ interface LabTestFormProps {
   labTest?: any;
   onSave: () => void;
   onCancel?: () => void;
+  isLoading?: boolean;
 }
 
-export const LabTestForm = ({ labTest, onSave, onCancel }: LabTestFormProps) => {
+export const LabTestForm = ({ labTest, onSave, onCancel, isLoading }: LabTestFormProps) => {
   const { register, handleSubmit, setValue, watch, formState: { errors, isSubmitting } } = useForm({
     defaultValues: labTest || {
       name: '',
       description: ''
     }
   });
+
+  const isFormLoading = isSubmitting || (isLoading ?? false);
   
   const { toast } = useToast();
   const { t, language } = useLanguage();
@@ -163,12 +166,14 @@ export const LabTestForm = ({ labTest, onSave, onCancel }: LabTestFormProps) => 
             </Label>
             <Input
               id="name"
+              disabled={isFormLoading}
               {...register('name', { required: 'Lab test name is required' })}
               placeholder="Enter lab test name (e.g., Complete Blood Count, Lipid Panel)"
               className={cn(
                 "h-9 border-gray-300 bg-gray-50 focus:bg-white focus:border-[#2463EB] focus:ring-[#2463EB]/20 shadow-sm text-sm",
                 errors.name && "border-red-500 focus:border-red-500 focus:ring-red-500/20",
-                language === 'ar' && 'text-right'
+                language === 'ar' && 'text-right',
+                isFormLoading && 'opacity-50 cursor-not-allowed'
               )}
             />
             {errors.name && (
@@ -191,11 +196,13 @@ export const LabTestForm = ({ labTest, onSave, onCancel }: LabTestFormProps) => 
             <Textarea
               id="description"
               {...register('description')}
+              disabled={isFormLoading}
               placeholder={t('labTests.enterDetails')}
               rows={3}
               className={cn(
                 "border-gray-300 bg-gray-50 focus:bg-white focus:border-[#2463EB] focus:ring-[#2463EB]/20 shadow-sm resize-none text-sm",
-                language === 'ar' && 'text-right'
+                language === 'ar' && 'text-right',
+                isFormLoading && 'opacity-50 cursor-not-allowed'
               )}
             />
           </div>
@@ -249,7 +256,7 @@ export const LabTestForm = ({ labTest, onSave, onCancel }: LabTestFormProps) => 
           <CancelButton 
             type="button" 
             onClick={onCancel}
-            disabled={isSubmitting}
+            disabled={isFormLoading}
             className="px-4 py-2"
           >
             Cancel
@@ -258,8 +265,8 @@ export const LabTestForm = ({ labTest, onSave, onCancel }: LabTestFormProps) => 
         
         <SaveButton 
           type="submit"
-          loading={isSubmitting}
-          disabled={isSubmitting}
+          loading={isFormLoading}
+          disabled={isFormLoading}
           className="px-6 py-2"
           onClick={handleSubmit(onSubmit)}
         >

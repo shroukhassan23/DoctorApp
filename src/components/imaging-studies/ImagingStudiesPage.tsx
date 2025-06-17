@@ -22,6 +22,7 @@ export const ImagingStudiesPage = () => {
   const { toast } = useToast();
   const { t, language } = useLanguage();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [formLoading, setFormLoading] = useState(false);
 
   const { data: imagingStudies, isLoading, refetch } = useQuery({
     queryKey: ['imaging_studies'],
@@ -37,9 +38,11 @@ export const ImagingStudiesPage = () => {
   ) || [];
 
   const handleStudySaved = () => {
+    setFormLoading(true);
     refetch();
     setShowForm(false);
     setEditingStudy(null);
+    setFormLoading(false);
   };
 
   const handleDelete = async (studyId: string) => {
@@ -81,7 +84,7 @@ export const ImagingStudiesPage = () => {
     return (
       <div className={cn("p-6", language === 'ar' && "rtl")}>
         {/* Header skeleton */}
-        <div className={cn("flex justify-between items-center mb-8", language === 'ar' && 'flex-row-reverse rtl')}>
+        <div className={cn("flex justify-between items-center mb-8", language === 'ar' && 'flex-row-reverse')}>
           <CardLoading lines={2} showAvatar />
           <div className="w-32 h-10 bg-gray-200 rounded-lg animate-pulse"></div>
         </div>
@@ -99,45 +102,67 @@ export const ImagingStudiesPage = () => {
 
   return (
     <div className={cn("p-6", language === 'ar' && "rtl")}>
-
-
-      <div className={cn("flex justify-between items-center mb-8", language === 'ar' && 'flex-row-reverse rtl')}>
-        <div className={cn("flex items-center gap-4", language === 'ar' && 'flex-row-reverse')}>
-          <div className="p-3 bg-[#2463EB] rounded-xl shadow-lg">
-            <Scan className="w-7 h-7 text-white" />
-          </div>
-          <div>
-            <h1 className={cn("text-3xl font-bold text-gray-900", language === 'ar' && 'text-right')}>
-              {t('imaging.title')}
-            </h1>
-            <p className={cn("text-gray-600 mt-1", language === 'ar' && 'text-right')}>
-              {t('imaging.manage')}
-            </p>
-          </div>
+      <div className={cn("flex justify-between items-center mb-8", language === 'ar' && 'flex-row-reverse')}>
+        <div className="flex items-center gap-4">
+          {language === 'ar' ? (
+            <>
+              <div className={cn("order-2", language === 'ar' && 'order-1')}>
+                <div className="p-3 bg-[#2463EB] rounded-xl shadow-lg">
+                  <Scan className="w-7 h-7 text-white" />
+                </div>
+              </div>
+              <div className={cn("order-1", language === 'ar' && 'order-2')}>
+                <h1 className={cn("text-3xl font-bold text-gray-900", language === 'ar' && 'text-right')}>
+                  {t('imaging.title')}
+                </h1>
+                <p className={cn("text-gray-600 mt-1", language === 'ar' && 'text-right')}>
+                  {t('imaging.manage')}
+                </p>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="p-3 bg-[#2463EB] rounded-xl shadow-lg">
+                <Scan className="w-7 h-7 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">
+                  {t('imaging.title')}
+                </h1>
+                <p className="text-gray-600 mt-1">
+                  {t('imaging.manage')}
+                </p>
+              </div>
+            </>
+          )}
         </div>
 
-        <Dialog open={showForm} onOpenChange={setShowForm}>
-          <DialogTrigger asChild>
-            <AddButton size="sm">
-              {t('imaging.addNew')}
-            </AddButton>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle className={cn(language === 'ar' && 'text-right')}>
+        <div className={cn(language === 'ar' && 'order-first')}>
+          <Dialog open={showForm} onOpenChange={setShowForm}>
+            <DialogTrigger asChild>
+              <AddButton size="sm" loading={formLoading} disabled={formLoading}>
                 {t('imaging.addNew')}
-              </DialogTitle>
-            </DialogHeader>
-            <ImagingStudyForm onSave={handleStudySaved} />
-          </DialogContent>
-        </Dialog>
+              </AddButton>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle className={cn(language === 'ar' && 'text-right')}>
+                  {t('imaging.addNew')}
+                </DialogTitle>
+              </DialogHeader>
+              <ImagingStudyForm onSave={handleStudySaved} isLoading={formLoading} />
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {/* Enhanced Search Section */}
       <div className="mb-8 p-6 bg-white rounded-xl shadow-md border border-gray-200">
         <div className="space-y-3">
-          <label className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2", language === 'ar' && 'text-right flex-row-reverse')}>
-            <Scan className="w-4 h-4 text-[#2463EB]" />
+          <label className={cn(
+            "text-sm font-semibold text-gray-700 flex items-center gap-2",
+            language === 'ar' && 'flex-row-reverse justify-end text-right'
+          )}>            <Scan className="w-4 h-4 text-[#2463EB]" />
             {t('imaging.search')}
           </label>
           <div className="relative">
@@ -175,11 +200,13 @@ export const ImagingStudiesPage = () => {
                 <TableCell className={cn(language === 'ar' && 'text-right')}>{study.description || 'N/A'}</TableCell>
                 <TableCell className={cn(language === 'ar' && 'text-right')}>{formatDate(study.created_at)}</TableCell>
                 <TableCell className={cn(language === 'ar' ? 'text-left' : 'text-right')}>
-                  <div className={cn("flex space-x-2", language === 'ar' ? 'justify-start flex-row-reverse space-x-reverse' : 'justify-end')}>
+                  <div className={cn("flex gap-2", language === 'ar' ? 'justify-start flex-row-reverse space-x-reverse' : 'justify-end')}>
                     <Dialog open={editingStudy?.id === study.id} onOpenChange={(open) => !open && setEditingStudy(null)}>
                       <DialogTrigger asChild>
                         <EditButton
                           size="sm"
+                          loading={formLoading && editingStudy?.id === study.id}
+                          disabled={formLoading}
                           onClick={() => setEditingStudy(study)}
                         >
                           {t('common.edit')}
@@ -189,7 +216,7 @@ export const ImagingStudiesPage = () => {
                         <DialogHeader>
                           <DialogTitle className={cn(language === 'ar' && 'text-right')}>{t('imaging.editStudy')}</DialogTitle>
                         </DialogHeader>
-                        <ImagingStudyForm imagingStudy={editingStudy} onSave={handleStudySaved} />
+                        <ImagingStudyForm imagingStudy={editingStudy} onSave={handleStudySaved} isLoading={formLoading} />
                       </DialogContent>
                     </Dialog>
 

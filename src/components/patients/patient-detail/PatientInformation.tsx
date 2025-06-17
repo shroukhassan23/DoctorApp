@@ -8,6 +8,8 @@ import { PatientForm } from '../PatientForm';
 import { VisitForm } from '../VisitForm';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { AddButton, EditButton } from '@/components/ui/enhanced-button';
+import { cn } from '@/lib/utils';
+
 interface PatientInformationProps {
   patient: any;
   onUpdate: () => void;
@@ -29,20 +31,20 @@ export const PatientInformation = ({ patient, onUpdate, onVisitSaved }: PatientI
   };
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>{t('patients.info')}</CardTitle>
-        <div className="flex gap-2">
+    <Card className={cn(language === 'ar' && 'rtl')} dir={language === 'ar' ? 'rtl' : 'ltr'}>
+<CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle className={cn(language === 'ar' && 'text-right')}>{t('patients.info')}</CardTitle>
+        <div className={cn("flex gap-2", language === 'ar' && 'flex-row-reverse')}>
           <Dialog open={showEditForm} onOpenChange={setShowEditForm}>
             <DialogTrigger asChild>
               <EditButton size="sm">
                 {t('patients.edit')}
               </EditButton>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className={cn("max-w-2xl")}>
               <DialogHeader>
-                <DialogTitle>{t('patients.editInfo')}</DialogTitle>
-                <DialogDescription>
+                <DialogTitle className={cn(language === 'ar' && 'text-right')}>{t('patients.editInfo')}</DialogTitle>
+                <DialogDescription className={cn(language === 'ar' && 'text-right')}>
                   {t('visit.updatePatientDetails')}
                 </DialogDescription>
               </DialogHeader>
@@ -56,10 +58,10 @@ export const PatientInformation = ({ patient, onUpdate, onVisitSaved }: PatientI
                 {t('patients.addVisit')}
               </AddButton>
             </DialogTrigger>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className={cn("max-w-4xl max-h-[90vh] overflow-y-auto")}>
               <DialogHeader>
-                <DialogTitle>{t('visit.recordNewVisit')}{patient.name}</DialogTitle>
-                <DialogDescription>
+                <DialogTitle className={cn(language === 'ar' && 'text-right')}>{t('visit.recordNewVisit')}{patient.name}</DialogTitle>
+                <DialogDescription className={cn(language === 'ar' && 'text-right')}>
                   {t('visit.addNewVisitRecord')}
                 </DialogDescription>
               </DialogHeader>
@@ -69,15 +71,15 @@ export const PatientInformation = ({ patient, onUpdate, onVisitSaved }: PatientI
         </div>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div><span className="font-medium">{t('patients.name')}:</span> {patient.name}</div>
-          <div><span className="font-medium">{t('patients.age')}:</span> {patient.age}{t('patients.years')} </div>
-          <div><span className="font-medium">{t('patients.gender')}:</span> {patient.gender}</div>
-          <div><span className="font-medium">{t('patients.phone')}:</span> {patient.phone || 'N/A'}</div>
-          <div className="col-span-2"><span className="font-medium">{t('patients.address')}:</span> {patient.address || 'N/A'}</div>
-          <div className="col-span-2">
+        <div className={cn("grid grid-cols-2 gap-4 text-sm", language === 'ar' && 'text-right')}>
+          <div className={cn(language === 'ar' && 'text-right')}><span className="font-medium">{t('patients.name')}:</span> {patient.name}</div>
+          <div className={cn(language === 'ar' && 'text-right')}><span className="font-medium">{t('patients.age')}:</span> {patient.age}{t('patients.years')} </div>
+          <div className={cn(language === 'ar' && 'text-right')}><span className="font-medium">{t('patients.gender')}:</span> {patient.gender}</div>
+          <div className={cn(language === 'ar' && 'text-right')}><span className="font-medium">{t('patients.phone')}:</span> {patient.phone || 'N/A'}</div>
+          <div className={cn("col-span-2", language === 'ar' && 'text-right')}><span className="font-medium">{t('patients.address')}:</span> {patient.address || 'N/A'}</div>
+          <div className={cn("col-span-2", language === 'ar' && 'text-right')}>
             <span className="font-medium">{t('patients.medicalHistory')}</span>
-            <p className="mt-1 text-gray-600">{patient.medical_history || t('patients.noMedicalhistory')}</p>
+            <p className={cn("mt-1 text-gray-600", language === 'ar' && 'text-right')}>{patient.medical_history || t('patients.noMedicalhistory')}</p>
           </div>
         </div>
       </CardContent>

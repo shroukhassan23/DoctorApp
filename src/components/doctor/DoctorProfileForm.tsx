@@ -8,14 +8,18 @@ import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import { doctorProfileUrl } from '@/components/constants.js';
+import { SaveButton, CancelButton } from '@/components/ui/enhanced-button';
+import { User, Mail, Phone, Building2, GraduationCap, Stethoscope, MapPin, FileText, AlertCircle } from 'lucide-react';
+
 
 interface DoctorProfileFormProps {
   profile?: any;
   onSave: () => void;
+  isLoading?: boolean;
 }
 
-export const DoctorProfileForm = ({ profile, onSave }: DoctorProfileFormProps) => {
-  const { register, handleSubmit, formState: { errors } } = useForm({
+export const DoctorProfileForm = ({ profile, onSave, isLoading }: DoctorProfileFormProps) => {
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
     defaultValues: profile || {
       name: '',
       title: '',
@@ -27,7 +31,8 @@ export const DoctorProfileForm = ({ profile, onSave }: DoctorProfileFormProps) =
       email: ''
     }
   });
-  
+  const isFormLoading = isSubmitting || (isLoading ?? false);
+
   const { toast } = useToast();
   const { t, language } = useLanguage();
 
@@ -51,35 +56,42 @@ export const DoctorProfileForm = ({ profile, onSave }: DoctorProfileFormProps) =
       onSave();
     } catch (error) {
       console.error('Error saving profile:', error);
-      toast({ 
-        title: t('profile.errorSaving'), 
+      toast({
+        title: t('profile.errorSaving'),
         description: t('form.tryAgain'),
-        variant: 'destructive' 
+        variant: 'destructive'
       });
     }
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className={cn("space-y-4", language === 'ar' && 'rtl')}>
+    <form onSubmit={handleSubmit(onSubmit)} className={cn("space-y-6", language === 'ar' && 'rtl')}>
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label htmlFor="name" className={cn(language === 'ar' && 'text-right')}>{t('profile.fullName')} *</Label>
           <Input
             id="name"
+            disabled={isFormLoading}
             {...register('name', { required: t('profile.nameRequired') })}
             placeholder={t('profile.enterFullName')}
-            className={cn(language === 'ar' && 'text-right')}
-          />
+            className={cn(
+              language === 'ar' && 'text-right',
+              isFormLoading && 'opacity-50 cursor-not-allowed'
+            )} />
           {errors.name && <p className={cn("text-red-500 text-sm mt-1", language === 'ar' && 'text-right')}>{String(errors.name.message)}</p>}
         </div>
-        
+
         <div>
           <Label htmlFor="title" className={cn(language === 'ar' && 'text-right')}>{t('profile.title')} *</Label>
           <Input
             id="title"
             {...register('title', { required: t('profile.titleRequired') })}
             placeholder={t('profile.enterTitle')}
-            className={cn(language === 'ar' && 'text-right')}
+            disabled={isFormLoading}
+            className={cn(
+              language === 'ar' && 'text-right',
+              isFormLoading && 'opacity-50 cursor-not-allowed'
+            )}
           />
           {errors.title && <p className={cn("text-red-500 text-sm mt-1", language === 'ar' && 'text-right')}>{String(errors.title.message)}</p>}
         </div>
@@ -95,7 +107,7 @@ export const DoctorProfileForm = ({ profile, onSave }: DoctorProfileFormProps) =
             className={cn(language === 'ar' && 'text-right')}
           />
         </div>
-        
+
         <div>
           <Label htmlFor="specialization" className={cn(language === 'ar' && 'text-right')}>{t('profile.specialization')}</Label>
           <Input
@@ -123,7 +135,11 @@ export const DoctorProfileForm = ({ profile, onSave }: DoctorProfileFormProps) =
           id="clinic_address"
           {...register('clinic_address')}
           placeholder={t('profile.enterClinicAddress')}
-          className={cn(language === 'ar' && 'text-right')}
+          disabled={isFormLoading}
+          className={cn(
+            language === 'ar' && 'text-right',
+            isFormLoading && 'opacity-50 cursor-not-allowed'
+          )}
         />
       </div>
 
@@ -137,7 +153,7 @@ export const DoctorProfileForm = ({ profile, onSave }: DoctorProfileFormProps) =
             className={cn(language === 'ar' && 'text-right')}
           />
         </div>
-        
+
         <div>
           <Label htmlFor="email" className={cn(language === 'ar' && 'text-right')}>{t('profile.email')}</Label>
           <Input
@@ -151,9 +167,13 @@ export const DoctorProfileForm = ({ profile, onSave }: DoctorProfileFormProps) =
       </div>
 
       <div className={cn("flex justify-end space-x-2", language === 'ar' && 'flex-row-reverse space-x-reverse')}>
-        <Button type="submit">
+        <SaveButton
+          type="submit"
+          loading={isFormLoading}
+          disabled={isFormLoading}
+        >
           {profile ? t('profile.updateProfile') : t('profile.createProfile')}
-        </Button>
+        </SaveButton>
       </div>
     </form>
   );

@@ -27,16 +27,16 @@ export const Sidebar = () => {
           {language === 'ar' ? 'بوابة الطبيب' : 'Doctor Portal'}
         </h1>
       </div>
-      
+
       <div className="p-4 border-b border-gray-200">
         <LanguageToggle />
       </div>
-      
-      <nav className="flex-1 px-4 py-6 space-y-2">
+
+      <nav className="flex-1 px-4 py-6 gap-2">
         {navigation.map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.href || (location.pathname === '/' && item.href === '/patients');
-          
+
           return (
             <Link
               key={item.name}
@@ -46,11 +46,20 @@ export const Sidebar = () => {
                 isActive
                   ? 'bg-blue-100 text-blue-700'
                   : 'text-gray-700 hover:bg-gray-100',
-                language === 'ar' && 'flex-row-reverse text-right'
+                language === 'ar' && 'text-right justify-start margin-right-10'
               )}
             >
-              <Icon className={cn("w-5 h-5", language === 'ar' ? 'ml-3' : 'mr-3')} />
-              {item.name}
+              {language === 'ar' ? (
+                <>
+                  <Icon className="w-5 h-5 mr-3" />
+                  <span>{item.name}</span>
+                </>
+              ) : (
+                <>
+                  <Icon className="w-5 h-5 mr-3" />
+                  {item.name}
+                </>
+              )}
             </Link>
           );
         })}

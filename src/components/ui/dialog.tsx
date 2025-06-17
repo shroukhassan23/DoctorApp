@@ -39,17 +39,18 @@ const DialogContent = React.forwardRef<
   const getCloseButtonStyles = () => {
     switch (closeButtonVariant) {
       case 'modern':
-        return cn(
-          'absolute right-4 top-4 w-9 h-9 p-0 rounded-lg',
-          'bg-gray-900/5 hover:bg-gray-900/10 dark:bg-gray-100/5 dark:hover:bg-gray-100/10',
-          'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100',
-          'transition-all duration-200',
-          'border border-gray-200/50 hover:border-gray-300/50',
-          'shadow-sm hover:shadow-md backdrop-blur-sm',
-          'focus:ring-2 focus:ring-gray-300 focus:outline-none',
-          'ring-offset-background',
-          'flex items-center justify-center' 
-        );
+  return cn(
+    'absolute w-9 h-9 p-0 rounded-lg',
+    'bg-gray-900/5 hover:bg-gray-900/10 dark:bg-gray-100/5 dark:hover:bg-gray-100/10',
+    'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100',
+    'transition-all duration-200',
+    'border border-gray-200/50 hover:border-gray-300/50',
+    'shadow-sm hover:shadow-md backdrop-blur-sm',
+    'focus:ring-2 focus:ring-gray-300 focus:outline-none',
+    'ring-offset-background',
+    'flex items-center justify-center',
+    'rtl:right-auto rtl:left-4 ltr:right-4 ltr:left-auto top-4'
+  );
       
       case 'subtle':
         return cn(

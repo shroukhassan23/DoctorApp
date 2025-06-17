@@ -189,37 +189,54 @@ export const PatientForm = ({ patient, onSave, onCancel, isLoading }: PatientFor
   return (
     <div className={cn("max-h-[80vh] flex flex-col", language === 'ar' && 'rtl')}>
       {/* Compact Header */}
-      <div className={cn("p-4 bg-gradient-to-r from-white to-blue-50/30 border-b flex-shrink-0", language === 'ar' && 'flex-row-reverse')}>
-        <div className={cn("flex items-center gap-3", language === 'ar' && 'flex-row-reverse')}>
-          <div className="p-2 bg-[#2463EB] rounded-lg">
-            {patient ? <Edit className="w-5 h-5 text-white" /> : <UserPlus className="w-5 h-5 text-white" />}
-          </div>
-          <div className="flex-1">
-            <h2 className={cn("text-lg font-bold text-gray-900", language === 'ar' && 'text-right')}>
-              {patient ? t('patients.editInfo') : t('patients.addNew')}
-            </h2>
-            <p className={cn("text-sm text-gray-600", language === 'ar' && 'text-right')}>
-              {patient ? t('patients.updateDetails') : t('patients.enterDetails')}
-            </p>
-          </div>
-          <Badge variant="secondary" className={cn(
-            "px-2 py-1 text-xs",
-            completionPercentage === 100 ? "bg-green-100 text-green-800" : "bg-orange-100 text-orange-800"
-          )}>
-            {completionPercentage}% {t('common.completed')}
-          </Badge>
-        </div>
+      
 
-        {/* Compact Progress Bar */}
-        <div className="mt-3">
-          <div className="w-full bg-gray-200 rounded-full h-1.5">
-            <div
-              className="h-1.5 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 transition-all duration-500"
-              style={{ width: `${completionPercentage}%` }}
-            />
-          </div>
+
+      <div className={cn("p-4 bg-gradient-to-r from-white to-blue-50/30 border-b flex-shrink-0", language === 'ar' ? 'pr-16' : 'pl-4 pr-16')}>
+  <div className="flex items-center gap-3">
+    {language === 'ar' ? (
+      <>
+        <Badge variant="secondary" className={cn(
+          "px-2 py-1 text-xs",
+          completionPercentage === 100 ? "bg-green-100 text-green-800" : "bg-orange-100 text-orange-800"
+        )}>
+          {completionPercentage}% {t('common.completed')}
+        </Badge>
+        <div className="flex-1 text-right">
+          <h2 className="text-lg font-bold text-gray-900 text-right">
+            {patient ? t('patients.editInfo') : t('patients.addNew')}
+          </h2>
+          <p className="text-sm text-gray-600 text-right">
+            {patient ? t('patients.updateDetails') : t('patients.enterDetails')}
+          </p>
         </div>
-      </div>
+        <div className="p-2 bg-[#2463EB] rounded-lg">
+          {patient ? <Edit className="w-5 h-5 text-white" /> : <UserPlus className="w-5 h-5 text-white" />}
+        </div>
+      </>
+    ) : (
+      <>
+        <div className="p-2 bg-[#2463EB] rounded-lg">
+          {patient ? <Edit className="w-5 h-5 text-white" /> : <UserPlus className="w-5 h-5 text-white" />}
+        </div>
+        <div className="flex-1">
+          <h2 className="text-lg font-bold text-gray-900">
+            {patient ? t('patients.editInfo') : t('patients.addNew')}
+          </h2>
+          <p className="text-sm text-gray-600">
+            {patient ? t('patients.updateDetails') : t('patients.enterDetails')}
+          </p>
+        </div>
+        <Badge variant="secondary" className={cn(
+          "px-2 py-1 text-xs",
+          completionPercentage === 100 ? "bg-green-100 text-green-800" : "bg-orange-100 text-orange-800"
+        )}>
+          {completionPercentage}% {t('common.completed')}
+        </Badge>
+      </>
+    )}
+  </div>
+  </div>
 
       {/* Scrollable Form Content */}
       <div className="flex-1 overflow-y-auto p-6">
