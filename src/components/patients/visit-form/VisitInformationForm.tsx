@@ -100,13 +100,13 @@ export const VisitInformationForm = ({
               language === 'ar' && 'text-right'
             )}>
               <SelectValue
-                placeholder={isLoadingTypes ? t('general.loading') : t('visit.selectType')}
+                placeholder={isLoadingTypes ? t('common.loading') : t('visit.selectType')}
               />
             </SelectTrigger>
             <SelectContent>
               {isLoadingTypes ? (
                 <SelectItem value="loading" disabled>
-                  {t('general.loading')}...
+                  {t('common.loading')}...
                 </SelectItem>
               ) : (
                 <>
@@ -158,13 +158,13 @@ export const VisitInformationForm = ({
               language === 'ar' && 'text-right'
             )}>
               <SelectValue
-                placeholder={isLoadingStatuses ? t('general.loading') : t('visit.selectStatus')}
+                placeholder={isLoadingStatuses ? t('common.loading') : t('visit.selectStatus')}
               />
             </SelectTrigger>
             <SelectContent>
               {isLoadingStatuses ? (
                 <SelectItem value="loading" disabled>
-                  {t('general.loading')}...
+                  {t('common.loading')}...
                 </SelectItem>
               ) : (
                 <>
@@ -258,7 +258,7 @@ export const VisitInformationForm = ({
           className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2", language === 'ar' && 'text-right flex-row-reverse')}
         >
           <FileText className="w-4 h-4 text-gray-500" />
-          {t('visit.notes')} <span className="text-gray-400 text-xs">(Optional)</span>
+          {t('visit.notes')} <span className="text-gray-400 text-xs">{t('common.optional')}</span>
         </Label>
         <Textarea
           id="notes"

@@ -186,7 +186,7 @@ export const LabTestForm = ({ labTest, onSave, onCancel }: LabTestFormProps) => 
               className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2", language === 'ar' && 'text-right flex-row-reverse')}
             >
               <FileText className="w-4 h-4 text-[#2463EB]" />
-              {t('common.description')} <span className="text-gray-400 text-xs">(Optional)</span>
+              {t('common.description')} <span className="text-gray-400 text-xs">{t('common.optional')}</span>
             </Label>
             <Textarea
               id="description"

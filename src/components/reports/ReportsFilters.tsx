@@ -240,7 +240,7 @@ export const ReportsFilters = ({
             {/* Active Filters Summary */}
             <div className={cn("flex flex-wrap items-center gap-2", language === 'ar' && 'flex-row-reverse')}>
               <span className={cn("text-sm font-medium text-gray-600", language === 'ar' && 'text-right')}>
-                Active filters:
+               {t('visit.activeFilters')}
               </span>
               <Badge className={currentStatus?.color}>
                 {currentStatus?.label}

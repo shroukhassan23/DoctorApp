@@ -353,7 +353,7 @@ export const PatientForm = ({ patient, onSave, onCancel, isLoading }: PatientFor
               className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2", language === 'ar' && 'text-right flex-row-reverse')}
             >
               <Phone className="w-4 h-4 text-[#2463EB]" />
-              {t('patients.phone')} <span className="text-gray-400 text-xs">(Optional)</span>
+              {t('patients.phone')} <span className="text-gray-400 text-xs">{t('common.optional')}</span>
             </Label>
             <div className="relative">
               <Phone className={cn(
@@ -381,7 +381,7 @@ export const PatientForm = ({ patient, onSave, onCancel, isLoading }: PatientFor
               className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2", language === 'ar' && 'text-right flex-row-reverse')}
             >
               <MapPin className="w-4 h-4 text-[#2463EB]" />
-              {t('patients.address')} <span className="text-gray-400 text-xs">(Optional)</span>
+              {t('patients.address')} <span className="text-gray-400 text-xs">{t('common.optional')}</span>
             </Label>
             <Textarea
               id="address"
@@ -404,7 +404,7 @@ export const PatientForm = ({ patient, onSave, onCancel, isLoading }: PatientFor
               className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2", language === 'ar' && 'text-right flex-row-reverse')}
             >
               <FileText className="w-4 h-4 text-[#2463EB]" />
-              {t('patients.medicalHistory')} <span className="text-gray-400 text-xs">(Optional)</span>
+              {t('patients.medicalHistory')} <span className="text-gray-400 text-xs">{t('common.optional')}</span>
             </Label>
             <Textarea
               id="medical_history"

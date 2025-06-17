@@ -70,7 +70,7 @@ export const ImagingStudiesSection = ({ selectedImagingStudies, setSelectedImagi
       </CardHeader>
       <CardContent>
   {imagingStudiesLoading ? (
-    <SectionLoading text={t('general.loading') || 'Loading imaging studies...'} variant="pulse" color="orange" />
+    <SectionLoading text={t('common.loading') || 'Loading imaging studies...'} variant="pulse" color="orange" />
   ) : (
     <div className="space-y-4">
       {imagingStudies?.map((study) => (

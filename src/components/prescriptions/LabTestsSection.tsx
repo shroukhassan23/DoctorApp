@@ -43,7 +43,7 @@ export const LabTestsSection = ({ selectedLabTests, setSelectedLabTests }: LabTe
       </CardHeader>
       <CardContent>
         {labTestsLoading ? (
-          <SectionLoading text={t('general.loading') || 'Loading lab tests...'} variant="pulse" color="orange" />
+          <SectionLoading text={t('common.loading') || 'Loading lab tests...'} variant="pulse" color="orange" />
         ) : (
           <div className="space-y-3">
             {labTests?.map((test) => (

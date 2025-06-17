@@ -152,7 +152,7 @@ export const VisitCard = ({
           size="sm"
           onClick={() => onViewDetails(visit)}
         >
-          View Visit
+          {t('reports.viewDetails')}
         </ViewButton>
         
         {onViewPatient && (
@@ -168,7 +168,7 @@ export const VisitCard = ({
               medical_history: visit.medical_history
             })}
           >
-            View Patient
+            {t('common.view')}
           </SaveButton>
         )}
         
@@ -179,7 +179,7 @@ export const VisitCard = ({
             console.log('Edit clicked', visit);
           }}
         >
-          Edit
+         {t('common.edit')} 
         </EditButton>
       </div>
     </Card>

@@ -66,7 +66,7 @@ export const PatientDetail = ({ patient, onUpdate }: PatientDetailProps) => {
           </div>
 
           {visitsLoading ? (
-            <SectionLoading text={t('general.loading') || 'Loading visits...'}  variant="dots"  color="green" />
+            <SectionLoading text={t('common.loading') || 'Loading visits...'}  variant="dots"  color="green" />
           ) : (
             <VisitHistory
               visits={visits}
@@ -78,7 +78,7 @@ export const PatientDetail = ({ patient, onUpdate }: PatientDetailProps) => {
 
         <TabsContent value="files" className="space-y-4">
           {filesLoading ? (
-            <SectionLoading text={t('general.loading') || 'Loading files...'}  variant="dots"  color="green" />
+            <SectionLoading text={t('common.loading') || 'Loading files...'}  variant="dots"  color="green" />
           ) : (
             <PatientFiles
               files={files}

@@ -81,7 +81,7 @@ export const VisitPrescriptionSection = ({
             <p className={cn("text-sm text-gray-600", language === 'ar' && 'text-right')}>
               {isEditing ? 
                 'Update medications, lab tests, and imaging studies' : 
-                'Add medications, lab tests, and imaging studies (optional)'
+                t('visit.addNote')
               }
             </p>
           </div>

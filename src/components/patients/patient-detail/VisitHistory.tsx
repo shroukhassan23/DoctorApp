@@ -22,6 +22,10 @@ export const VisitHistory = ({ visits, onVisitClick, onVisitUpdated }: VisitHist
   const [editingVisit, setEditingVisit] = useState<any>(null);
   const { toast } = useToast();
   const { t, language } = useLanguage();
+  
+  // Check if current language is Arabic
+  const isRTL = language === 'ar';
+  
   const handleDeleteVisit = async (visitId: string) => {
     try {
       const response = await fetch(deleteVisitUrl(visitId), {
@@ -60,15 +64,15 @@ export const VisitHistory = ({ visits, onVisitClick, onVisitUpdated }: VisitHist
   };
 
   return (
-    <div className="space-y-3">
+    <div className={`space-y-3 ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
       {visits?.map((visit) => (
         <Card key={visit.id} className="hover:bg-gray-50 transition-colors">
           <CardContent className="pt-4">
-            <div className="flex items-start justify-between">
+            <div className={`flex items-start justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
               <div className="space-y-2 w-full cursor-pointer" onClick={() => onVisitClick(visit)}>
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center text-sm text-gray-600">
-                    <Calendar className="w-4 h-4 mr-2" />
+                <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <div className={`flex items-center text-sm text-gray-600 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                    <Calendar className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
                     {formatDate(visit.visit_date)}
                   </div>
                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${visit.type_id === 1 || visit.visit_type === 'primary'
@@ -80,33 +84,33 @@ export const VisitHistory = ({ visits, onVisitClick, onVisitUpdated }: VisitHist
                 </div>
 
                 {visit.chief_complaint && visit.chief_complaint.trim() !== '' && (
-                  <div className="text-sm">
-                    <span className="font-medium">Chief Complaint:</span> {visit.chief_complaint.length > 100 ? `${visit.chief_complaint.substring(0, 100)}...` : visit.chief_complaint}
+                  <div className={`text-sm ${isRTL ? 'text-right' : 'text-left'}`}>
+                    <span className="font-medium">{t('visit.chiefComplaint')}:</span> {visit.chief_complaint.length > 100 ? `${visit.chief_complaint.substring(0, 100)}...` : visit.chief_complaint}
                   </div>
                 )}
 
                 {visit.diagnosis && visit.diagnosis.trim() !== '' && (
-                  <div className="text-sm">
-                    <span className="font-medium">Diagnosis:</span> {visit.diagnosis.length > 100 ? `${visit.diagnosis.substring(0, 100)}...` : visit.diagnosis}
+                  <div className={`text-sm ${isRTL ? 'text-right' : 'text-left'}`}>
+                    <span className="font-medium">{t('visit.diagnosis')}:</span> {visit.diagnosis.length > 100 ? `${visit.diagnosis.substring(0, 100)}...` : visit.diagnosis}
                   </div>
                 )}
 
                 {visit.notes && visit.notes.trim() !== '' && (
-                  <div className="text-sm">
-                    <span className="font-medium">Notes:</span> {visit.notes.length > 100 ? `${visit.notes.substring(0, 100)}...` : visit.notes}
+                  <div className={`text-sm ${isRTL ? 'text-right' : 'text-left'}`}>
+                    <span className="font-medium">{t('visit.notes')}:</span> {visit.notes.length > 100 ? `${visit.notes.substring(0, 100)}...` : visit.notes}
                   </div>
                 )}
 
                 {(!visit.chief_complaint || visit.chief_complaint.trim() === '') &&
                   (!visit.diagnosis || visit.diagnosis.trim() === '') &&
                   (!visit.notes || visit.notes.trim() === '') && (
-                    <div className="text-sm text-gray-500 italic">
+                    <div className={`text-sm text-gray-500 italic ${isRTL ? 'text-right' : 'text-left'}`}>
                       {t('visit.noAdditionalDetails')}
                     </div>
                   )}
               </div>
 
-              <div className="flex space-x-2 ml-4">
+              <div className={`flex space-x-2 ${isRTL ? 'ml-4 mr-4 mt-20 space-x-reverse' : 'ml-4'}`}>
                 <EditButton
                   size="sm"
                   onClick={(e) => {
@@ -126,14 +130,16 @@ export const VisitHistory = ({ visits, onVisitClick, onVisitUpdated }: VisitHist
                       {t('visit.delete')}
                     </DeleteButton>
                   </AlertDialogTrigger>
-                  <AlertDialogContent>
+                  <AlertDialogContent dir={isRTL ? 'rtl' : 'ltr'}>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>{t('common.areYouSure')} </AlertDialogTitle>
-                      <AlertDialogDescription>
-{t('common.cannotUndo')}
+                      <AlertDialogTitle className={isRTL ? 'text-right' : 'text-left'}>
+                        {t('common.areYouSure')}
+                      </AlertDialogTitle>
+                      <AlertDialogDescription className={isRTL ? 'text-right' : 'text-left'}>
+                        {t('common.cannotUndo')}
                       </AlertDialogDescription>
                     </AlertDialogHeader>
-                    <AlertDialogFooter>
+                    <AlertDialogFooter className={isRTL ? 'flex-row-reverse' : ''}>
                       <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
                       <DeleteButton onClick={() => handleDeleteVisit(visit.id)}>
                         {t('common.delete')}
@@ -148,15 +154,19 @@ export const VisitHistory = ({ visits, onVisitClick, onVisitUpdated }: VisitHist
       ))}
 
       {!visits?.length && (
-        <p className="text-gray-500 text-center py-8">{t('visit.noVisits')}</p>
+        <p className={`text-gray-500 text-center py-8 ${isRTL ? 'text-right' : 'text-left'}`}>
+          {t('visit.noVisits')}
+        </p>
       )}
 
       {/* Edit Visit Dialog */}
       {editingVisit && (
         <Dialog open={!!editingVisit} onOpenChange={() => setEditingVisit(null)}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" dir={isRTL ? 'rtl' : 'ltr'}>
             <DialogHeader>
-              <DialogTitle>{t('reports.editVisit')} - {formatDate(editingVisit.visit_date)}</DialogTitle>
+              <DialogTitle className={isRTL ? 'text-right' : 'text-left'}>
+                {t('reports.editVisit')} - {formatDate(editingVisit.visit_date)}
+              </DialogTitle>
             </DialogHeader>
             <VisitForm
               patientId={editingVisit.patient_id}

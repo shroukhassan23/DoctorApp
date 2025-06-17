@@ -46,6 +46,8 @@ const translations = {
     'common.completed':'Complete',
     'common.attach':"File Attachments",
     'common.uploadFile':'Upload relevant documents, images, or test results for this visit.',
+    'common.optional':'(Optional)',
+    'common.updateMedication':'Update medications, lab tests, and imaging studies',
     // Patients
     'patients.title': 'Patient Management',
     'patients.addNew': 'Add New Patient',
@@ -309,6 +311,9 @@ const translations = {
 'visit.noVisits':'No visits recorded yet.',
 'visit.clickSave':"Click 'Save Visit' to create this visit record. You can add or edit prescriptions later.",
 'visit.clickupdate':"Click 'Update Visit' to save your changes to this visit record.",
+'visit.status.waiting':'Waiting',
+'visit.activeFilters':'Active filters:',
+'visit.addNote':'Add medications, lab tests, and imaging studies (optional)',
     // Prescription
     'prescription.date': 'Prescription Date',
     'prescription.diagnosis': 'Diagnosis',
@@ -399,7 +404,8 @@ const translations = {
     'common.completed':"مكتمل",
     'common.attach':'ارفاق ملف',
     'common.uploadFile':'قم بتحميل المستندات أو الصور أو نتائج الاختبارات ذات الصلة بهذه الزيارة.',
-
+    'common.optional':'(اختياري)',
+'common.updateMedication':'تحديث الأدوية والفحوصات المخبرية ودراسات التصوير',
     // Patients
     'patients.title': 'إدارة المرضى',
     'patients.addNew': 'إضافة مريض جديد',
@@ -666,6 +672,9 @@ const translations = {
 'visit.noVisits':'لا يوجد زيارات',
 'visit.clickSave':"انقر على' حفظ الزيارة' لإنشاء سجل الزيارة هذا. يمكنك إضافة أو تعديل الوصفات الطبية لاحقًا.",
 'visit.clickupdate':'انقر فوق "تحديث الزيارة" لحفظ التغييرات التي أجريتها على سجل الزيارة هذا.',
+'visit.status.waiting':'في الانتظار',
+'visit.activeFilters':'الفلاتر النشطه',
+'visit.addNote':'إضافة الأدوية والاختبارات المعملية ودراسات التصوير (اختياري)',
     // Prescription
     'prescription.date': 'تاريخ الوصفة الطبية',
     'prescription.diagnosis': 'الجرعه',

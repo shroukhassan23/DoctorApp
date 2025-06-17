@@ -420,7 +420,7 @@ export const VisitForm = ({ patientId, visit, onSave }: VisitFormProps) => {
           </CardHeader>
             <CardContent>
               {isLoadingVisitData ? (
-                <SectionLoading text={t('general.loading') || 'Loading visit form...'} variant="dots" color="blue" />
+                <SectionLoading text={t('common.loading') || 'Loading visit form...'} variant="dots" color="blue" />
               ) : (
                 <div className="w-full">
                   {/* Required Fields Info */}

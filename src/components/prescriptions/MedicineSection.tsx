@@ -109,7 +109,7 @@ export const MedicineSection = ({ medicines, setMedicines }: MedicineSectionProp
       </CardHeader>
       <CardContent>
         {medicinesLoading ? (
-          <SectionLoading text={t('general.loading') || 'Loading medicines...'} variant="pulse" color="orange"/>
+          <SectionLoading text={t('common.loading') || 'Loading medicines...'} variant="pulse" color="orange"/>
         ) : (
           <div className="space-y-4">
             {localMedicines.map((medicine, index) => (
