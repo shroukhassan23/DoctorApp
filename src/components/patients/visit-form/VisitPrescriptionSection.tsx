@@ -72,8 +72,8 @@ export const VisitPrescriptionSection = ({
   return (
     <div className="w-full space-y-6">
       {/* Section Header */}
-      <div className={cn("flex items-center justify-between", language === 'ar' && 'flex-row-reverse')}>
-        <div className={cn("flex items-center gap-3", language === 'ar' && 'flex-row-reverse')}>
+      <div className={cn("flex items-center justify-between")}>
+        <div className={cn("flex items-center gap-3")}>
           <div className="p-2 bg-green-100 rounded-lg">
             <Pill className="w-5 h-5 text-green-600" />
           </div>
@@ -150,7 +150,7 @@ export const VisitPrescriptionSection = ({
       {/* Warning for unsaved changes */}
       {isEditing && !isPrescriptionSaved && (
         <div className={cn("p-4 bg-amber-50 rounded-lg border border-amber-200", language === 'ar' && 'text-right')}>
-          <div className={cn("flex items-start gap-2 text-sm text-amber-800", language === 'ar' && 'flex-row-reverse')}>
+          <div className={cn("flex items-start gap-2 text-sm text-amber-800")}>
             <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
             <div>
               <p className="font-medium mb-1">Unsaved Changes:</p>

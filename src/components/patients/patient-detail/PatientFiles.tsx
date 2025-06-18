@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { downloadPatientFileUrl, deletePatientFileUrl, previewPatientFileUrl } from '@/components/constants.js';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { EnhancedFilePreviewer } from '@/components/ui/file-preview';
+import { cn } from '@/lib/utils';
 interface PatientFilesProps {
   files: any[];
   patientId: string;
@@ -286,7 +287,7 @@ export const PatientFiles = ({ files, patientId, onFileUploaded }: PatientFilesP
 
   return (
     <>
-      <div className="flex justify-between items-center">
+      <div className={cn("flex justify-between items-center", language === 'ar' && 'flex-row-reverse')}>
         <h3 className="text-lg font-medium">{t('patients.generalFiles')}</h3>
         <Dialog open={showFileUpload} onOpenChange={setShowFileUpload}>
           <DialogTrigger asChild>
@@ -314,11 +315,11 @@ export const PatientFiles = ({ files, patientId, onFileUploaded }: PatientFilesP
 
           return (
             <Card key={file.id}>
-              <CardContent className="pt-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
+              <CardContent className={cn("pt-4")}>
+                <div className={cn("flex items-center justify-between", language === 'ar' && 'flex-row-reverse')}>
+                  <div className={cn("flex items-center gap-3", language === 'ar' && 'flex-row-reverse')}>
                     {getFileIcon(displayFilename, file.file_type)}
-                    <div className="flex-1">
+                    <div className="flex-1" style={{ direction: language === 'ar' ? 'rtl' : 'ltr' }}>
                       <p className="font-medium break-all" title={displayFilename}>
                         {displayFilename}
                       </p>
@@ -334,7 +335,7 @@ export const PatientFiles = ({ files, patientId, onFileUploaded }: PatientFilesP
                       </div>
                     </div>
                   </div>
-                  <div className="flex space-x-2">
+                  <div className={cn("flex gap-2", language === 'ar' && 'flex-row-reverse')}>
                     {canPreviewFile && (
                       <Button
                         variant="outline"

@@ -87,8 +87,8 @@ export const VisitCard = ({
       language === 'ar' && 'rtl'
     )}>
       {/* Header */}
-      <div className={cn("flex justify-between items-start mb-4", language === 'ar' && 'flex-row-reverse')}>
-        <div className={cn("flex items-center gap-3", language === 'ar' && 'flex-row-reverse')}>
+      <div  className={cn("flex justify-between items-start mb-4")}>
+        <div style={{ direction: language === 'ar' ? 'rtl' : 'ltr' }} className={cn("flex items-center gap-3")}>
           <div className="p-2 bg-[#2463EB] rounded-lg">
             <Hash className="w-4 h-4 text-white" />
           </div>
@@ -105,7 +105,7 @@ export const VisitCard = ({
       {/* Visit Information */}
       <div className="space-y-3 mb-4">
         {/* Patient Name */}
-        <div className={cn("flex items-center gap-3", language === 'ar' && 'flex-row-reverse')}>
+        <div className={cn("flex items-center gap-3")}>
           <div className="p-1.5 bg-blue-100 rounded">
             <User className="w-3 h-3 text-[#2463EB]" />
           </div>
@@ -117,7 +117,7 @@ export const VisitCard = ({
         </div>
 
         {/* Visit Date */}
-        <div className={cn("flex items-center gap-3", language === 'ar' && 'flex-row-reverse')}>
+        <div className={cn("flex items-center gap-3")}>
           <div className="p-1.5 bg-blue-100 rounded">
             <Calendar className="w-3 h-3 text-[#2463EB]" />
           </div>
@@ -129,7 +129,7 @@ export const VisitCard = ({
         </div>
 
         {/* Status Selector */}
-        <div className={cn("flex items-center gap-3", language === 'ar' && 'flex-row-reverse')}>
+        <div className={cn("flex items-center gap-3")}>
           <div className="p-1.5 bg-blue-100 rounded">
             <AlertCircle className="w-3 h-3 text-[#2463EB]" />
           </div>
@@ -145,7 +145,7 @@ export const VisitCard = ({
       </div>
 
       {/* Action Buttons */}
-      <div className={cn("flex gap-2 pt-4 border-t border-gray-100", language === 'ar' ? 'justify-start' : 'justify-end')}>
+      <div className={cn("flex gap-2 pt-4 border-t border-gray-100", language === 'ar' ? 'justify-end' : 'justify-end')}>
         <ViewButton
           size="sm"
           onClick={() => onViewDetails(visit)}

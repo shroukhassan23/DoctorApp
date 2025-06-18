@@ -32,17 +32,19 @@ export const PrescriptionDetails = ({ prescription }: PrescriptionDetailsProps) 
     return null;
   }
 
+  console.log('Rendering PrescriptionDetails with prescription:', prescription);
+
   return (
     <div className={cn("space-y-4", language === 'ar' && "rtl")}>
-      <div className={cn("flex items-center justify-between", language === 'ar' && 'flex-row-reverse')}>
-        <h3 className={cn("text-lg font-medium flex items-center gap-2", language === 'ar' && 'flex-row-reverse')}>
+      <div className={cn("flex items-center justify-between")}>
+        <h3 className={cn("text-lg font-medium flex items-center gap-2")}>
           <FileText className="w-5 h-5" />
           {t('visit.prescription')}
         </h3>
         <Button 
           variant="outline" 
           onClick={() => setShowPrint(true)}
-          className={cn("flex items-center gap-2", language === 'ar' && 'flex-row-reverse')}
+          className={cn("flex items-center gap-2")}
         >
           <Printer className="w-4 h-4" />
           {t('visit.printPrescription')}
@@ -58,7 +60,7 @@ export const PrescriptionDetails = ({ prescription }: PrescriptionDetailsProps) 
       )}
       
       {hasImagingStudies && (
-        <PrescribedImagingStudies imagingStudies={prescription.prescription_imaging_studies} />
+        <PrescribedImagingStudies key={prescription?.id} imagingStudies={prescription.prescription_imaging_studies} />
       )}
       
       {hasNotes && (

@@ -88,7 +88,7 @@ export const MedicineForm = ({ medicine, onSave, onCancel, isLoading }: Medicine
               <div className="space-y-2">
                 <Label
                   htmlFor="name"
-                  className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2", language === 'ar' && 'text-right flex-row-reverse')}
+                  className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2")}
                 >
                   <Package className="w-4 h-4 text-[#2463EB]" />
                   {t('medicines.medicineName')} *
@@ -105,7 +105,7 @@ export const MedicineForm = ({ medicine, onSave, onCancel, isLoading }: Medicine
                   )}
                 />
                 {errors.name && (
-                  <p className={cn("text-red-500 text-sm mt-1 flex items-center gap-1", language === 'ar' && 'text-right flex-row-reverse')}>
+                  <p className={cn("text-red-500 text-sm mt-1 flex items-center gap-1")}>
                     <span className="text-red-500">⚠️</span>
                     {String(errors.name.message)}
                   </p>
@@ -115,7 +115,7 @@ export const MedicineForm = ({ medicine, onSave, onCancel, isLoading }: Medicine
               <div className="space-y-2">
                 <Label
                   htmlFor="dosage"
-                  className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2", language === 'ar' && 'text-right flex-row-reverse')}
+                  className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2")}
                 >
                   <Beaker className="w-4 h-4 text-[#2463EB]" />
                   {t('medicines.dosage')}
@@ -137,7 +137,7 @@ export const MedicineForm = ({ medicine, onSave, onCancel, isLoading }: Medicine
               <div className="space-y-2">
                 <Label
                   htmlFor="form"
-                  className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2", language === 'ar' && 'text-right flex-row-reverse')}
+                  className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2")}
                 >
                   <Package className="w-4 h-4 text-[#2463EB]" />
                   {t('medicines.form')}
@@ -156,7 +156,7 @@ export const MedicineForm = ({ medicine, onSave, onCancel, isLoading }: Medicine
               <div className="space-y-2">
                 <Label
                   htmlFor="manufacturer"
-                  className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2", language === 'ar' && 'text-right flex-row-reverse')}
+                  className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2")}
                 >
                   <Building2 className="w-4 h-4 text-[#2463EB]" />
                   {t('medicines.manufacturer')}
@@ -177,7 +177,7 @@ export const MedicineForm = ({ medicine, onSave, onCancel, isLoading }: Medicine
             <div className="space-y-2">
               <Label
                 htmlFor="price"
-                className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2", language === 'ar' && 'text-right flex-row-reverse')}
+                className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2")}
               >
                 <DollarSign className="w-4 h-4 text-[#2463EB]" />
                 {t('medicines.price')} ($)
@@ -208,7 +208,7 @@ export const MedicineForm = ({ medicine, onSave, onCancel, isLoading }: Medicine
                 />
               </div>
               {errors.price && (
-                <p className={cn("text-red-500 text-sm mt-1 flex items-center gap-1", language === 'ar' && 'text-right flex-row-reverse')}>
+                <p className={cn("text-red-500 text-sm mt-1 flex items-center gap-1")}>
                   <span className="text-red-500">⚠️</span>
                   {String(errors.price.message)}
                 </p>
@@ -217,7 +217,7 @@ export const MedicineForm = ({ medicine, onSave, onCancel, isLoading }: Medicine
 
             {/* Form Instructions */}
             <div className={cn("p-4 bg-blue-50 rounded-lg border border-blue-200", language === 'ar' && 'text-right')}>
-              <div className={cn("flex items-start gap-2 text-sm text-blue-800", language === 'ar' && 'flex-row-reverse')}>
+              <div className={cn("flex items-start gap-2 text-sm text-blue-800")}>
                 <Pill className="w-4 h-4 mt-0.5 flex-shrink-0" />
                 <div>
                   <p className="font-medium mb-1">{t('medicines.infotip')}</p>

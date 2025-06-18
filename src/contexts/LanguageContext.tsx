@@ -336,6 +336,9 @@ const translations = {
 'visit.status.cancelled':'cancelled',
 'visit.status.completed':'completed',
     // Prescription
+    'prescription.prescriptionPreview': 'Prescription Preview',
+    'prescription.print': 'Print Prescription',
+    'prescription.printDescription': 'Review the prescription details before printing. Click print to generate a professional copy.',
     'prescription.date': 'Prescription Date',
     'prescription.diagnosis': 'Diagnosis',
     'prescription.addMedecine': 'Add Medecine',
@@ -722,6 +725,9 @@ const translations = {
 'visit.status.cancelled':'ملغيه',
 'visit.status.completed':'مكتمله',
     // Prescription
+    'prescription.prescriptionPreview': 'معاينة الوصفة الطبية',
+    'prescription.print': 'طباعة الروشتة',
+    'prescription.printDescription': '.راجع تفاصيل الوصفة الطبية قبل الطباعة. اضغط على "طباعة" لإنشاء نسخة احترافية',
     'prescription.date': 'تاريخ الوصفة الطبية',
     'prescription.diagnosis': 'الجرعه',
     'prescription.addMedecine': 'إضافة دواء',

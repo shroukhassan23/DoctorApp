@@ -78,7 +78,7 @@ export const VisitFormActions = ({
       )}
 
       {/* Action Summary */}
-      <div className={cn("flex items-center justify-between p-4 bg-gray-50 rounded-lg border", language === 'ar' && 'flex-row-reverse')}>
+      <div className={cn("flex items-center justify-between p-4 bg-gray-50 rounded-lg border")}>
         <div className={cn("flex items-center gap-4", language === 'ar' && 'flex-row-reverse')}>
           <div className={cn("flex items-center gap-2", language === 'ar' && 'flex-row-reverse')}>
             <FileText className="w-4 h-4 text-gray-600" />

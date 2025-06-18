@@ -5,6 +5,8 @@ import { Printer } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { doctorProfileUrl, getPatientByIdUrl } from '@/components/constants.js';
+import { cn } from '@/lib/utils';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface PrescriptionPrintProps {
   prescription: any;
@@ -14,6 +16,7 @@ interface PrescriptionPrintProps {
 
 export const PrescriptionPrint = ({ prescription, open, onOpenChange }: PrescriptionPrintProps) => {
   const printRef = useRef<HTMLDivElement>(null);
+  const { t, language } = useLanguage();
 
   const { data: doctorProfile } = useQuery({
     queryKey: ['doctor-profile'],
@@ -492,12 +495,13 @@ export const PrescriptionPrint = ({ prescription, open, onOpenChange }: Prescrip
   if (!prescription) return null;
 
   return (
+    <div className={cn("flex gap-2", language === 'ar' ? 'justify-start flex-row-reverse' : 'justify-end')}>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Medical Prescription Preview</DialogTitle>
-          <DialogDescription>
-            Review the prescription details before printing. Click print to generate a professional copy.
+          <DialogTitle className={cn(language === 'ar' && 'text-right')}> {t('prescription.prescriptionPreview')}</DialogTitle>
+          <DialogDescription className={cn(language === 'ar' && 'text-right')}>
+          {t('prescription.printDescription')}
           </DialogDescription>
         </DialogHeader>
 
@@ -1037,5 +1041,6 @@ export const PrescriptionPrint = ({ prescription, open, onOpenChange }: Prescrip
         </div>
       </DialogContent>
     </Dialog>
+    </div>
   );
 };

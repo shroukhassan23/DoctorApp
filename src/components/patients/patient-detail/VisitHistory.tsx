@@ -71,7 +71,7 @@ export const VisitHistory = ({ visits, onVisitClick, onVisitUpdated }: VisitHist
           <CardContent className="pt-4">
           <div className={cn("flex items-start justify-between", language === 'ar' && 'flex-row-reverse')}>
           <div className={cn("space-y-2 w-full cursor-pointer", language === 'ar' && 'order-2')}>
-                <div className={cn("flex items-center gap-3", language === 'ar' && 'flex-row-reverse')}>
+                <div className={cn("flex items-center gap-3")}>
                   <div className={cn("flex items-center text-sm text-gray-600", language === 'ar' && 'flex-row-reverse')}>
                     <Calendar className={cn("w-4 h-4", language === 'ar' ? 'ml-2' : 'mr-2')} />
                     {formatDate(visit.visit_date)}

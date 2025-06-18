@@ -117,6 +117,8 @@ export const DateSelector = ({
                 type="date"
                 value={toDate}
                 onChange={(e) => onToDateChange(e.target.value)}
+                dir={language === 'ar' ? 'rtl' : 'ltr'}
+                style={{ direction: language === 'ar' ? 'rtl' : 'ltr' }}
                 className={cn(
                   "h-12 border-gray-300 bg-gray-50 focus:bg-white focus:border-[#2463EB] focus:ring-[#2463EB]/20 shadow-sm transition-colors",
                   dateError && "border-red-300 bg-red-50",

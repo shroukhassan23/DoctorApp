@@ -17,7 +17,7 @@ export const PrescribedLabTests = ({ labTests }: PrescribedLabTestsProps) => {
   return (
     <Card className={cn(language === 'ar' && "rtl")}>
       <CardHeader>
-        <CardTitle className={cn("text-lg text-green-700 flex items-center gap-2", language === 'ar' && 'flex-row-reverse')}>
+        <CardTitle className={cn("text-lg text-green-700 flex items-center gap-2")}>
           <TestTube className="w-5 h-5" />
           {t('prescription.labTests')}
         </CardTitle>

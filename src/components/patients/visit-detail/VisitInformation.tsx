@@ -16,7 +16,7 @@ export const VisitInformation = ({ visit }: VisitInformationProps) => {
   return (
     <Card className={cn(language === 'ar' && "rtl")}>
       <CardHeader>
-        <CardTitle className={cn("flex items-center gap-2", language === 'ar' && 'flex-row-reverse')}>
+        <CardTitle className={cn("flex items-center gap-2")}>
           <Calendar className="w-5 h-5" />
           {t('visit.details')}
         </CardTitle>

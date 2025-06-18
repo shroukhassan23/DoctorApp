@@ -109,7 +109,7 @@ export const ImagingStudyForm = ({ imagingStudy, onSave, onCancel, isLoading }: 
     <div className={cn("max-h-[80vh] flex flex-col", language === 'ar' && 'rtl')}>
       {/* Compact Header */}
       <div className={cn("p-4 bg-gradient-to-r from-white to-blue-50/30 border-b flex-shrink-0", language === 'ar' && 'flex-row-reverse')}>
-        <div className={cn("flex items-center gap-3", language === 'ar' && 'flex-row-reverse')}>
+        <div className={cn("flex items-center gap-3")}>
           <div className="p-2 bg-[#2463EB] rounded-lg">
             {imagingStudy ? <Edit className="w-5 h-5 text-white" /> : <Plus className="w-5 h-5 text-white" />}
           </div>
@@ -144,7 +144,7 @@ export const ImagingStudyForm = ({ imagingStudy, onSave, onCancel, isLoading }: 
       <div className="flex-1 overflow-y-auto p-6">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {/* Section Header */}
-          <div className={cn("flex items-center gap-3 mb-4", language === 'ar' && 'flex-row-reverse text-right')}>
+          <div className={cn("flex items-center gap-3 mb-4")}>
             <div className="p-2 bg-blue-100 rounded-lg">
               <Scan className="w-4 h-4 text-[#2463EB]" />
             </div>
@@ -161,7 +161,7 @@ export const ImagingStudyForm = ({ imagingStudy, onSave, onCancel, isLoading }: 
           <div className="space-y-2">
             <Label 
               htmlFor="name" 
-              className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2", language === 'ar' && 'text-right flex-row-reverse')}
+              className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2")}
             >
               <Camera className="w-4 h-4 text-[#2463EB]" />
               {t('imaging.studyName')} <span className="text-red-500">*</span>
@@ -190,7 +190,7 @@ export const ImagingStudyForm = ({ imagingStudy, onSave, onCancel, isLoading }: 
           <div className="space-y-2">
             <Label 
               htmlFor="description" 
-              className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2", language === 'ar' && 'text-right flex-row-reverse')}
+              className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2")}
             >
               <FileText className="w-4 h-4 text-[#2463EB]" />
               {t('common.description')} <span className="text-gray-400 text-xs">{t('common.optional')}</span>

@@ -20,7 +20,7 @@ export const PrescribedMedicines = ({ prescriptionItems }: PrescribedMedicinesPr
   return (
     <Card className={cn(language === 'ar' && "rtl")}>
       <CardHeader>
-        <CardTitle className={cn("text-lg text-blue-700 flex items-center gap-2", language === 'ar' && 'flex-row-reverse')}>
+        <CardTitle className={cn("text-lg text-blue-700 flex items-center gap-2")}>
           <Pill className="w-5 h-5" />
           {t('prescription.medicines')}
         </CardTitle>

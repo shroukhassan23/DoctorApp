@@ -223,7 +223,7 @@ export const ReportsFilters = ({
                   <Filter className="w-4 h-4 text-[#2463EB]" />
                   {t('visit.status')}
                 </Label>
-                <Select value={statusFilter} onValueChange={(value: any) => setStatusFilter(value)}>
+                <Select dir={language === 'ar' ? 'rtl' : 'ltr'} value={statusFilter} onValueChange={(value: any) => setStatusFilter(value)}>
                   <SelectTrigger className={cn(
                     "h-12 border-gray-300 bg-gray-50 focus:bg-white focus:border-[#2463EB] focus:ring-[#2463EB]/20 shadow-sm",
                     language === 'ar' && 'text-right'

@@ -1,3 +1,6 @@
+CREATE DATABASE IF NOT EXISTS doctor CHARACTER SET utf8 COLLATE utf8_general_ci;
+
+use doctor;
 --
 -- Table structure for table `imaging_studies`
 --
@@ -79,80 +82,6 @@ INSERT INTO `patients` VALUES (34,'mona',19,'2005-10-06','female','4445',NULL,NU
 UNLOCK TABLES;
 
 --
--- Table structure for table `prescription`
---
-
-DROP TABLE IF EXISTS `prescription`;
-CREATE TABLE `prescription` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `prescription_date` date DEFAULT NULL,
-  `diagnosis` text,
-  `notes` text,
-  `lab_tests` varchar(100) DEFAULT NULL,
-  `visit_id` int DEFAULT NULL,
-  `patient_id` int DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `fk_visitid` (`visit_id`),
-  KEY `fk_patientid` (`patient_id`),
-  KEY `idx_prescription_visit_id` (`visit_id`),
-  KEY `idx_prescription_patient_id` (`patient_id`),
-  CONSTRAINT `fk_patientid` FOREIGN KEY (`patient_id`) REFERENCES `patients` (`id`),
-  CONSTRAINT `fk_visitid` FOREIGN KEY (`visit_id`) REFERENCES `visits` (`id`)
-) ENGINE=InnoDB ;
-
-LOCK TABLES `prescription` WRITE;
-UNLOCK TABLES;
-
---
--- Table structure for table `prescription_imaging_studies`
---
-
-DROP TABLE IF EXISTS `prescription_imaging_studies`;
-CREATE TABLE `prescription_imaging_studies` (
-  `prescription_id` int NOT NULL,
-  `imaging_studies_id` int NOT NULL,
-  `comments` text,
-  PRIMARY KEY (`prescription_id`,`imaging_studies_id`),
-  KEY `imaging_studies_id` (`imaging_studies_id`),
-  CONSTRAINT `prescription_imaging_studies_ibfk_1` FOREIGN KEY (`prescription_id`) REFERENCES `prescription` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `prescription_imaging_studies_ibfk_2` FOREIGN KEY (`imaging_studies_id`) REFERENCES `imaging_studies` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB ;
-
-LOCK TABLES `prescription_imaging_studies` WRITE;
-UNLOCK TABLES;
-
---
--- Table structure for table `prescription_items`
---
-
-CREATE TABLE `prescription_items` (
-    `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `prescription_id` INT NOT NULL,
-    `medicine_id` INT NOT NULL,
-    `dosage` VARCHAR(255),
-    `frequency` VARCHAR(255),
-    `duration` VARCHAR(255),
-    `instructions` TEXT,
-    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (`prescription_id`) REFERENCES `prescription`(`id`) ON DELETE CASCADE,
-    FOREIGN KEY (`medicine_id`) REFERENCES `medicine`(`id`) ON DELETE CASCADE
-) ENGINE=InnoDB;
-
---
--- Table structure for table `prescription_lab_tests`
---
-
-CREATE TABLE `prescription_lab_tests` (
-    `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `prescription_id` INT NOT NULL,
-    `lab_test_id` INT NOT NULL,
-    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (`prescription_id`) REFERENCES `prescription`(`id`) ON DELETE CASCADE,
-    FOREIGN KEY (`lab_test_id`) REFERENCES `lab_tests`(`id`) ON DELETE CASCADE
-) ENGINE=InnoDB;
-
---
 -- Table structure for table `status`
 --
 
@@ -185,28 +114,6 @@ LOCK TABLES `type` WRITE;
 INSERT INTO `type` VALUES (10,'follow up'),(9,'primary');
 UNLOCK TABLES;
 
---
--- Table structure for table `visit_medicines`
---
-
-DROP TABLE IF EXISTS `visit_medicines`;
-CREATE TABLE `visit_medicines` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `dosage` text,
-  `diagnosis` text,
-  `duration` text,
-  `instructions` varchar(100) DEFAULT NULL,
-  `prescription_id` int DEFAULT NULL,
-  `medicine_id` int DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `prescription_id` (`prescription_id`),
-  KEY `medicine_id` (`medicine_id`),
-  CONSTRAINT `visit_medicines_ibfk_1` FOREIGN KEY (`prescription_id`) REFERENCES `prescription` (`id`),
-  CONSTRAINT `visit_medicines_ibfk_2` FOREIGN KEY (`medicine_id`) REFERENCES `medicine` (`id`)
-) ENGINE=InnoDB ;
-
-LOCK TABLES `visit_medicines` WRITE;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `visits`
@@ -231,7 +138,6 @@ CREATE TABLE `visits` (
   KEY `fk_prescription` (`prescription_id`),
   KEY `idx_visits_patient_id` (`patient_id`),
   KEY `idx_visits_date` (`visit_date`),
-  CONSTRAINT `fk_prescription` FOREIGN KEY (`prescription_id`) REFERENCES `prescription` (`id`),
   CONSTRAINT `visits_ibfk_1` FOREIGN KEY (`patient_id`) REFERENCES `patients` (`id`),
   CONSTRAINT `visits_ibfk_2` FOREIGN KEY (`type_id`) REFERENCES `type` (`id`),
   CONSTRAINT `visits_ibfk_3` FOREIGN KEY (`status_id`) REFERENCES `status` (`id`)
@@ -345,5 +251,106 @@ CREATE TABLE `instruction_history` (
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     KEY `idx_instruction_usage` (`usage_count` DESC, `last_used` DESC)
 ) ENGINE=InnoDB;
+
+
+
+--
+-- Table structure for table `prescription`
+--
+
+DROP TABLE IF EXISTS `prescription`;
+CREATE TABLE `prescription` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `prescription_date` date DEFAULT NULL,
+  `diagnosis` text,
+  `notes` text,
+  `lab_tests` varchar(100) DEFAULT NULL,
+  `visit_id` int DEFAULT NULL,
+  `patient_id` int DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `fk_visitid` (`visit_id`),
+  KEY `fk_patientid` (`patient_id`),
+  KEY `idx_prescription_visit_id` (`visit_id`),
+  KEY `idx_prescription_patient_id` (`patient_id`),
+  CONSTRAINT `fk_patientid` FOREIGN KEY (`patient_id`) REFERENCES `patients` (`id`),
+  CONSTRAINT `fk_visitid` FOREIGN KEY (`visit_id`) REFERENCES `visits` (`id`)
+) ENGINE=InnoDB ;
+
+LOCK TABLES `prescription` WRITE;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `prescription_imaging_studies`
+--
+
+DROP TABLE IF EXISTS `prescription_imaging_studies`;
+CREATE TABLE `prescription_imaging_studies` (
+  `prescription_id` int NOT NULL,
+  `imaging_studies_id` int NOT NULL,
+  `comments` text,
+  PRIMARY KEY (`prescription_id`,`imaging_studies_id`),
+  KEY `imaging_studies_id` (`imaging_studies_id`),
+  CONSTRAINT `prescription_imaging_studies_ibfk_1` FOREIGN KEY (`prescription_id`) REFERENCES `prescription` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `prescription_imaging_studies_ibfk_2` FOREIGN KEY (`imaging_studies_id`) REFERENCES `imaging_studies` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB ;
+
+LOCK TABLES `prescription_imaging_studies` WRITE;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `prescription_items`
+--
+
+CREATE TABLE `prescription_items` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `prescription_id` INT NOT NULL,
+    `medicine_id` INT NOT NULL,
+    `dosage` VARCHAR(255),
+    `frequency` VARCHAR(255),
+    `duration` VARCHAR(255),
+    `instructions` TEXT,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (`prescription_id`) REFERENCES `prescription`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`medicine_id`) REFERENCES `medicine`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+--
+-- Table structure for table `prescription_lab_tests`
+--
+
+CREATE TABLE `prescription_lab_tests` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `prescription_id` INT NOT NULL,
+    `lab_test_id` INT NOT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`prescription_id`) REFERENCES `prescription`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`lab_test_id`) REFERENCES `lab_tests`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+
+--
+-- Table structure for table `visit_medicines`
+--
+
+DROP TABLE IF EXISTS `visit_medicines`;
+CREATE TABLE `visit_medicines` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `dosage` text,
+  `diagnosis` text,
+  `duration` text,
+  `instructions` varchar(100) DEFAULT NULL,
+  `prescription_id` int DEFAULT NULL,
+  `medicine_id` int DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `prescription_id` (`prescription_id`),
+  KEY `medicine_id` (`medicine_id`),
+  CONSTRAINT `visit_medicines_ibfk_1` FOREIGN KEY (`prescription_id`) REFERENCES `prescription` (`id`),
+  CONSTRAINT `visit_medicines_ibfk_2` FOREIGN KEY (`medicine_id`) REFERENCES `medicine` (`id`)
+) ENGINE=InnoDB ;
+
+LOCK TABLES `visit_medicines` WRITE;
+UNLOCK TABLES;
+
 
 -- Dump completed on 2025-06-13 15:20:28

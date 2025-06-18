@@ -360,8 +360,8 @@ export const VisitForm = ({ patientId, visit, onSave }: VisitFormProps) => {
       {/* Header Card */}
       <Card className="shadow-lg border-0 bg-gradient-to-r from-white to-blue-50/30">
         <CardHeader className="pb-4">
-          <div className={cn("flex items-center justify-between", language === 'ar' && 'flex-row-reverse')}>
-            <div className={cn("flex items-center gap-4", language === 'ar' && 'flex-row-reverse')}>
+          <div className={cn("flex items-center justify-between")}>
+            <div className={cn("flex items-center gap-4")}>
               <div className="p-3 bg-[#2463EB] rounded-xl shadow-lg">
                 {isEditing ? <Activity className="w-7 h-7 text-white" /> : <Stethoscope className="w-7 h-7 text-white" />}
               </div>
@@ -410,7 +410,7 @@ export const VisitForm = ({ patientId, visit, onSave }: VisitFormProps) => {
         {/* Visit Details Section */}
         <Card className="shadow-lg border-0 bg-white">
           <CardHeader className="pb-6">
-            <CardTitle className={cn("flex items-center gap-3 text-xl font-bold", language === 'ar' && 'flex-row-reverse text-right')}>
+            <CardTitle className={cn("flex items-center gap-3 text-xl font-bold")}>
               <div className="p-2 bg-blue-100 rounded-lg">
                 <Calendar className="w-5 h-5 text-[#2463EB]" />
               </div>
@@ -430,7 +430,7 @@ export const VisitForm = ({ patientId, visit, onSave }: VisitFormProps) => {
                 <div className="w-full">
                   {/* Required Fields Info */}
                   <div className={cn("mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200", language === 'ar' && 'text-right')}>
-                    <div className={cn("flex items-start gap-2 text-sm text-blue-800", language === 'ar' && 'flex-row-reverse')}>
+                    <div className={cn("flex items-start gap-2 text-sm text-blue-800")}>
                       <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
                       <div>
                         <p className="font-medium mb-1">{t('common.required')}</p>
@@ -457,7 +457,7 @@ export const VisitForm = ({ patientId, visit, onSave }: VisitFormProps) => {
         {/* Prescription Section */}
         <Card className="shadow-lg border-0 bg-white">
           <CardHeader className="pb-6">
-            <CardTitle className={cn("flex items-center gap-3 text-xl font-bold", language === 'ar' && 'flex-row-reverse text-right')}>
+            <CardTitle className={cn("flex items-center gap-3 text-xl font-bold")}>
               <div className="p-2 bg-green-100 rounded-lg">
                 <FileText className="w-5 h-5 text-green-600" />
               </div>

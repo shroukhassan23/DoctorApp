@@ -51,7 +51,7 @@ export const VisitInformationForm = ({
         <div className="space-y-2">
           <Label 
             htmlFor="visit_date" 
-            className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2", language === 'ar' && 'text-right flex-row-reverse')}
+            className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2")}
           >
             <Calendar className="w-4 h-4 text-[#2463EB]" />
             {t('visit.date')} <span className="text-red-500">*</span>
@@ -67,7 +67,7 @@ export const VisitInformationForm = ({
             )}
           />
           {errors.visit_date && (
-            <p className={cn("text-red-500 text-sm mt-1 flex items-center gap-1", language === 'ar' && 'text-right flex-row-reverse')}>
+            <p className={cn("text-red-500 text-sm mt-1 flex items-center gap-1")}>
               <AlertCircle className="w-3 h-3" />
               {errors.visit_date.message}
             </p>
@@ -78,7 +78,7 @@ export const VisitInformationForm = ({
         <div className="space-y-2">
           <Label 
             htmlFor="visit_type" 
-            className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2", language === 'ar' && 'text-right flex-row-reverse')}
+            className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2")}
           >
             <Activity className="w-4 h-4 text-[#2463EB]" />
             {t('visit.type')} <span className="text-red-500">*</span>
@@ -125,7 +125,7 @@ export const VisitInformationForm = ({
             </SelectContent>
           </Select>
           {errors.visit_type && (
-            <p className={cn("text-red-500 text-sm mt-1 flex items-center gap-1", language === 'ar' && 'text-right flex-row-reverse')}>
+            <p className={cn("text-red-500 text-sm mt-1 flex items-center gap-1")}>
               <AlertCircle className="w-3 h-3" />
               {errors.visit_type.message}
             </p>
@@ -136,7 +136,7 @@ export const VisitInformationForm = ({
         <div className="space-y-2">
           <Label 
             htmlFor="status" 
-            className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2", language === 'ar' && 'text-right flex-row-reverse')}
+            className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2")}
           >
             <ClipboardList className="w-4 h-4 text-[#2463EB]" />
             {t('visit.status')} <span className="text-red-500">*</span>
@@ -183,7 +183,7 @@ export const VisitInformationForm = ({
             </SelectContent>
           </Select>
           {errors.status && (
-            <p className={cn("text-red-500 text-sm mt-1 flex items-center gap-1", language === 'ar' && 'text-right flex-row-reverse')}>
+            <p className={cn("text-red-500 text-sm mt-1 flex items-center gap-1")}>
               <AlertCircle className="w-3 h-3" />
               {errors.status.message}
             </p>
@@ -195,7 +195,7 @@ export const VisitInformationForm = ({
       <div className="space-y-2">
         <Label 
           htmlFor="chief_complaint" 
-          className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2", language === 'ar' && 'text-right flex-row-reverse')}
+          className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2")}
         >
           <Stethoscope className="w-4 h-4 text-[#2463EB]" />
           {t('visit.chiefComplaint')} <span className="text-red-500">*</span>
@@ -211,7 +211,7 @@ export const VisitInformationForm = ({
           )}
         />
         {errors.chief_complaint && (
-          <p className={cn("text-red-500 text-sm mt-1 flex items-center gap-1", language === 'ar' && 'text-right flex-row-reverse')}>
+          <p className={cn("text-red-500 text-sm mt-1 flex items-center gap-1")}>
             <AlertCircle className="w-3 h-3" />
             {errors.chief_complaint.message}
           </p>
@@ -222,7 +222,7 @@ export const VisitInformationForm = ({
       <div className="space-y-2">
         <Label 
           htmlFor="diagnosis" 
-          className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2", language === 'ar' && 'text-right flex-row-reverse')}
+          className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2")}
         >
           <FileText className="w-4 h-4 text-[#2463EB]" />
           {t('visit.diagnosis')} <span className="text-red-500">*</span>
@@ -244,7 +244,7 @@ export const VisitInformationForm = ({
 />
         </div>
         {errors.diagnosis && (
-          <p className={cn("text-red-500 text-sm mt-1 flex items-center gap-1", language === 'ar' && 'text-right flex-row-reverse')}>
+          <p className={cn("text-red-500 text-sm mt-1 flex items-center gap-1")}>
             <AlertCircle className="w-3 h-3" />
             {errors.diagnosis.message}
           </p>
@@ -255,7 +255,7 @@ export const VisitInformationForm = ({
       <div className="space-y-2">
         <Label 
           htmlFor="notes" 
-          className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2", language === 'ar' && 'text-right flex-row-reverse')}
+          className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2")}
         >
           <FileText className="w-4 h-4 text-gray-500" />
           {t('visit.notes')} <span className="text-gray-400 text-xs">{t('common.optional')}</span>
@@ -273,7 +273,7 @@ export const VisitInformationForm = ({
 
       {/* Form Tips */}
       <div className={cn("p-4 bg-blue-50 rounded-lg border border-blue-200", language === 'ar' && 'text-right')}>
-        <div className={cn("flex items-start gap-2 text-sm text-blue-800", language === 'ar' && 'flex-row-reverse')}>
+        <div className={cn("flex items-start gap-2 text-sm text-blue-800")}>
           <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
           <div>
             <p className="font-medium mb-1">{t('common.guideLines')}</p>
