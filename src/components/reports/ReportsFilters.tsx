@@ -188,7 +188,7 @@ export const ReportsFilters = ({
                 {t('reports.searchAll')}
               </span>
               <Badge variant="secondary" className="ml-auto text-xs">
-                All dates
+                {t('common.allDates')}
               </Badge>
             </label>
           </div>

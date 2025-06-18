@@ -41,7 +41,7 @@ export const VisitPrescriptionSection = ({
   const getPrescriptionStatus = () => {
     if (isPrescriptionSaved || existingPrescription) {
       return {
-        label: 'Saved',
+        label: t('common.saved'),
         color: 'bg-green-100 text-green-800 border-green-200',
         icon: CheckCircle
       };

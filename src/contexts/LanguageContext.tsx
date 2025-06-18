@@ -54,6 +54,11 @@ const translations = {
     'common.areRequired':'are required',
     'common.required':'Required fields:',
     'common.new':'New',
+    'common.saved':'Saved',
+    'common.editing':'Editing...',
+    'common.saving':'Saving...',
+    'common.updating':'Updating...',
+    'common.allDates':'All dates',
     // Patients
     'patients.title': 'Patient Management',
     'patients.addNew': 'Add New Patient',
@@ -354,6 +359,7 @@ const translations = {
     'prescription.info':'Prescription Information:',
 'prescription.guides':'Adding a prescription is optional. You can save the visit without a prescription and add one later if needed.',
     'prescription.successSave':'Prescription has been saved and is ready to print.',
+    'prescription.ready':'Prescription Ready',
     // Forms
     'form.required': 'This field is required',
     'form.selectFile': 'Select File',
@@ -422,6 +428,7 @@ const translations = {
     'common.attach':'ارفاق ملف',
     'common.uploadFile':'قم بتحميل المستندات أو الصور أو نتائج الاختبارات ذات الصلة بهذه الزيارة.',
     'common.optional':'(اختياري)',
+    'common.saved':'تم الحفظ',
 'common.updateMedication':'تحديث الأدوية والفحوصات المخبرية ودراسات التصوير',
     'common.quickPrint':'طباعه سريعه',
 'common.guideLines':'التعليمات',
@@ -429,6 +436,10 @@ const translations = {
     'common.areRequired':'مطلوبه',
     'common.required':'الحقول المطلوبة:',
 'common.new':'جديد',
+    'common.editing':'جاري التعديل...',
+    'common.saving':'جاري الحفظ...',
+    'common.updating':'جاري التحديث...',
+    'common.allDates':'كل التواريخ',
 
     // Patients
     'patients.title': 'إدارة المرضى',
@@ -735,7 +746,7 @@ const translations = {
 'prescription.guides':'إضافة وصفة طبية اختيارية. يمكنك حفظ زيارتك بدون وصفة طبية وإضافتها لاحقًا عند الحاجة.',
     'prescription.successSave':"تم حفظ الوصفة الطبية وهي جاهزة للطباعة.",
     'labTests.guidelines':'استخدم أسماء اختبارات واضحة وموحدة • قم بتضمين غرض الاختبار في الوصف • تأكد من تطابق الاسم مع معايير المختبر',
-
+'prescription.ready':'الوصفه الطبيه جاهزه',
     // Forms
     'form.required': 'هذا الحقل مطلوب',
     'form.selectFile': 'اختر ملف',

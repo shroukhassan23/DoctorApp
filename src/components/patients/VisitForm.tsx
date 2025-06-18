@@ -388,7 +388,7 @@ export const VisitForm = ({ patientId, visit, onSave }: VisitFormProps) => {
               {shouldShowPrintButton && (
                 <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-blue-200 px-3 py-1">
                   <FileText className="w-3 h-3 mr-1" />
-                  Prescription Ready
+                 {t('prescription.ready')}
                 </Badge>
               )}
             </div>
@@ -465,7 +465,7 @@ export const VisitForm = ({ patientId, visit, onSave }: VisitFormProps) => {
               {shouldShowPrintButton && (
                 <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-200 ml-auto">
                   <CheckCircle className="w-3 h-3 mr-1" />
-                  Saved
+                  {t('common.saved')}
                 </Badge>
               )}
             </CardTitle>

@@ -99,7 +99,7 @@ export const VisitFormActions = ({
                 {isPrescriptionSaved ? (
                   <>
                     <CheckCircle className="w-3 h-3 mr-1" />
-                    Saved
+                    {t('common.saved')}
                   </>
                 ) : (
                   <>
@@ -120,7 +120,7 @@ export const VisitFormActions = ({
               onClick={onCancel}
               disabled={isSubmitting}
             >
-              Cancel
+              {t('common.saved')}
             </CancelButton>
           )}
 
@@ -144,7 +144,7 @@ export const VisitFormActions = ({
               size="lg"
               className="min-w-[140px]"
             >
-              {isSubmitting ? 'Updating...' : (t('visit.updateVisit') || 'Update Visit')}
+              {isSubmitting ? t('common.updating') : (t('visit.updateVisit') || 'Update Visit')}
             </SaveButton>
           ) : (
             <SaveButton 
@@ -154,7 +154,7 @@ export const VisitFormActions = ({
               size="lg"
               className="min-w-[140px]"
             >
-              {isSubmitting ? 'Saving...' : (t('visit.saveVisit'))}
+              {isSubmitting ? t('common.saving') : t('visit.saveVisit')}
             </SaveButton>
           )}
         </div>

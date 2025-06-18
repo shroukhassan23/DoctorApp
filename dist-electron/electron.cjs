@@ -20,7 +20,7 @@ function createWindow() {
     }
     else {
         // Fix: Ensure correct path to dist folder
-        const indexPath = path.join(__dirname, 'dist', 'index.html');
+        const indexPath = path.join(__dirname, 'app_dist', 'index.html');
         // Check if file exists before loading
         const fs = require('fs');
         if (fs.existsSync(indexPath)) {
@@ -31,7 +31,7 @@ function createWindow() {
         else {
             console.error('index.html not found at:', indexPath);
             // Try alternative path
-            const altPath = path.join(__dirname, '..', 'dist', 'index.html');
+            const altPath = path.join(__dirname, '..', 'app_dist', 'index.html');
             console.log('Trying alternative path:', altPath);
             if (fs.existsSync(altPath)) {
                 win.loadFile(altPath).catch(err => {

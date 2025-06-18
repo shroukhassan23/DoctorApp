@@ -96,9 +96,7 @@ export const VisitCard = ({
             <h3 className={cn("font-semibold text-gray-900", language === 'ar' && 'text-right')}>
               {t('visit.visitId')}: {visit.visit_id}
             </h3>
-            <p className={cn("text-sm text-gray-600", language === 'ar' && 'text-right')}>
-              Medical Visit Record
-            </p>
+           
           </div>
         </div>
         {getStatusBadge(visit.status_id)}
