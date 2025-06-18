@@ -91,7 +91,7 @@ export const ReportsFilters = ({
         {/* Search Mode Toggle */}
         <div className="space-y-3">
           <Label className={cn("text-sm font-semibold text-gray-700", language === 'ar' && 'text-right')}>
-            {t('reports.searchMode')}
+            {t('reports.searchPatients')}
           </Label>
           <div className={cn("flex gap-4", language === 'ar' && 'flex-row-reverse')}>
             <label

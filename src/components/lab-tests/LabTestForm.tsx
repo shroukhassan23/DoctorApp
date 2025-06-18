@@ -207,42 +207,14 @@ export const LabTestForm = ({ labTest, onSave, onCancel, isLoading }: LabTestFor
             />
           </div>
 
-          {/* Test Categories Examples */}
-          <div className={cn("p-3 bg-blue-50 rounded-lg border border-blue-200", language === 'ar' && 'text-right')}>
-            <div className={cn("flex items-start gap-2 text-xs text-blue-800", language === 'ar' && 'flex-row-reverse')}>
-              <Info className="w-3 h-3 mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="font-medium mb-1">Common Lab Test Categories:</p>
-                <div className={cn("grid grid-cols-2 gap-2 text-xs", language === 'ar' && 'text-right')}>
-                  <div>
-                    <p className="font-medium">Blood Tests:</p>
-                    <p className="text-blue-700">CBC, Lipid Panel, Glucose</p>
-                  </div>
-                  <div>
-                    <p className="font-medium">Chemistry:</p>
-                    <p className="text-blue-700">Liver Panel, Kidney Function</p>
-                  </div>
-                  <div>
-                    <p className="font-medium">Immunology:</p>
-                    <p className="text-blue-700">Allergy Tests, Antibodies</p>
-                  </div>
-                  <div>
-                    <p className="font-medium">Microbiology:</p>
-                    <p className="text-blue-700">Culture Tests, Sensitivity</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
           {/* Guidelines */}
           <div className={cn("p-3 bg-blue-50 rounded-lg border border-blue-200", language === 'ar' && 'text-right')}>
             <div className={cn("flex items-start gap-2 text-xs text-blue-800", language === 'ar' && 'flex-row-reverse')}>
               <Info className="w-3 h-3 mt-0.5 flex-shrink-0" />
               <div>
-                <p className="font-medium mb-1">Lab Test Guidelines:</p>
+                <p className="font-medium mb-1">{t('common.guideLines')}</p>
                 <p className={cn("text-xs", language === 'ar' && 'text-right')}>
-                  • Use clear, standardized test names • Include test purpose in description • Ensure name matches laboratory standards
+                  • {t('labTests.guidelines')}
                 </p>
               </div>
             </div>

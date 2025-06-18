@@ -61,7 +61,7 @@ export const VisitFormActions = ({
             <div className={cn("flex items-center gap-2", language === 'ar' && 'flex-row-reverse')}>
               <CheckCircle className="w-4 h-4 text-green-600" />
               <span className={cn("text-sm font-medium text-green-800", language === 'ar' && 'text-right')}>
-                Prescription saved successfully - ready to print
+                {t('prescription.successSave')} 
               </span>
             </div>
             {onPrintPrescription && (
@@ -70,7 +70,7 @@ export const VisitFormActions = ({
                 onClick={onPrintPrescription}
                 size="sm"
               >
-                Quick Print
+                {t('common.quickPrint')}
               </PrintButton>
             )}
           </div>
@@ -82,19 +82,15 @@ export const VisitFormActions = ({
         <div className={cn("flex items-center gap-4", language === 'ar' && 'flex-row-reverse')}>
           <div className={cn("flex items-center gap-2", language === 'ar' && 'flex-row-reverse')}>
             <FileText className="w-4 h-4 text-gray-600" />
-            <span className={cn("text-sm font-medium text-gray-700", language === 'ar' && 'text-right')}>
-              Visit Form:
-            </span>
+         
             <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-blue-200">
-              {isEditing ? 'Editing' : 'New'}
+              {isEditing ? t('common.edit') : t('common.new')}
             </Badge>
           </div>
 
           {hasPrescriptionContent && (
             <div className={cn("flex items-center gap-2", language === 'ar' && 'flex-row-reverse')}>
-              <span className={cn("text-sm font-medium text-gray-700", language === 'ar' && 'text-right')}>
-                Prescription:
-              </span>
+            
               <Badge variant="secondary" className={
                 isPrescriptionSaved 
                   ? "bg-green-100 text-green-800 border-green-200" 

@@ -48,6 +48,12 @@ const translations = {
     'common.uploadFile':'Upload relevant documents, images, or test results for this visit.',
     'common.optional':'(Optional)',
     'common.updateMedication':'Update medications, lab tests, and imaging studies',
+    'common.quickPrint':'Quick Print',
+    'common.guideLines':"Guidelines:",
+    'common.fieldMarkedWith':'Fields marked with',
+    'common.areRequired':'are required',
+    'common.required':'Required fields:',
+    'common.new':'New',
     // Patients
     'patients.title': 'Patient Management',
     'patients.addNew': 'Add New Patient',
@@ -89,6 +95,8 @@ const translations = {
      'patients.loading':"Loading patients...",
      'patients.fill':'Fill in the patient information below.',
      'patients.updateDetails':'Update patient details and medical information',
+     'patients.noPatientsFound':'No patients found',
+'patients.ageAutoCalculated':'Auto-calculated from date of birth',
     // Medicines
     'medicines.title': 'Medicine Management',
     'medicines.medicine': 'Medicine',
@@ -153,7 +161,7 @@ const translations = {
     'labTests.deletedSuccess': 'Lab test deleted successfully',
     'labTests.errorSaving': 'Error saving lab test',
     'labTests.errorDeleting': 'Error deleting lab test',
-    
+    'labTests.guidelines':'Use clear, standardized test names • Include test purpose in description • Ensure name matches laboratory standards',
     // Imaging Studies
     'imaging.title': 'Imaging Studies Management',
     'imaging.imaging':'Imaging Studies',
@@ -181,6 +189,7 @@ const translations = {
     'imaging.updateDetails':"Update imaging study details and description",
     'imaging.create':"Create a new medical imaging study for diagnostics",
     'imaging.detail':'Imaging Study Details',
+    'imaging.guidelines':' • Use standard medical imaging terminology • Include anatomical location and imaging method • Specify contrast usage if applicable',
     // Reports
     'reports.title': 'Daily Reports',
     'reports.selectDate': 'Select Date',
@@ -274,7 +283,7 @@ const translations = {
     'visit.details': 'Visit Details',
     'visit.primaryConsultation': 'Primary',
     'visit.followUp': 'Follow-up',
-    'visit.waiting': 'Waiting',
+    'visit.status.waiting': 'Waiting',
     'visit.completed': 'Completed',
     'visit.cancelled': 'Cancelled',
     'visit.allStatuses': 'All Statuses',
@@ -311,9 +320,16 @@ const translations = {
 'visit.noVisits':'No visits recorded yet.',
 'visit.clickSave':"Click 'Save Visit' to create this visit record. You can add or edit prescriptions later.",
 'visit.clickupdate':"Click 'Update Visit' to save your changes to this visit record.",
-'visit.status.waiting':'Waiting',
+'visit.visitDate':'Visit Date',
+'visit.visitType':'Visit Type',
+'visit.guidelines':'and Status are required to save the visit.',
 'visit.activeFilters':'Active filters:',
 'visit.addNote':'Add medications, lab tests, and imaging studies (optional)',
+'visit.chiefComplaintGuide':" Chief complaint should describe the patient's main concern",
+'visit.diagnosisGuide':'Diagnosis should include your clinical assessment',
+'visit.notesguides':'Notes are optional but helpful for future reference',
+'visit.status.cancelled':'cancelled',
+'visit.status.completed':'completed',
     // Prescription
     'prescription.date': 'Prescription Date',
     'prescription.diagnosis': 'Diagnosis',
@@ -335,8 +351,9 @@ const translations = {
     'prescription.notFound':'No prescriptions found. Create your first prescription to get started',
     'prescription.notSavedSuccess':'Error saving prescription',
     'prescription.treatment':'Prescription & Treatment',
-
-    
+    'prescription.info':'Prescription Information:',
+'prescription.guides':'Adding a prescription is optional. You can save the visit without a prescription and add one later if needed.',
+    'prescription.successSave':'Prescription has been saved and is ready to print.',
     // Forms
     'form.required': 'This field is required',
     'form.selectFile': 'Select File',
@@ -406,6 +423,13 @@ const translations = {
     'common.uploadFile':'قم بتحميل المستندات أو الصور أو نتائج الاختبارات ذات الصلة بهذه الزيارة.',
     'common.optional':'(اختياري)',
 'common.updateMedication':'تحديث الأدوية والفحوصات المخبرية ودراسات التصوير',
+    'common.quickPrint':'طباعه سريعه',
+'common.guideLines':'التعليمات',
+    'common.fieldMarkedWith':'الحقول التي تحمل علامة',
+    'common.areRequired':'مطلوبه',
+    'common.required':'الحقول المطلوبة:',
+'common.new':'جديد',
+
     // Patients
     'patients.title': 'إدارة المرضى',
     'patients.addNew': 'إضافة مريض جديد',
@@ -448,6 +472,9 @@ const translations = {
 'patients.loading':'جاري تحميل المرضى',
 'patients.fill':'املأ معلومات المريض في الأسفل',
 'patients.recordDetails':'تسجيل تفاصيل استشارة المريض',
+'patients.noPatientsFound':'لا يوجد مرضى',
+'patients.ageAutoCalculated':'يتم حسابه تلقائي من تاريخ الميلاد',
+
   // Medicines
     
     'medicines.title': 'إدارة الأدوية',
@@ -539,7 +566,7 @@ const translations = {
     'imaging.updateDetails':'تحديث تفاصيل دراسة التصوير والوصف',
     'imaging.create':'تحديث تفاصيل دراسة التصوير والوصف',
     'imaging.detail':'تفاصيل الاشاعه',
-
+'imaging.guidelines':'استخدم مصطلحات التصوير الطبي القياسية • قم بتضمين الموقع التشريحي وطريقة التصوير • حدد استخدام التباين إذا لزم الأمر',
     // Reports
     'reports.title': 'التقارير اليومية',
     "reports.to":'إلى',
@@ -675,6 +702,14 @@ const translations = {
 'visit.status.waiting':'في الانتظار',
 'visit.activeFilters':'الفلاتر النشطه',
 'visit.addNote':'إضافة الأدوية والاختبارات المعملية ودراسات التصوير (اختياري)',
+'visit.visitDate':'تاريخ الزياره',
+'visit.visitType':'نوع الزياره',
+'visit.guidelines':'والحالة مطلوبة لحفظ الزيارة.',
+'visit.chiefComplaintGuide':"يجب أن تصف الشكوى الرئيسية الاهتمام الرئيسي للمريض",
+'visit.diagnosisGuide':'يجب أن يتضمن التشخيص تقييمك السريري',
+'visit.notesguides':"الملاحظات اختيارية ولكنها مفيدة للرجوع إليها في المستقبل",
+'visit.status.cancelled':'ملغيه',
+'visit.status.completed':'مكتمله',
     // Prescription
     'prescription.date': 'تاريخ الوصفة الطبية',
     'prescription.diagnosis': 'الجرعه',
@@ -696,6 +731,11 @@ const translations = {
     'prescription.errorDelete':"خطأ في حذف الوصفه الطبيه",
     'prescription.notFound':'إنشئ وصفه للبدء,لا يوجد وصفات طبيه',
     'prescription.treatment':'العلاج و الوصفه الطبيه',
+    'prescription.info':'معلومات الوصفه الطبيه',
+'prescription.guides':'إضافة وصفة طبية اختيارية. يمكنك حفظ زيارتك بدون وصفة طبية وإضافتها لاحقًا عند الحاجة.',
+    'prescription.successSave':"تم حفظ الوصفة الطبية وهي جاهزة للطباعة.",
+    'labTests.guidelines':'استخدم أسماء اختبارات واضحة وموحدة • قم بتضمين غرض الاختبار في الوصف • تأكد من تطابق الاسم مع معايير المختبر',
+
     // Forms
     'form.required': 'هذا الحقل مطلوب',
     'form.selectFile': 'اختر ملف',

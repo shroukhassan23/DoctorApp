@@ -209,70 +209,14 @@ export const ImagingStudyForm = ({ imagingStudy, onSave, onCancel, isLoading }: 
             />
           </div>
 
-          {/* Imaging Modalities Examples */}
-          <div className={cn("p-3 bg-blue-50 rounded-lg border border-blue-200", language === 'ar' && 'text-right')}>
-            <div className={cn("flex items-start gap-2 text-xs text-blue-800", language === 'ar' && 'flex-row-reverse')}>
-              <Info className="w-3 h-3 mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="font-medium mb-1">Common Imaging Modalities:</p>
-                <div className={cn("grid grid-cols-2 gap-2 text-xs", language === 'ar' && 'text-right')}>
-                  <div className="flex items-center gap-1">
-                    <Eye className="w-3 h-3 text-[#2463EB]" />
-                    <div>
-                      <p className="font-medium">X-Ray:</p>
-                      <p className="text-blue-700">Chest, Bone, Joint imaging</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Brain className="w-3 h-3 text-[#2463EB]" />
-                    <div>
-                      <p className="font-medium">MRI:</p>
-                      <p className="text-blue-700">Brain, Spine, Soft tissue</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Scan className="w-3 h-3 text-[#2463EB]" />
-                    <div>
-                      <p className="font-medium">CT Scan:</p>
-                      <p className="text-blue-700">Abdomen, Chest, Head</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Heart className="w-3 h-3 text-[#2463EB]" />
-                    <div>
-                      <p className="font-medium">Ultrasound:</p>
-                      <p className="text-blue-700">Cardiac, Abdominal, Pelvic</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Study Types Reference */}
-          <div className={cn("p-3 bg-indigo-50 rounded-lg border border-indigo-200", language === 'ar' && 'text-right')}>
-            <div className={cn("flex items-start gap-2 text-xs text-indigo-800", language === 'ar' && 'flex-row-reverse')}>
-              <Info className="w-3 h-3 mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="font-medium mb-1">Study Examples by Body System:</p>
-                <div className={cn("text-xs space-y-1", language === 'ar' && 'text-right')}>
-                  <p><span className="font-medium">Cardiovascular:</span> Echocardiogram, Cardiac CT, Angiography</p>
-                  <p><span className="font-medium">Neurological:</span> Brain MRI, CT Head, Spine imaging</p>
-                  <p><span className="font-medium">Pulmonary:</span> Chest X-Ray, CT Chest, Pulmonary angiogram</p>
-                  <p><span className="font-medium">Musculoskeletal:</span> Bone X-Ray, Joint MRI, Bone scan</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
           {/* Guidelines */}
           <div className={cn("p-3 bg-blue-50 rounded-lg border border-blue-200", language === 'ar' && 'text-right')}>
             <div className={cn("flex items-start gap-2 text-xs text-blue-800", language === 'ar' && 'flex-row-reverse')}>
               <Info className="w-3 h-3 mt-0.5 flex-shrink-0" />
               <div>
-                <p className="font-medium mb-1">Imaging Study Guidelines:</p>
+                <p className="font-medium mb-1">{t('common.guideLines')}</p>
                 <p className={cn("text-xs", language === 'ar' && 'text-right')}>
-                  • Use standard medical imaging terminology • Include anatomical location and imaging method • Specify contrast usage if applicable
+                 {t('imaging.guidelines')}
                 </p>
               </div>
             </div>

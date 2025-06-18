@@ -324,7 +324,7 @@ export const PatientForm = ({ patient, onSave, onCancel, isLoading }: PatientFor
                 )}
               />
               <p className={cn("text-xs text-gray-500", language === 'ar' && 'text-right')}>
-                Auto-calculated from date of birth
+                {t('patients.ageAutoCalculated')}
               </p>
             </div>
 
@@ -442,9 +442,9 @@ export const PatientForm = ({ patient, onSave, onCancel, isLoading }: PatientFor
             <div className={cn("flex items-start gap-2 text-xs text-blue-800", language === 'ar' && 'flex-row-reverse')}>
               <Info className="w-3 h-3 mt-0.5 flex-shrink-0" />
               <div>
-                <p className="font-medium mb-1">Guidelines:</p>
+                <p className="font-medium mb-1">{t('common.guideLines')}</p>
                 <p className={cn("text-xs", language === 'ar' && 'text-right')}>
-                  Fields marked with <span className="text-red-500">*</span> are required. Age is auto-calculated.
+                  {t('common.fieldMarkedWith')}<span className="text-red-500">*</span> {t('common.areRequired')}.
                 </p>
               </div>
             </div>

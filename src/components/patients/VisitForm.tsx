@@ -433,9 +433,9 @@ export const VisitForm = ({ patientId, visit, onSave }: VisitFormProps) => {
                     <div className={cn("flex items-start gap-2 text-sm text-blue-800", language === 'ar' && 'flex-row-reverse')}>
                       <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
                       <div>
-                        <p className="font-medium mb-1">Required Fields:</p>
+                        <p className="font-medium mb-1">{t('common.required')}</p>
                         <p className="text-xs">
-                          Visit Date, Visit Type, Chief Complaint, Diagnosis, and Status are required to save the visit.
+                          {t('visit.visitDate')}, {t('visit.visitType')}, {t('visit.chiefComplaint')},{t('visit.diagnosis')},{t('visit.guidelines')}
                         </p>
                       </div>
                     </div>
@@ -495,7 +495,7 @@ export const VisitForm = ({ patientId, visit, onSave }: VisitFormProps) => {
                 </div>
                 {t('common.attach')}
                 <Badge variant="secondary" className="ml-auto">
-                  Optional
+                 {t('common.optional')} 
                 </Badge>
               </CardTitle>
             </CardHeader>

@@ -87,7 +87,7 @@ export const ReportsPageHeader = ({ fromDate, toDate }: ReportsPageHeaderProps) 
       )}>
         <CalendarDays className="h-5 w-5 text-[#2463EB]" />
         <div className={cn("text-sm", language === 'ar' && 'text-right')}>
-          <span className="font-medium text-gray-700">{t('reports.selectedDateRange')}:</span>
+          <span className="font-medium text-gray-700">{t('reports.selectedRange')}:</span>
           <span className={cn("text-gray-600", language === 'ar' ? 'mr-2' : 'ml-2')}>
             {formatDateRange(fromDate, toDate)}
           </span>

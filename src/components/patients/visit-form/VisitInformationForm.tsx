@@ -276,12 +276,12 @@ export const VisitInformationForm = ({
         <div className={cn("flex items-start gap-2 text-sm text-blue-800", language === 'ar' && 'flex-row-reverse')}>
           <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
           <div>
-            <p className="font-medium mb-1">Form Guidelines:</p>
+            <p className="font-medium mb-1">{t('common.guideLines')}</p>
             <ul className={cn("space-y-1 text-xs", language === 'ar' && 'text-right')}>
-              <li>• Fields marked with <span className="text-red-500">*</span> are required</li>
-              <li>• Chief complaint should describe the patient's main concern</li>
-              <li>• Diagnosis should include your clinical assessment</li>
-              <li>• Notes are optional but helpful for future reference</li>
+              <li>• {t('common.fieldMarkedWith')}<span className="text-red-500">*</span>{t('common.areRequired')}</li>
+              <li>•{t('visit.chiefComplaintGuide')}</li>
+              <li>• {t('visit.diagnosisGuide')}</li>
+              <li>• {t('visit.notesguides')}</li>
             </ul>
           </div>
         </div>

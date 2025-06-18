@@ -54,7 +54,7 @@ export const VisitPrescriptionSection = ({
       };
     }
     return {
-      label: 'Optional',
+      label: t('common.optional'),
       color: 'bg-gray-100 text-gray-600 border-gray-200',
       icon: Info
     };
@@ -86,7 +86,7 @@ export const VisitPrescriptionSection = ({
             </h3>
             <p className={cn("text-sm text-gray-600", language === 'ar' && 'text-right')}>
               {isEditing ? 
-                'Update medications, lab tests, and imaging studies' : 
+                t('common.updateMedication') : 
                 t('visit.addNote')
               }
             </p>
@@ -118,9 +118,9 @@ export const VisitPrescriptionSection = ({
           <div className={cn("flex items-start gap-2 text-sm text-blue-800", language === 'ar' && 'flex-row-reverse')}>
             <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
             <div>
-              <p className="font-medium mb-1">Prescription Information:</p>
+              <p className="font-medium mb-1">{t('prescription.info')}</p>
               <p className="text-xs">
-                Adding a prescription is optional. You can save the visit without a prescription and add one later if needed.
+                {t('prescription.guides')}
               </p>
             </div>
           </div>
@@ -134,7 +134,7 @@ export const VisitPrescriptionSection = ({
             <div className={cn("flex items-center gap-2 text-sm text-green-800", language === 'ar' && 'flex-row-reverse')}>
               <CheckCircle className="w-4 h-4" />
               <span className="font-medium">
-              Prescription has been saved and is ready to print.
+             {t('prescription.successSave')}
               </span>
             </div>
             {/* <PrintButton 
