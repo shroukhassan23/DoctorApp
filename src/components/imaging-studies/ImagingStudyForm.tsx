@@ -111,7 +111,7 @@ export const ImagingStudyForm = ({ imagingStudy, onSave, onCancel }: ImagingStud
           <div className="p-2 bg-[#2463EB] rounded-lg">
             {imagingStudy ? <Edit className="w-5 h-5 text-white" /> : <Plus className="w-5 h-5 text-white" />}
           </div>
-          <div className="flex-1">
+          <div className={"flex-1"}>
             <h2 className={cn("text-lg font-bold text-gray-900", language === 'ar' && 'text-right')}>
               {imagingStudy ? t('imaging.editStudy') : t('imaging.addNew')}
             </h2>
