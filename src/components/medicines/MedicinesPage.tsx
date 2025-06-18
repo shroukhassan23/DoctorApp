@@ -73,7 +73,7 @@ export const MedicinesPage = () => {
     return (
       <div className={cn("p-6", language === 'ar' && "rtl")}>
         {/* Header skeleton */}
-        <div className={cn("flex justify-between items-center mb-8", language === 'ar' && 'flex-row-reverse rtl')}>
+        <div className={cn("flex justify-between items-center mb-8", language === 'ar' && 'flex-row-reverse')}>
           <CardLoading lines={2} showAvatar />
           <div className="w-32 h-10 bg-gray-200 rounded-lg animate-pulse"></div>
         </div>
@@ -91,44 +91,69 @@ export const MedicinesPage = () => {
 
   return (
     <div className={cn("p-6", language === 'ar' && "rtl")}>
-      <div className={cn("flex justify-between items-center mb-8", language === 'ar' && 'flex-row-reverse rtl')}>
-        <div className={cn("flex items-center gap-4", language === 'ar' && 'flex-row-reverse')}>
-          <div className="p-3 bg-[#2463EB] rounded-xl shadow-lg">
-            <Pill className="w-7 h-7 text-white" />
-          </div>
-          <div>
-            <h1 className={cn("text-3xl font-bold text-gray-900", language === 'ar' && 'text-right')}>
-              {t('medicines.title')}
-            </h1>
-            <p className={cn("text-gray-600 mt-1", language === 'ar' && 'text-right')}>
-              {t('medicines.manage')}
-            </p>
-          </div>
+      <div className={cn("flex justify-between items-center mb-8", language === 'ar' && 'flex-row-reverse')}>
+        <div className="flex items-center gap-4">
+          {language === 'ar' ? (
+            <>
+              <div className={cn("order-2", language === 'ar' && 'order-1')}>
+                <div className="p-3 bg-[#2463EB] rounded-xl shadow-lg">
+                  <Pill className="w-7 h-7 text-white" />
+                </div>
+              </div>
+              <div className={cn("order-1", language === 'ar' && 'order-2')}>
+                <h1 className={cn("text-3xl font-bold text-gray-900", language === 'ar' && 'text-right')}>
+                  {t('medicines.title')}
+                </h1>
+                <p className={cn("text-gray-600 mt-1", language === 'ar' && 'text-right')}>
+                  {t('medicines.manage')}
+                </p>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="p-3 bg-[#2463EB] rounded-xl shadow-lg">
+                <Pill className="w-7 h-7 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">
+                  {t('medicines.title')}
+                </h1>
+                <p className="text-gray-600 mt-1">
+                  {t('medicines.manage')}
+                </p>
+              </div>
+            </>
+          )}
         </div>
 
-        <Dialog open={showForm} onOpenChange={setShowForm}>
-          <DialogTrigger asChild>
-            <AddButton
-              size="sm"
-              onClick={() => { setSelectedMedicine(null) }}
-            >
-              {t('medicines.addNew')}
-            </AddButton>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle className={cn(language === 'ar' && 'text-right')}>
-                {selectedMedicine ? t('medicines.editMedicine') : t('medicines.addNew')}
-              </DialogTitle>
-            </DialogHeader>
-            <MedicineForm medicine={selectedMedicine} onSave={handleMedicineSaved} isLoading={false} />
-          </DialogContent>
-        </Dialog>
+        <div className={cn(language === 'ar' && 'order-first')}>
+          <Dialog open={showForm} onOpenChange={setShowForm}>
+            <DialogTrigger asChild>
+              <AddButton
+                size="sm"
+                onClick={() => { setSelectedMedicine(null) }}
+              >
+                {t('medicines.addNew')}
+              </AddButton>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle className={cn(language === 'ar' && 'text-right')}>
+                  {selectedMedicine ? t('medicines.editMedicine') : t('medicines.addNew')}
+                </DialogTitle>
+              </DialogHeader>
+              <MedicineForm medicine={selectedMedicine} onSave={handleMedicineSaved} isLoading={false} />
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <div className="mb-8 p-6 bg-white rounded-xl shadow-md border border-gray-200">
         <div className="space-y-3">
-          <label className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2", language === 'ar' && 'text-right flex-row-reverse')}>
+          <label className={cn(
+            "text-sm font-semibold text-gray-700 flex items-center gap-2",
+            language === 'ar' && 'flex-row-reverse justify-end text-right'
+          )}>
             <Search className="w-4 h-4 text-[#2463EB]" />
             {t('medicines.search')}
           </label>
@@ -170,7 +195,7 @@ export const MedicinesPage = () => {
                 <TableCell className={cn(language === 'ar' && 'text-right')}>{medicine.manufacturer || 'N/A'}</TableCell>
                 <TableCell className={cn(language === 'ar' && 'text-right')}>{medicine.price ? `$${medicine.price}` : 'N/A'}</TableCell>
                 <TableCell className={cn(language === 'ar' ? 'text-left' : 'text-right')}>
-                  <div className={cn("flex space-x-2", language === 'ar' ? 'justify-start flex-row-reverse space-x-reverse' : 'justify-end')}>
+                  <div className={cn("flex gap-2", language === 'ar' ? 'justify-start flex-row-reverse space-x-reverse' : 'justify-end')}>
                     <Dialog>
                       <DialogTrigger asChild>
                         <EditButton

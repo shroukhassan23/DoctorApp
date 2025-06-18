@@ -51,11 +51,22 @@ export const DateSelector = ({
   return (
     <Card className={cn("shadow-lg border-0 bg-white mb-6", language === 'ar' && 'rtl')}>
       <CardHeader className="pb-4">
-        <CardTitle className={cn("flex items-center gap-3 text-xl font-bold", language === 'ar' && 'flex-row-reverse text-right')}>
-          <div className="p-2 bg-[#2463EB] rounded-xl shadow-lg">
-            <CalendarRange className="w-6 h-6 text-white" />
-          </div>
-          {t('reports.dateRange')}
+        <CardTitle className={cn("flex items-center gap-3 text-xl font-bold", language === 'ar' && 'text-right')}>
+          {language === 'ar' ? (
+            <>
+              <span>{t('reports.dateRange')}</span>
+              <div className="p-2 bg-[#2463EB] rounded-xl shadow-lg">
+                <CalendarRange className="w-6 h-6 text-white" />
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="p-2 bg-[#2463EB] rounded-xl shadow-lg">
+                <CalendarRange className="w-6 h-6 text-white" />
+              </div>
+              {t('reports.dateRange')}
+            </>
+          )}
         </CardTitle>
       </CardHeader>
 
@@ -65,7 +76,10 @@ export const DateSelector = ({
           <div className="space-y-2">
             <Label
               htmlFor="from-date"
-              className="text-sm font-semibold text-gray-700 flex items-center gap-2"
+              className={cn(
+                "text-sm font-semibold text-gray-700 flex items-center gap-2",
+                language === 'ar' && 'flex-row-reverse justify-end text-right'
+              )}
             >
               <Calendar className="w-4 h-4 text-[#2463EB]" />
               {t('reports.from')}
@@ -89,11 +103,13 @@ export const DateSelector = ({
           <div className="space-y-2">
             <Label
               htmlFor="to-date"
-              className="text-sm font-semibold text-gray-700 flex items-center gap-2"
+              className={cn(
+                "text-sm font-semibold text-gray-700 flex items-center gap-2",
+                language === 'ar' && 'flex-row-reverse justify-end text-right'
+              )}
             >
               <Calendar className="w-4 h-4 text-[#2463EB]" />
-                            {t('reports.to')}
-
+              {t('reports.to')}
             </Label>
             <div className="relative">
               <Input

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -33,12 +33,15 @@ export const PrescriptionForm = ({
   onSave,
   isEmbedded = false
 }: PrescriptionFormProps) => {
+  console.log('PrescriptionForm re-rendered');
   const [medicines, setMedicines] = useState<any[]>([]);
   const [selectedLabTests, setSelectedLabTests] = useState<any[]>([]);
-  const [selectedImagingStudies, setSelectedImagingStudies] = useState<any[]>([]);
   const [selectedPatientId, setSelectedPatientId] = useState(patientId || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { t, language } = useLanguage();
+
+  const imagingStudiesRef = useRef<{ getSelectedStudies: () => any[] }>(null);
+  const labTestsRef = useRef<{ getSelectedTests: () => any[] }>(null);
 
   const { register, handleSubmit, setValue, watch, reset } = useForm({
     defaultValues: {
@@ -60,23 +63,23 @@ export const PrescriptionForm = ({
     },
     enabled: !isEmbedded && !patientId
   });
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0'); // +1 because months are 0-based
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // +1 because months are 0-based
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
   // Load existing prescription data when editing
   useEffect(() => {
     if (prescription) {
-reset({
-  prescription_date: prescription.prescription_date 
-    ? formatDate(prescription.prescription_date)
-    : formatDate(new Date().toISOString()),
-  notes: prescription.notes || '',
-  diagnosis: prescription.diagnosis || ''
-});
+      reset({
+        prescription_date: prescription.prescription_date
+          ? formatDate(prescription.prescription_date)
+          : formatDate(new Date().toISOString()),
+        notes: prescription.notes || '',
+        diagnosis: prescription.diagnosis || ''
+      });
 
 
       // Load medicines
@@ -107,7 +110,7 @@ reset({
           name: study.imaging_studies?.name?.trim() || '',
           notes: study.comments || study.notes || ''
         }));
-        setSelectedImagingStudies(loadedImagingStudies);
+        // setSelectedImagingStudies(loadedImagingStudies);
       }
 
       // Set patient ID if available
@@ -135,6 +138,10 @@ reset({
       currentMedicines = (setMedicines as any).getCurrentMedicines();
     }
 
+    const currentSelectedLabTests = labTestsRef.current?.getSelectedTests() || selectedLabTests;
+    const currentSelectedImagingStudies = imagingStudiesRef.current?.getSelectedStudies() || [];
+
+
     setIsSubmitting(true);
 
     try {
@@ -143,7 +150,7 @@ reset({
         patient_id: targetPatientId,
         medicines: currentMedicines,
         selectedLabTests,
-        selectedImagingStudies,
+        selectedImagingStudies: currentSelectedImagingStudies,
         visit_id: visitId
       };
 
@@ -167,7 +174,7 @@ reset({
         <div>
           <Label htmlFor="patient">{t('patients.patient')}*</Label>
           {patientsLoading ? (
-            <SectionLoading text={t('patients.loading')}variant="pulse" color="orange"/>
+            <SectionLoading text={t('patients.loading')} variant="pulse" color="orange" />
           ) : (
             <Select
               value={selectedPatientId}
@@ -224,8 +231,12 @@ reset({
       />
 
       <ImagingStudiesSection
-        selectedImagingStudies={selectedImagingStudies}
-        setSelectedImagingStudies={setSelectedImagingStudies}
+        ref={imagingStudiesRef}
+        initialSelectedImagingStudies={prescription?.prescription_imaging_studies?.map((study: any) => ({
+          studyId: String(study.imaging_study_id || study.imaging_studies_id),
+          name: study.imaging_studies?.name?.trim() || '',
+          notes: study.comments || study.notes || ''
+        })) || []}
       />
 
       <div>
@@ -238,25 +249,25 @@ reset({
       </div>
 
       <div className="flex justify-end">
-      {prescription ? (
-  <EditButton 
-    type={isEmbedded ? "button" : "submit"} 
-    disabled={isSubmitting} 
-    loading={isSubmitting}
-    onClick={isEmbedded ? handleSubmit(onSubmit) : undefined}
-  >
-    {t('prescription.update')}
-  </EditButton>
-) : (
-  <SaveButton 
-    type={isEmbedded ? "button" : "submit"} 
-    disabled={isSubmitting} 
-    loading={isSubmitting}
-    onClick={isEmbedded ? handleSubmit(onSubmit) : undefined}
-  >
-    {t('prescription.save')}
-  </SaveButton>
-)}
+        {prescription ? (
+          <EditButton
+            type={isEmbedded ? "button" : "submit"}
+            disabled={isSubmitting}
+            loading={isSubmitting}
+            onClick={isEmbedded ? handleSubmit(onSubmit) : undefined}
+          >
+            {t('prescription.update')}
+          </EditButton>
+        ) : (
+          <SaveButton
+            type={isEmbedded ? "button" : "submit"}
+            disabled={isSubmitting}
+            loading={isSubmitting}
+            onClick={isEmbedded ? handleSubmit(onSubmit) : undefined}
+          >
+            {t('prescription.save')}
+          </SaveButton>
+        )}
       </div>
     </>
   );

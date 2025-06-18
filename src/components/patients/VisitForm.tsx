@@ -120,6 +120,9 @@ export const VisitForm = ({ patientId, visit, onSave }: VisitFormProps) => {
   // Populate form when editing
   useEffect(() => {
     if (visit && visitTypes.length > 0 && visitStatuses.length > 0) {
+      console.log('Visit object properties:', Object.keys(visit));
+      console.log('Visit ID:', visit.id);
+      console.log('Visit visit_id:', visit.visit_id);
       // Format date properly for input[type="date"]
       let formattedDate = visit.visit_date;
       if (formattedDate) {
@@ -150,9 +153,11 @@ export const VisitForm = ({ patientId, visit, onSave }: VisitFormProps) => {
 
     try {
       console.log('load existing visit',visit)
-      const response = await fetch(getVisitPrescriptionUrl(visit.visit_id));
+      const response = await fetch(getVisitPrescriptionUrl(visit.id));
+      console.log('Fetching prescription for visit ID:', visit.id);
       if (response.ok) {
         const prescription = await response.json();
+        console.log('prescription response:', prescription);
         setExistingPrescriptionData(prescription);
         setCurrentPrescriptionData(prescription);
       } else if (response.status !== 404) {

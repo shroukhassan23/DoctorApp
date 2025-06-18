@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { PrintButton } from '@/components/ui/enhanced-button';
 import { Separator } from '@/components/ui/separator';
@@ -63,6 +63,12 @@ export const VisitPrescriptionSection = ({
   const status = getPrescriptionStatus();
   const StatusIcon = status.icon;
 
+  const stablePrescriptionKey = useMemo(() => {
+    // Only change when absolutely necessary
+    return visitId ? `prescription-${visitId}` : 'new-prescription';
+  }, [visitId]);
+  
+
   return (
     <div className="w-full space-y-6">
       {/* Section Header */}
@@ -95,14 +101,14 @@ export const VisitPrescriptionSection = ({
           </Badge>
 
           {/* Print Button - Show when prescription is saved */}
-          {(isPrescriptionSaved || existingPrescription) && (
+          {/* {(isPrescriptionSaved || existingPrescription) && (
             <PrintButton 
               onClick={onPrintPrescription}
               size="sm"
             >
               {t('visit.printPrescription') || 'Print'}
             </PrintButton>
-          )}
+          )} */}
         </div>
       </div>
 
@@ -128,15 +134,15 @@ export const VisitPrescriptionSection = ({
             <div className={cn("flex items-center gap-2 text-sm text-green-800", language === 'ar' && 'flex-row-reverse')}>
               <CheckCircle className="w-4 h-4" />
               <span className="font-medium">
-                Prescription has been saved and is ready to print.
+              Prescription has been saved and is ready to print.
               </span>
             </div>
-            <PrintButton 
+            {/* <PrintButton 
               onClick={onPrintPrescription}
               size="sm"
             >
               Print Now
-            </PrintButton>
+            </PrintButton> */}
           </div>
         </div>
       )}
@@ -159,7 +165,7 @@ export const VisitPrescriptionSection = ({
       {/* Prescription Form */}
       <div className="space-y-4">
         <PrescriptionForm 
-          key={prescriptionKey}
+          key={stablePrescriptionKey}
           patientId={patientId}
           visitId={visitId}
           prescription={existingPrescription}

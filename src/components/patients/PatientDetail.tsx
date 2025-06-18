@@ -9,6 +9,7 @@ import { PatientFiles } from './patient-detail/PatientFiles';
 import { getPatientVisitsUrl, getPatientFilesUrl } from '@/components/constants.js';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { SectionLoading } from '@/components/ui/loading-spinner';
+import { cn } from '@/lib/utils';
 
 interface PatientDetailProps {
   patient: any;
@@ -61,8 +62,8 @@ export const PatientDetail = ({ patient, onUpdate }: PatientDetailProps) => {
         </TabsList>
 
         <TabsContent value="visits" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-medium">{t('visit.visitHistory')}</h3>
+        <div className={cn("flex justify-between items-center", language === 'ar' && 'flex-row-reverse')}>
+        <h3 className={cn("text-lg font-medium", language === 'ar' && 'text-right')}>{t('visit.visitHistory')}</h3>
           </div>
 
           {visitsLoading ? (
