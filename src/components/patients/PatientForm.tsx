@@ -346,7 +346,7 @@ export const PatientForm = ({ patient, onSave, onCancel, isLoading }: PatientFor
                   errors.gender && "border-red-500 focus:border-red-500 focus:ring-red-500/20",
                   language === 'ar' && 'text-right'
                 )}>
-                  <SelectValue placeholder="Select gender" />
+                  <SelectValue placeholder={t('visit.selectType')} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="male">Male</SelectItem>
