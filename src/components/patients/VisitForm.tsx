@@ -312,39 +312,41 @@ export const VisitForm = ({ patientId, visit, onSave }: VisitFormProps) => {
     setShowPrintDialog(true);
   };
 
-  const getPrintablePrescription = () => {
-    // Use the most current prescription data
-    const prescriptionToPrint = currentPrescriptionData || existingPrescription || prescriptionData;
+ const getPrintablePrescription = () => {
+  // Use the most current prescription data
+  const prescriptionToPrint = currentPrescriptionData || existingPrescription || prescriptionData;
 
-    if (!prescriptionToPrint) return null;
+  if (!prescriptionToPrint) return null;
 
-    // If it's already in the correct format, return it
-    if (prescriptionToPrint.prescription_items || prescriptionToPrint.prescription_lab_tests || prescriptionToPrint.prescription_imaging_studies) {
-      return prescriptionToPrint;
-    }
+  // If it's already in the correct format, return it
+  if (prescriptionToPrint.prescription_items || prescriptionToPrint.prescription_lab_tests || prescriptionToPrint.prescription_imaging_studies) {
+    return prescriptionToPrint;
+  }
 
-    // For new prescriptions, format the data properly for printing
-    return {
-      ...prescriptionToPrint,
-      patient_id: patientId,
-      prescription_date: prescriptionToPrint.prescription_date || new Date().toISOString().split('T')[0],
-      prescription_items: prescriptionToPrint.medicines?.filter((med: any) => med.medicine_id).map((med: any) => ({
-        medicines: { name: med.medicine_name || 'Medicine' },
-        dosage: med.dosage || '',
-        duration: med.duration || '',
-        frequency: med.frequency || '',
-        instructions: med.instructions || ''
-      })) || [],
-      prescription_lab_tests: prescriptionToPrint.selectedLabTests?.map((test: any) => ({
-        lab_tests: { name: test.testName || 'Lab Test' }
-      })) || [],
-      prescription_imaging_studies: prescriptionToPrint.selectedImagingStudies?.map((study: any) => ({
-        imaging_studies: { name: study.studyName || 'Imaging Study' },
-        notes: study.notes || ''
-      })) || []
-    };
+  // For new prescriptions, format the data properly for printing
+  return {
+    ...prescriptionToPrint,
+    patient_id: patientId,
+    prescription_date: prescriptionToPrint.prescription_date || new Date().toISOString().split('T')[0],
+    prescription_items: prescriptionToPrint.medicines?.filter((med: any) => med.medicine_id).map((med: any) => ({
+      medicines: { name: med.medicine_name || 'Medicine' },
+      dosage: med.dosage || '',
+      duration: med.duration || '',
+      frequency: med.frequency || '',
+      instructions: med.instructions || ''
+    })) || [],
+    
+    // الحل: استخدم الأسماء الصحيحة
+    prescription_lab_tests: prescriptionToPrint.selectedLabTests?.map((test: any) => ({
+      lab_tests: { name: test.name || test.testName || 'Lab Test' } // استخدم test.name الأول
+    })) || [],
+    
+    prescription_imaging_studies: prescriptionToPrint.selectedImagingStudies?.map((study: any) => ({
+      imaging_studies: { name: study.name || study.studyName || 'Imaging Study' }, // استخدم study.name الأول
+      notes: study.notes || ''
+    })) || []
   };
-
+};
   // Determine if we should show the print button
   const shouldShowPrintButton = isPrescriptionSaved || !!existingPrescription || !!currentPrescriptionData;
   const hasPrescriptionContent = prescriptionData !== null || existingPrescription !== null || currentPrescriptionData !== null;

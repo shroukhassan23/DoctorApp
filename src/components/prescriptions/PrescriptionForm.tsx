@@ -12,11 +12,10 @@ import { useToast } from '@/hooks/use-toast';
 import { MedicineSection } from './MedicineSection';
 import { LabTestsSection } from './LabTestsSection';
 import { ImagingStudiesSection } from './ImagingStudiesSection';
-import { SimpleHistoryTextarea } from './SimpleHistoryTextarea';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { SectionLoading, ButtonLoading } from '@/components/ui/loading-spinner';
 import { EditButton, SaveButton } from '../ui/enhanced-button';
-
+import { PrescriptionPrint } from '../prescriptions/PrescriptionPrint';
 
 interface PrescriptionFormProps {
   patientId?: string;
@@ -36,6 +35,7 @@ export const PrescriptionForm = ({
   console.log('PrescriptionForm re-rendered');
   const [medicines, setMedicines] = useState<any[]>([]);
   const [selectedLabTests, setSelectedLabTests] = useState<any[]>([]);
+  const [selectedImagingStudies, setSelectedImagingStudies] = useState<any[]>([]);
   const [selectedPatientId, setSelectedPatientId] = useState(patientId || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { t, language } = useLanguage();
@@ -110,7 +110,7 @@ export const PrescriptionForm = ({
           name: study.imaging_studies?.name?.trim() || '',
           notes: study.comments || study.notes || ''
         }));
-        // setSelectedImagingStudies(loadedImagingStudies);
+         setSelectedImagingStudies(loadedImagingStudies);
       }
 
       // Set patient ID if available
@@ -139,7 +139,7 @@ export const PrescriptionForm = ({
     }
 
     const currentSelectedLabTests = labTestsRef.current?.getSelectedTests() || selectedLabTests;
-    const currentSelectedImagingStudies = imagingStudiesRef.current?.getSelectedStudies() || [];
+    const currentSelectedImagingStudies = imagingStudiesRef.current?.getSelectedStudies() || selectedImagingStudies;
 
 
     setIsSubmitting(true);
@@ -149,12 +149,13 @@ export const PrescriptionForm = ({
         ...data,
         patient_id: targetPatientId,
         medicines: currentMedicines,
-        selectedLabTests,
+        selectedLabTests:currentSelectedLabTests,
         selectedImagingStudies: currentSelectedImagingStudies,
         visit_id: visitId
       };
 
       onSave(prescriptionData);
+        setSelectedImagingStudies(currentSelectedImagingStudies);
     } catch (error) {
       console.error('Error saving prescription:', error);
       toast({
@@ -230,14 +231,11 @@ export const PrescriptionForm = ({
         setSelectedLabTests={setSelectedLabTests}
       />
 
-      <ImagingStudiesSection
-        ref={imagingStudiesRef}
-        initialSelectedImagingStudies={prescription?.prescription_imaging_studies?.map((study: any) => ({
-          studyId: String(study.imaging_study_id || study.imaging_studies_id),
-          name: study.imaging_studies?.name?.trim() || '',
-          notes: study.comments || study.notes || ''
-        })) || []}
-      />
+    <ImagingStudiesSection
+  ref={imagingStudiesRef}
+  initialSelectedImagingStudies={selectedImagingStudies}
+  onSelectionChange={setSelectedImagingStudies}
+/>
 
       <div>
         <Label htmlFor="notes">{t('prescription.notes')}</Label>
@@ -291,5 +289,6 @@ export const PrescriptionForm = ({
         )}
       </CardContent>
     </Card>
+    
   );
 };

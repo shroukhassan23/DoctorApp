@@ -1,19 +1,15 @@
 const express = require('express');
 const cors = require('cors');
-const initDatabase = require('../initDb.cjs'); // استدعاء الدالة
+const initDatabase = require('../initDb.cjs'); 
 const app = express();
 app.use(cors());
 app.use(express.json());
-
-let db; // نحتفظ بمتغير db لنعرفه بعد التهيئة
+let db; 
 
 (async () => {
   try {
-    db = await initDatabase(); // جهزي الاتصال
+    db = await initDatabase(); 
     console.log("✅ Database initialized.");
-
-    // 🔥 بعد ما الاتصال جاهز، فعّلي الـ routes
-
     // GET all Patients
     app.get('/Patients', async (req, res) => {
       try {
