@@ -16,6 +16,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { SectionLoading, ButtonLoading } from '@/components/ui/loading-spinner';
 import { EditButton, SaveButton } from '../ui/enhanced-button';
 import { PrescriptionPrint } from '../prescriptions/PrescriptionPrint';
+import DatePicker from 'react-datepicker';
 
 interface PrescriptionFormProps {
   patientId?: string;
@@ -197,12 +198,21 @@ export const PrescriptionForm = ({
       )}
 
       <div>
-        <Label htmlFor="prescription_date">{t('prescription.date')}</Label>
-        <Input
-          id="prescription_date"
-          type="date"
-          {...register('prescription_date', { required: 'Date is required' })}
-        />
+        <Label htmlFor="prescription_date"  className="mb-2 block">{t('prescription.date')}</Label>
+  <DatePicker
+  id="prescription_date"
+  selected={watch('prescription_date') ? new Date(watch('prescription_date')) : null}
+  onChange={(date: Date | null) => {
+    if (date) {
+      const formattedDate = date.toISOString().split('T')[0];
+      setValue('prescription_date', formattedDate, { shouldValidate: true });
+    }
+  }}
+  dateFormat="dd/MM/yyyy"
+  placeholderText="DD/MM/YYYY"
+  className="h-12 w-full border border-gray-300 bg-gray-50 rounded px-4 py-2 pl-4 focus:outline-none focus:ring-2 focus:ring-[#2463EB]/50"
+/>
+
       </div>
 
       <div>

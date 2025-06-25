@@ -311,7 +311,7 @@ app.get('/patients/:patientId/visits', async (req, res) => {
        LEFT JOIN type t ON v.type_id = t.id
        LEFT JOIN status s ON v.status_id = s.id
        WHERE v.patient_id = ?
-       ORDER BY v.visit_date DESC, v.created_at DESC`,
+       ORDER BY v.visit_date ASC, v.created_at ASC`,
       [patientId]
     );
     

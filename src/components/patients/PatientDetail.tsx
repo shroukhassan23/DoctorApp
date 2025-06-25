@@ -14,11 +14,13 @@ import { cn } from '@/lib/utils';
 interface PatientDetailProps {
   patient: any;
   onUpdate: () => void;
+    onViewVisit: (visit: any) => void;
 }
 
-export const PatientDetail = ({ patient, onUpdate }: PatientDetailProps) => {
+export const PatientDetail = ({ patient, onUpdate,onViewVisit }: PatientDetailProps) => {
   const [selectedVisit, setSelectedVisit] = useState<any>(null);
   const { t, language } = useLanguage();
+  
   const { data: visits, isLoading: visitsLoading, refetch: refetchVisits } = useQuery({
     queryKey: ['patient-visits', patient.id],
     queryFn: async () => {
@@ -73,6 +75,7 @@ export const PatientDetail = ({ patient, onUpdate }: PatientDetailProps) => {
               visits={visits}
               onVisitClick={handleVisitClick}
               onVisitUpdated={handleVisitUpdated}
+             onViewDetails={setSelectedVisit}
             />
           )}
         </TabsContent>

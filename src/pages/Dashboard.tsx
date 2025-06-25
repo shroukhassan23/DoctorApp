@@ -9,6 +9,7 @@ import { ImagingStudiesPage } from '@/components/imaging-studies/ImagingStudiesP
 import { PrescriptionsPage } from '@/components/prescriptions/PrescriptionsPage';
 import { DoctorProfilePage } from '@/components/doctor/DoctorProfilePage';
 import { ReportsPage } from '@/components/reports/ReportsPage';
+import { DailyReportsPage } from '@/components/reports/DailyReports';
 
 export const Dashboard = () => {
   return (
@@ -23,6 +24,7 @@ export const Dashboard = () => {
           <Route path="/lab-tests" element={<LabTestsPage />} />
           <Route path="/imaging-studies" element={<ImagingStudiesPage />} />
           <Route path="/reports" element={<ReportsPage />} />
+          <Route path="/todayReports" element={<DailyReportsPage />} />
           <Route path="/profile" element={<DoctorProfilePage />} />
         </Routes>
       </div>

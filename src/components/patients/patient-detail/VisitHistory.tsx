@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { deleteVisitUrl } from '@/components/constants.js';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { DeleteButton, EditButton } from '@/components/ui/enhanced-button';
+import { ViewButton, DeleteButton, EditButton, SaveButton } from '@/components/ui/enhanced-button';
 import { cn } from '@/lib/utils';
 
 
@@ -17,9 +17,17 @@ interface VisitHistoryProps {
   visits: any[];
   onVisitClick: (visit: any) => void;
   onVisitUpdated: () => void;
+  onViewDetails?: (visit: any) => void; // Added this prop
+  onViewPatient?: (patient: any) => void; // Added this prop
 }
 
-export const VisitHistory = ({ visits, onVisitClick, onVisitUpdated }: VisitHistoryProps) => {
+export const VisitHistory = ({ 
+  visits, 
+  onVisitClick, 
+  onVisitUpdated, 
+  onViewDetails, 
+  onViewPatient 
+}: VisitHistoryProps) => {
   const [editingVisit, setEditingVisit] = useState<any>(null);
   const { toast } = useToast();
   const { t, language } = useLanguage();
@@ -69,8 +77,8 @@ export const VisitHistory = ({ visits, onVisitClick, onVisitUpdated }: VisitHist
       {visits?.map((visit) => (
         <Card key={visit.id} className="hover:bg-gray-50 transition-colors">
           <CardContent className="pt-4">
-          <div className={cn("flex items-start justify-between", language === 'ar' && 'flex-row-reverse')}>
-          <div className={cn("space-y-2 w-full cursor-pointer", language === 'ar' && 'order-2')}>
+            <div className={cn("flex items-start justify-between", language === 'ar' && 'flex-row-reverse')}>
+              <div className={cn("space-y-2 w-full cursor-pointer", language === 'ar' && 'order-2')}>
                 <div className={cn("flex items-center gap-3")}>
                   <div className={cn("flex items-center text-sm text-gray-600", language === 'ar' && 'flex-row-reverse')}>
                     <Calendar className={cn("w-4 h-4", language === 'ar' ? 'ml-2' : 'mr-2')} />
@@ -111,43 +119,56 @@ export const VisitHistory = ({ visits, onVisitClick, onVisitUpdated }: VisitHist
                   )}
               </div>
 
-              <div className={cn("flex gap-2", language === 'ar' ? 'mr-4 order-first' : 'ml-4')}>
-                <EditButton
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setEditingVisit(visit);
-                  }}
-                >
-                  {t('patients.edit')}
-                </EditButton>
+              {/* Action Buttons Section */}
+              <div className={cn("flex gap-2 pt-4 border-t border-gray-100", language === 'ar' ? 'justify-end' : 'justify-end')}>
+           
 
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <DeleteButton
-                      size="sm"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {t('visit.delete')}
-                    </DeleteButton>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent dir={isRTL ? 'rtl' : 'ltr'}>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle className={cn(language === 'ar' && 'text-right')}>
-                        {t('common.areYouSure')}
-                      </AlertDialogTitle>
-                      <AlertDialogDescription className={cn(language === 'ar' && 'text-right')}>
-                        {t('common.cannotUndo')}
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter className={cn(language === 'ar' && 'flex-row-reverse')}>
-                      <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
-                      <DeleteButton onClick={() => handleDeleteVisit(visit.id)}>
-                        {t('common.delete')}
+                {/* Edit and Delete Buttons */}
+                <div className={cn("flex gap-2", language === 'ar' ? 'mr-4 order-first' : 'ml-4')}>
+
+                  <EditButton
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditingVisit(visit);
+                    }}
+                  >
+                    {t('patients.edit')}
+                  </EditButton>
+                  
+                  <ViewButton
+                          size="sm"
+                          onClick={() => onViewDetails(visit)}
+                        >
+                          {t('reports.viewDetails')}
+                        </ViewButton>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <DeleteButton
+                        size="sm"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {t('visit.delete')}
                       </DeleteButton>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent dir={isRTL ? 'rtl' : 'ltr'}>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle className={cn(language === 'ar' && 'text-right')}>
+                          {t('common.areYouSure')}
+                        </AlertDialogTitle>
+                        <AlertDialogDescription className={cn(language === 'ar' && 'text-right')}>
+                          {t('common.cannotUndo')}
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter className={cn(language === 'ar' && 'flex-row-reverse')}>
+                        <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+                        <DeleteButton onClick={() => handleDeleteVisit(visit.id)}>
+                          {t('common.delete')}
+                        </DeleteButton>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
               </div>
             </div>
           </CardContent>
@@ -165,7 +186,7 @@ export const VisitHistory = ({ visits, onVisitClick, onVisitUpdated }: VisitHist
         <Dialog open={!!editingVisit} onOpenChange={() => setEditingVisit(null)}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" dir={isRTL ? 'rtl' : 'ltr'}>
             <DialogHeader>
-            <DialogTitle className={cn(language === 'ar' && 'text-right')}>
+              <DialogTitle className={cn(language === 'ar' && 'text-right')}>
                 {t('reports.editVisit')} - {formatDate(editingVisit.visit_date)}
               </DialogTitle>
             </DialogHeader>

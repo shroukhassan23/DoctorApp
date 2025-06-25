@@ -844,47 +844,11 @@ export const PrescriptionPrint = ({ prescription, open, onOpenChange }: Prescrip
   `}</style>
           <div className="prescription">
             {/* Rest of your existing JSX content remains the same */}
-            <div className="watermark">RX</div>
+          
 
             <div className="content">
               {/* Header */}
-              <div className="header">
-                <div className="doctor-info">
-                  <h1 className="clinic-name">
-                    {doctorProfile?.clinic_name || 'Medical Clinic'}
-                  </h1>
-                  <h2 className="doctor-name">
-                    {doctorProfile?.name || 'Dr. [Doctor Name]'}
-                  </h2>
-                  <p className="doctor-title">
-                    {doctorProfile?.title && `${doctorProfile.title} • `}
-                    {doctorProfile?.specialization || 'Medical Practitioner'}
-                    {doctorProfile?.qualification && ` • ${doctorProfile.qualification}`}
-                  </p>
-
-                  <div className="contact-info">
-                    {doctorProfile?.clinic_address && (
-                      <div className="contact-item">
-                        <span>📍</span>
-                        <span>{doctorProfile.clinic_address}</span>
-                      </div>
-                    )}
-                    {doctorProfile?.phone && (
-                      <div className="contact-item">
-                        <span>📞</span>
-                        <span>{doctorProfile.phone}</span>
-                      </div>
-                    )}
-                    {doctorProfile?.email && (
-                      <div className="contact-item">
-                        <span>✉️</span>
-                        <span>{doctorProfile.email}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
+             
               {/* Patient Information */}
               <div className="patient-card">
                 <div className="patient-header">
@@ -897,20 +861,12 @@ export const PrescriptionPrint = ({ prescription, open, onOpenChange }: Prescrip
                 </div>
 
                 <div className="patient-details">
-                  <div className="detail-item">
-                    <span className="detail-label">Age</span>
-                    <span className="detail-value">{patient?.age || 'N/A'} years</span>
-                  </div>
+                 
                   <div className="detail-item">
                     <span className="detail-label">Gender</span>
                     <span className="detail-value">{patient?.gender || 'N/A'}</span>
                   </div>
-                  {patient?.phone && (
-                    <div className="detail-item">
-                      <span className="detail-label">Phone</span>
-                      <span className="detail-value">{patient.phone}</span>
-                    </div>
-                  )}
+                
                   <div className="detail-item">
                     <span className="detail-label">Date</span>
                     <span className="detail-value">{formatDate(prescription.prescription_date)}</span>

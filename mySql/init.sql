@@ -112,7 +112,7 @@ CREATE TABLE `visits` (
   `visit_date` date NOT NULL,
   `type_id` int NOT NULL,
   `status_id` int NOT NULL,
-  `chief_complaint` text,
+  `chief_complaint` text ,
   `diagnosis` text,
   `notes` text,
   `prescription_id` int DEFAULT NULL,

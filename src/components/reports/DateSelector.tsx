@@ -6,6 +6,47 @@ import { SearchButton } from '@/components/ui/enhanced-button';
 import { Calendar, CalendarRange, AlertTriangle } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
+import DatePicker from "react-datepicker";
+import { format } from "date-fns";
+import "react-datepicker/dist/react-datepicker.css";
+
+// Custom styles to ensure DatePicker appears above all elements
+const datePickerStyles = `
+  .react-datepicker-wrapper {
+    position: relative;
+    z-index: 1000;
+  }
+  .react-datepicker-popper {
+    z-index: 9999 !important;
+    position: fixed !important;
+  }
+  .react-datepicker {
+    z-index: 9999 !important;
+    border: 1px solid #e5e7eb !important;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+    font-family: inherit !important;
+  }
+  .react-datepicker__triangle {
+    z-index: 9999 !important;
+  }
+  .react-datepicker__header {
+    background-color: #f9fafb !important;
+    border-bottom: 1px solid #e5e7eb !important;
+  }
+  .react-datepicker__current-month {
+    color: #374151 !important;
+    font-weight: 600 !important;
+  }
+  .react-datepicker__day--selected {
+    background-color: #2463EB !important;
+  }
+  .react-datepicker__day--selected:hover {
+    background-color: #1d4ed8 !important;
+  }
+  .react-datepicker__day:hover {
+    background-color: #eff6ff !important;
+  }
+`;
 
 interface DateSelectorProps {
   fromDate: string;
@@ -29,6 +70,10 @@ export const DateSelector = ({
   const [dateError, setDateError] = React.useState(false);
 
   const isValidDateRange = fromDate && toDate && new Date(fromDate) <= new Date(toDate);
+  
+  // Convert string dates to Date objects for DatePicker
+  const fromDateObj = fromDate ? new Date(fromDate) : null;
+  const toDateObj = toDate ? new Date(toDate) : null;
 
   React.useEffect(() => {
     if (!fromDate || !toDate) {
@@ -48,9 +93,39 @@ export const DateSelector = ({
     });
   };
 
+  // Format date for server (YYYY-MM-DD)
+  const formatDateForServer = (date: Date) => {
+    return format(date, 'yyyy-MM-dd');
+  };
+
+  const handleFromDateChange = (date: Date) => {
+    if (date) {
+      const formattedDate = formatDateForServer(date);
+      onFromDateChange(formattedDate);
+    } else {
+      onFromDateChange('');
+    }
+  };
+
+  const handleToDateChange = (date: Date) => {
+    if (date) {
+      const formattedDate = formatDateForServer(date);
+      onToDateChange(formattedDate);
+    } else {
+      onToDateChange('');
+    }
+  };
+
   return (
-    <Card className={cn("shadow-lg border-0 bg-white mb-6", language === 'ar' && 'rtl')}>
-      <CardHeader className="pb-4">
+    <>
+      {/* Inject custom styles */}
+      <style dangerouslySetInnerHTML={{ __html: datePickerStyles }} />
+      
+      {/* Portal container for DatePicker */}
+      <div id="date-picker-portal"></div>
+      
+      <Card className={cn("shadow-lg border-0 bg-white mb-6", language === 'ar' && 'rtl')}>
+        <CardHeader className="pb-4">
         <CardTitle className={cn("flex items-center gap-3 text-xl font-bold", language === 'ar' && 'text-right')}>
           {language === 'ar' ? (
             <>
@@ -84,17 +159,17 @@ export const DateSelector = ({
               <Calendar className="w-4 h-4 text-[#2463EB]" />
               {t('reports.from')}
             </Label>
-            <div className="relative">
-              <Input
-                id="from-date"
-                type="date"
-                value={fromDate}
-                onChange={(e) => onFromDateChange(e.target.value)}
-                className={cn(
-                  "h-12 border-gray-300 bg-gray-50 focus:bg-white focus:border-[#2463EB] focus:ring-[#2463EB]/20 shadow-sm transition-colors",
-                  dateError && "border-red-300 bg-red-50",
-                  language === 'ar' && 'text-right'
-                )}
+            <div className="relative z-[1000]">
+              <DatePicker
+                selected={fromDateObj}
+                onChange={handleFromDateChange}
+                dateFormat="dd/MM/yyyy"
+                placeholderText="DD/MM/YYYY"
+                className="w-50 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#2463EB] focus:border-transparent"
+                maxDate={toDateObj || undefined}
+                popperClassName="date-picker-popper"
+                popperPlacement="bottom-start"
+                portalId="date-picker-portal"
               />
             </div>
           </div>
@@ -111,35 +186,20 @@ export const DateSelector = ({
               <Calendar className="w-4 h-4 text-[#2463EB]" />
               {t('reports.to')}
             </Label>
-            <div className="relative">
-              <Input
-                id="to-date"
-                type="date"
-                value={toDate}
-                onChange={(e) => onToDateChange(e.target.value)}
-                dir={language === 'ar' ? 'rtl' : 'ltr'}
-                style={{ direction: language === 'ar' ? 'rtl' : 'ltr' }}
-                className={cn(
-                  "h-12 border-gray-300 bg-gray-50 focus:bg-white focus:border-[#2463EB] focus:ring-[#2463EB]/20 shadow-sm transition-colors",
-                  dateError && "border-red-300 bg-red-50",
-                  language === 'ar' && 'text-right'
-                )}
+            <div className="relative z-[1000]">
+              <DatePicker
+                selected={toDateObj}
+                onChange={handleToDateChange}
+                dateFormat="dd/MM/yyyy"
+                placeholderText="DD/MM/YYYY"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#2463EB] focus:border-transparent"
+                minDate={fromDateObj || undefined}
+                popperClassName="date-picker-popper"
+                popperPlacement="bottom-start"
+                portalId="date-picker-portal"
               />
             </div>
-          </div>
-
-          {/* Search Button */}
-          {/* <div className="flex justify-start md:justify-end lg:justify-center">
-            <SearchButton
-              onClick={onSearch}
-              loading={loading}
-              disabled={!fromDate || !toDate || dateError}
-              size="lg"
-              className="w-full md:w-auto px-8"
-            >
-              {t('common.search')}
-            </SearchButton>
-          </div> */}
+          </div>       
         </div>
 
         {/* Date Range Summary */}
@@ -167,5 +227,6 @@ export const DateSelector = ({
         )}
       </CardContent>
     </Card>
+    </>
   );
 };

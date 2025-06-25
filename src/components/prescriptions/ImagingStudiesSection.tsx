@@ -115,6 +115,7 @@ export const ImagingStudiesSection =  React.forwardRef<
                 
                 {/* Only show textarea when study is selected */}
                 {isStudySelected(study.id) && (
+                  
                   <div className="ml-6">
                     <Label htmlFor={`notes-${study.id}`} className="text-xs text-gray-600">
                       {t('imaging.comment')}

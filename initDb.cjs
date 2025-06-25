@@ -63,6 +63,7 @@ async function initDatabase() {
       console.log('✅ SQL initialization completed!');
       
     } else {
+ 
       console.log('✅ Table "patients" already exists. Skipping SQL init.');
     }
 

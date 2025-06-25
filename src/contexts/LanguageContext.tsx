@@ -17,9 +17,10 @@ const translations = {
     'nav.medicines': 'Medicines',
     'nav.labTests': 'Lab Tests',
     'nav.imagingStudies': 'Imaging Studies',
-    'nav.reports': 'Reports',
+    'nav.reports': 'Patients & Visit Management',
     'nav.profile': 'Doctor Profile',
     'nav.prescriptions': 'Prescriptions',
+    'nav.dailyReports':"Today's Visits",
     
     // Common
     'common.search': 'Search',
@@ -335,6 +336,7 @@ const translations = {
 'visit.notesguides':'Notes are optional but helpful for future reference',
 'visit.status.cancelled':'cancelled',
 'visit.status.completed':'completed',
+'visit.waiting':'waiting',
     // Prescription
     'prescription.prescriptionPreview': 'Prescription Preview',
     'prescription.print': 'Print Prescription',
@@ -397,13 +399,14 @@ const translations = {
   },
   ar: {
     // Navigation
-    'nav.patients': 'المرضى',
-    'nav.medicines': 'الأدوية',
-    'nav.labTests': 'التحاليل المخبرية',
-    'nav.imagingStudies': 'الأشعة',
-    'nav.reports': 'التقارير',
-    'nav.profile': 'ملف الطبيب',
-    'nav.prescriptions': 'الوصفات الطبية',
+    'nav.patients': ' المرضى ',
+    'nav.medicines': ' الأدوية ',
+    'nav.labTests': ' التحاليل المخبريه ',
+    'nav.imagingStudies': ' الأشعة ',
+    'nav.reports': 'إدارة المرضى و الزيارات',
+    'nav.profile': ' ملف الطبيب ',
+    'nav.prescriptions': ' الوصفات الطبيه ',
+    'nav.dailyReports':"زيارات اليوم ",
     
     // Common
     'common.search': 'بحث',
@@ -729,7 +732,7 @@ const translations = {
     'prescription.print': 'طباعة الروشتة',
     'prescription.printDescription': '.راجع تفاصيل الوصفة الطبية قبل الطباعة. اضغط على "طباعة" لإنشاء نسخة احترافية',
     'prescription.date': 'تاريخ الوصفة الطبية',
-    'prescription.diagnosis': 'الجرعه',
+    'prescription.diagnosis': 'التشخيص',
     'prescription.addMedecine': 'إضافة دواء',
     'prescription.medicines': 'الأدوية الموصوفة',
     'prescription.labTests': 'التحاليل المخبرية الموصوفة',
@@ -739,7 +742,7 @@ const translations = {
      'prescription.edit': 'تعديل الوصفه الطبيه',
      'prescription.update': 'تحديث الوصفه الطبيه',
      'prescription.new': 'إنشاء وصفه طبيه',
-  'prescription.enterDiagnosis': "أدخل الجرعه",
+  'prescription.enterDiagnosis': "أدخل التشخيص",
      'prescription.enterNotes': "أدخل الملاحظات",
     'prescription.updateSuccess':'تم تعديل الوصفه الطبيه بنجاح',
     'prescription.savedSuccess':'تم حفظ الوصفه الطبيه بنجاح',

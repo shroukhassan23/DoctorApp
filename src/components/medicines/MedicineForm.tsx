@@ -83,7 +83,7 @@ export const MedicineForm = ({ medicine, onSave, onCancel, isLoading }: Medicine
 
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            {/* Medicine Name and Dosage */}
+            {/* Medicine Name  */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <Label
@@ -110,26 +110,7 @@ export const MedicineForm = ({ medicine, onSave, onCancel, isLoading }: Medicine
                     {String(errors.name.message)}
                   </p>
                 )}
-              </div>
-
-              <div className="space-y-2">
-                <Label
-                  htmlFor="dosage"
-                  className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2")}
-                >
-                  <Beaker className="w-4 h-4 text-[#2463EB]" />
-                  {t('medicines.dosage')}
-                </Label>
-                <Input
-                  id="dosage"
-                  {...register('dosage')}
-                  placeholder={t('medicines.enterDosage')}
-                  className={cn(
-                    "h-12 border-gray-300 bg-gray-50 focus:bg-white focus:border-[#2463EB] focus:ring-[#2463EB]/20 shadow-sm",
-                    language === 'ar' && 'text-right'
-                  )}
-                />
-              </div>
+              </div>    
             </div>
 
             {/* Form and Manufacturer */}
@@ -173,47 +154,7 @@ export const MedicineForm = ({ medicine, onSave, onCancel, isLoading }: Medicine
               </div>
             </div>
 
-            {/* Price */}
-            <div className="space-y-2">
-              <Label
-                htmlFor="price"
-                className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2")}
-              >
-                <DollarSign className="w-4 h-4 text-[#2463EB]" />
-                {t('medicines.price')} ($)
-              </Label>
-              <div className="relative">
-                <DollarSign className={cn(
-                  "absolute top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400",
-                  language === 'ar' ? 'right-4' : 'left-4'
-                )} />
-                <Input
-                  id="price"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  {...register('price', {
-                    validate: value => {
-                      if (value && parseFloat(value) < 0) {
-                        return 'Price cannot be negative';
-                      }
-                      return true;
-                    }
-                  })}
-                  placeholder={t('medicines.enterPrice')}
-                  className={cn(
-                    "h-12 border-gray-300 bg-gray-50 focus:bg-white focus:border-[#2463EB] focus:ring-[#2463EB]/20 shadow-sm",
-                    language === 'ar' ? 'pr-12 text-right' : 'pl-12'
-                  )}
-                />
-              </div>
-              {errors.price && (
-                <p className={cn("text-red-500 text-sm mt-1 flex items-center gap-1")}>
-                  <span className="text-red-500">⚠️</span>
-                  {String(errors.price.message)}
-                </p>
-              )}
-            </div>
+    
 
             {/* Form Instructions */}
             <div className={cn("p-4 bg-blue-50 rounded-lg border border-blue-200", language === 'ar' && 'text-right')}>
@@ -223,9 +164,9 @@ export const MedicineForm = ({ medicine, onSave, onCancel, isLoading }: Medicine
                   <p className="font-medium mb-1">{t('medicines.infotip')}</p>
                   <ul className={cn("space-y-1 text-xs", language === 'ar' && 'text-right')}>
                     <li>• {t('medicines.nameRequiredTip')}</li>
-                    <li>• {t('medicines.includeDosage')}</li>
+                   
                     <li>• {t('medicines.formRefer')}</li>
-                    <li>• {t('medicines.priceTip')}</li>
+                    
                   </ul>
                 </div>
               </div>

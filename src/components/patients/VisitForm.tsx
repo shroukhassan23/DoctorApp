@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { PrescriptionPrint } from '../prescriptions/PrescriptionPrint';
 import { FileUpload } from './FileUpload';
@@ -353,7 +352,7 @@ export const VisitForm = ({ patientId, visit, onSave }: VisitFormProps) => {
 
   // Get form completion status
   const formValues = watch();
-  const requiredFields = ['visit_date', 'visit_type', 'chief_complaint', 'diagnosis', 'status'];
+  const requiredFields = ['visit_date', 'visit_type',  'status'];
   const completedFields = requiredFields.filter(field => formValues[field]).length;
   const completionPercentage = Math.round((completedFields / requiredFields.length) * 100);
 
