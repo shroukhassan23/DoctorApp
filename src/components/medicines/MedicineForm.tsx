@@ -110,31 +110,8 @@ export const MedicineForm = ({ medicine, onSave, onCancel, isLoading }: Medicine
                     {String(errors.name.message)}
                   </p>
                 )}
-              </div>    
-            </div>
-
-            {/* Form and Manufacturer */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label
-                  htmlFor="form"
-                  className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2")}
-                >
-                  <Package className="w-4 h-4 text-[#2463EB]" />
-                  {t('medicines.form')}
-                </Label>
-                <Input
-                  id="form"
-                  {...register('form')}
-                  placeholder={t('medicines.enterForm')}
-                  className={cn(
-                    "h-12 border-gray-300 bg-gray-50 focus:bg-white focus:border-[#2463EB] focus:ring-[#2463EB]/20 shadow-sm",
-                    language === 'ar' && 'text-right'
-                  )}
-                />
-              </div>
-
-              <div className="space-y-2">
+              </div>   
+               <div className="space-y-2">
                 <Label
                   htmlFor="manufacturer"
                   className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2")}
@@ -151,12 +128,10 @@ export const MedicineForm = ({ medicine, onSave, onCancel, isLoading }: Medicine
                     language === 'ar' && 'text-right'
                   )}
                 />
-              </div>
+              </div> 
             </div>
 
-    
-
-            {/* Form Instructions */}
+          {/* Form Instructions */}
             <div className={cn("p-4 bg-blue-50 rounded-lg border border-blue-200", language === 'ar' && 'text-right')}>
               <div className={cn("flex items-start gap-2 text-sm text-blue-800")}>
                 <Pill className="w-4 h-4 mt-0.5 flex-shrink-0" />
@@ -164,8 +139,6 @@ export const MedicineForm = ({ medicine, onSave, onCancel, isLoading }: Medicine
                   <p className="font-medium mb-1">{t('medicines.infotip')}</p>
                   <ul className={cn("space-y-1 text-xs", language === 'ar' && 'text-right')}>
                     <li>• {t('medicines.nameRequiredTip')}</li>
-                   
-                    <li>• {t('medicines.formRefer')}</li>
                     
                   </ul>
                 </div>

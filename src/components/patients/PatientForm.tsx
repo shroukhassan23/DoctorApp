@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -22,9 +22,12 @@ import {
   UserPlus,
   Edit,
   Info,
-  Baby
+  Baby,
+  
 } from 'lucide-react';
 import { PatientsPage } from './PatientsPage';
+import DatePicker from 'react-datepicker';
+import { format } from 'date-fns';
 
 interface PatientFormProps {
   patient?: any;
@@ -34,7 +37,7 @@ interface PatientFormProps {
 }
 
 export const PatientForm = ({ patient, onSave, onCancel, isLoading }: PatientFormProps) => {
-  const { register, handleSubmit, setValue, watch, formState: { errors, isSubmitting } } = useForm({
+  const { register, handleSubmit, setValue, watch, control, formState: { errors, isSubmitting } } = useForm({
     defaultValues: patient || {
       name: '',
       age: '',
@@ -47,11 +50,20 @@ export const PatientForm = ({ patient, onSave, onCancel, isLoading }: PatientFor
   });
   const isFormLoading = isSubmitting || (isLoading ?? false);
 
-
   const { toast } = useToast();
   const selectedGender = watch('gender');
   const dateOfBirth = watch('date_of_birth');
   const { t, language } = useLanguage();
+
+  // Fixed: Handle date change for date_of_birth (not prescription_date)
+  const handleDateChange = useCallback((date: Date | null) => {
+    if (date) {
+      const formattedDate = date.toISOString().split('T')[0];
+      setValue('date_of_birth', formattedDate, { shouldValidate: true });
+    } else {
+      setValue('date_of_birth', '', { shouldValidate: true });
+    }
+  }, [setValue]);
 
   // Calculate age based on date of birth
   useEffect(() => {
@@ -66,24 +78,34 @@ export const PatientForm = ({ patient, onSave, onCancel, isLoading }: PatientFor
       }
 
       setValue('age', age.toString());
+    } else {
+      setValue('age', '');
     }
   }, [dateOfBirth, setValue]);
 
   // Set values when loading patient data
-  useEffect(() => {
-    if (patient) {
-      Object.keys(patient).forEach((key) => {
-        if (patient[key] !== undefined) {
-          if (key === "date_of_birth") {
-            setValue(key, patient[key].split("T")[0]); // YYYY-MM-DD
-          } else {
-            setValue(key, patient[key]);
-          }
-        }
-      });
-    }
-  }, [patient, setValue]);
-
+ useEffect(() => {
+  if (patient) {
+    Object.keys(patient).forEach((key) => {
+      if (patient[key] !== undefined && patient[key] !== null) {
+        if (key === "date_of_birth") {
+  let dateValue = '';
+  if (typeof patient[key] === 'string' && patient[key].trim() !== '') {
+    const raw = patient[key].includes('T') ? patient[key].split("T")[0] : patient[key];
+    const [year, month, day] = raw.split('-').map(Number);
+    const correctedDate = new Date(year, month - 1, day);
+    correctedDate.setDate(correctedDate.getDate() + 1); // ✅ فقط هنا نضيف اليوم
+    const yyyy = correctedDate.getFullYear();
+    const mm = String(correctedDate.getMonth() + 1).padStart(2, '0');
+    const dd = String(correctedDate.getDate()).padStart(2, '0');
+    dateValue = `${yyyy}-${mm}-${dd}`;
+  }
+  setValue(key, dateValue);
+}
+      }
+    });
+  }
+}, [patient, setValue]);
   // Set gender value in select when loading patient data
   useEffect(() => {
     if (patient) {
@@ -161,11 +183,6 @@ export const PatientForm = ({ patient, onSave, onCancel, isLoading }: PatientFor
           throw new Error(errorData.error || 'Failed to add patient');
         }
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to add patient');
-        }
-
         toast({ title: t('patients.addSuccess') });
       }
 
@@ -185,58 +202,81 @@ export const PatientForm = ({ patient, onSave, onCancel, isLoading }: PatientFor
   const requiredFields = ['name', 'date_of_birth', 'gender'];
   const completedFields = requiredFields.filter(field => formValues[field]).length;
   const completionPercentage = Math.round((completedFields / requiredFields.length) * 100);
+// ✅ خارج المكون: دالة تحويل التاريخ القادم من السيرفر + تعويض اليوم الناقص
+const parseUTCDate = (dateValue) => {
+  if (!dateValue) return null;
 
+  const dateString = Array.isArray(dateValue) ? dateValue[0] : dateValue;
+
+  const match = dateString.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (match) {
+    const [_, year, month, day] = match.map(Number);
+    const date = new Date(year, month - 1, day);
+
+    // ✅ نضيف يوم لتصحيح الخطأ القادم من السيرفر
+    date.setDate(date.getDate() + 1);
+
+    return date;
+  }
+
+  return null;
+};
+// دالة لتحويل التاريخ إلى صيغة YYYY-MM-DD
+const formatDateForServer = (date) => {
+  if (!date || !(date instanceof Date) || isNaN(date.getTime())) return '';
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
   return (
     <div className={cn("max-h-[80vh] flex flex-col", language === 'ar' && 'rtl')}>
       {/* Compact Header */}
-      
-
-
       <div className={cn("p-4 bg-gradient-to-r from-white to-blue-50/30 border-b flex-shrink-0", language === 'ar' ? 'pr-16' : 'pl-4 pr-16')}>
-  <div className="flex items-center gap-3">
-    {language === 'ar' ? (
-      <>
-        <Badge variant="secondary" className={cn(
-          "px-2 py-1 text-xs",
-          completionPercentage === 100 ? "bg-green-100 text-green-800" : "bg-orange-100 text-orange-800"
-        )}>
-          {completionPercentage}% {t('common.completed')}
-        </Badge>
-        <div className="flex-1 text-right">
-          <h2 className="text-lg font-bold text-gray-900 text-right">
-            {patient ? t('patients.editInfo') : t('patients.addNew')}
-          </h2>
-          <p className="text-sm text-gray-600 text-right">
-            {patient ? t('patients.updateDetails') : t('patients.enterDetails')}
-          </p>
+        <div className="flex items-center gap-3">
+          {language === 'ar' ? (
+            <>
+              <Badge variant="secondary" className={cn(
+                "px-2 py-1 text-xs",
+                completionPercentage === 100 ? "bg-green-100 text-green-800" : "bg-orange-100 text-orange-800"
+              )}>
+                {completionPercentage}% {t('common.completed')}
+              </Badge>
+              <div className="flex-1 text-right">
+                <h2 className="text-lg font-bold text-gray-900 text-right">
+                  {patient ? t('patients.editInfo') : t('patients.addNew')}
+                </h2>
+                <p className="text-sm text-gray-600 text-right">
+                  {patient ? t('patients.updateDetails') : t('patients.enterDetails')}
+                </p>
+              </div>
+              <div className="p-2 bg-[#2463EB] rounded-lg">
+                {patient ? <Edit className="w-5 h-5 text-white" /> : <UserPlus className="w-5 h-5 text-white" />}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="p-2 bg-[#2463EB] rounded-lg">
+                {patient ? <Edit className="w-5 h-5 text-white" /> : <UserPlus className="w-5 h-5 text-white" />}
+              </div>
+              <div className="flex-1">
+                <h2 className="text-lg font-bold text-gray-900">
+                  {patient ? t('patients.editInfo') : t('patients.addNew')}
+                </h2>
+                <p className="text-sm text-gray-600">
+                  {patient ? t('patients.updateDetails') : t('patients.enterDetails')}
+                </p>
+              </div>
+              <Badge variant="secondary" className={cn(
+                "px-2 py-1 text-xs",
+                completionPercentage === 100 ? "bg-green-100 text-green-800" : "bg-orange-100 text-orange-800"
+              )}>
+                {completionPercentage}% {t('common.completed')}
+              </Badge>
+            </>
+          )}
         </div>
-        <div className="p-2 bg-[#2463EB] rounded-lg">
-          {patient ? <Edit className="w-5 h-5 text-white" /> : <UserPlus className="w-5 h-5 text-white" />}
-        </div>
-      </>
-    ) : (
-      <>
-        <div className="p-2 bg-[#2463EB] rounded-lg">
-          {patient ? <Edit className="w-5 h-5 text-white" /> : <UserPlus className="w-5 h-5 text-white" />}
-        </div>
-        <div className="flex-1">
-          <h2 className="text-lg font-bold text-gray-900">
-            {patient ? t('patients.editInfo') : t('patients.addNew')}
-          </h2>
-          <p className="text-sm text-gray-600">
-            {patient ? t('patients.updateDetails') : t('patients.enterDetails')}
-          </p>
-        </div>
-        <Badge variant="secondary" className={cn(
-          "px-2 py-1 text-xs",
-          completionPercentage === 100 ? "bg-green-100 text-green-800" : "bg-orange-100 text-orange-800"
-        )}>
-          {completionPercentage}% {t('common.completed')}
-        </Badge>
-      </>
-    )}
-  </div>
-  </div>
+      </div>
 
       {/* Scrollable Form Content */}
       <div className="flex-1 overflow-y-auto p-6">
@@ -279,18 +319,43 @@ export const PatientForm = ({ patient, onSave, onCancel, isLoading }: PatientFor
                 <Calendar className="w-4 h-4 text-[#2463EB]" />
                 {t('patients.dateOfBirth')} <span className="text-red-500">*</span>
               </Label>
-              <Input
-                id="date_of_birth"
-                type="date"
-                {...register('date_of_birth', { required: 'Date of birth is required' })}
-                disabled={isFormLoading}
-                className={cn(
-                  "h-9 border-gray-300 bg-gray-50 focus:bg-white focus:border-[#2463EB] focus:ring-[#2463EB]/20 shadow-sm text-sm",
-                  errors.date_of_birth && "border-red-500 focus:border-red-500 focus:ring-red-500/20",
-                  language === 'ar' && 'text-right',
-                  isFormLoading && 'opacity-50 cursor-not-allowed'
-                )}
-              />
+              
+              {/* Fixed: Use Controller to properly connect DatePicker */}
+              
+<Controller
+  name="date_of_birth"
+  control={control}
+  rules={{ required: 'Date of birth is required' }}
+  render={({ field }) => {
+    console.log('Original date from server:', field.value);
+    console.log('Parsed date for DatePicker:', parseUTCDate(field.value));
+
+    return (
+      <DatePicker
+        selected={field.value ? new Date(field.value) : null}
+
+        onChange={(date: Date | null) => {
+          const formattedDate = formatDateForServer(date);
+          console.log('Saving date as:', formattedDate);
+          field.onChange(formattedDate);
+        }}
+        dateFormat="dd/MM/yyyy"
+        placeholderText="Select date of birth"
+        disabled={isFormLoading}
+        maxDate={new Date()}
+        showYearDropdown
+        showMonthDropdown
+        dropdownMode="select"
+        className={cn(
+          "w-full h-9 px-3 py-2 border border-gray-300 bg-gray-50 focus:bg-white focus:border-[#2463EB] focus:ring-[#2463EB]/20 shadow-sm text-sm rounded-md",
+          errors.date_of_birth && "border-red-500 focus:border-red-500 focus:ring-red-500/20",
+          language === 'ar' && 'text-right',
+          isFormLoading && 'opacity-50 cursor-not-allowed'
+        )}
+      />
+    );
+  }}
+/>
               {errors.date_of_birth && (
                 <p className={cn("text-red-500 text-sm mt-1 flex items-center gap-1", language === 'ar' && 'text-right flex-row-reverse')}>
                   <AlertCircle className="w-3 h-3" />
@@ -467,7 +532,7 @@ export const PatientForm = ({ patient, onSave, onCancel, isLoading }: PatientFor
 
         <SaveButton
           type="submit"
-          loading={isFormLoading}  // This will show loading for both isSubmitting AND isLoading
+          loading={isFormLoading}
           disabled={isFormLoading}
           className="px-6 py-2"
           onClick={handleSubmit(onSubmit)}

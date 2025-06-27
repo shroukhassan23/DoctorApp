@@ -37,7 +37,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   validatePath: (path) => ipcRenderer.invoke('validate-path', path),
   
   // Check Docker installation
-  checkDockerInstallation: () => ipcRenderer.invoke('check-docker-installation'),
+  checkOrInstallDockerSilently: () => ipcRenderer.invoke('check-docker-installation'),
   
   // Generate configuration file
   generateConfigFile: (config) => ipcRenderer.invoke('generate-config-file', config)

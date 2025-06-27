@@ -9,11 +9,11 @@ async function initDatabase() {
 
     // Create database if not exists
     connection = await mysql.createConnection({
-      host: '147.182.180.167',
-      user: 'sa',
-      password: 'P@ssw0rd',
-      database: 'doctor2',
-
+      host: '127.0.0.1',
+      user: 'root',
+      password: 'MyPassword123',
+       port: 3307, 
+     
       multipleStatements: true,
     });
 
@@ -24,9 +24,10 @@ async function initDatabase() {
 
     // Connect to the database
     connection = await mysql.createConnection({
-      host: '147.182.180.167',
-      user: 'sa',
-      password: 'P@ssw0rd',
+       host: '127.0.0.1',
+      user: 'root',
+      password: 'MyPassword123',
+       port: 3307, 
       database: 'doctor2',
       multipleStatements: true,
     });

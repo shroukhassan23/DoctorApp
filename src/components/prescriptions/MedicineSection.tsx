@@ -58,11 +58,13 @@ export const MedicineSection = ({ medicines, setMedicines }: MedicineSectionProp
   }, [getCurrentMedicines, setMedicines]);
 
   // Update only local state - no parent re-render
-  const updateMedicine = useCallback((index: number, field: string, value: string) => {
-    setLocalMedicines(prev => prev.map((med, i) =>
-      i === index ? { ...med, [field]: value } : med
-    ));
-  }, []);
+ const updateMedicine = (index: number, field: string, value: string) => {
+  const updated = medicines.map((med, i) =>
+    i === index ? { ...med, [field]: value } : med
+  );
+  setMedicines(updated);
+};
+
 
   // Commit changes to parent when medicine selection changes
   const updateMedicineSelection = useCallback((index: number, medicineId: string) => {

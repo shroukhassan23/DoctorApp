@@ -36,17 +36,13 @@ export const DailyReportsPage = () => {
   }, [searchTerm]);
 
   const { data: visitStats, isLoading, refetch } = useQuery({
-    queryKey: ['todayReports', fromDate, toDate],
+    queryKey: ['visit-stats', fromDate, toDate],
     queryFn: async () => {
-      const response = await fetch(`http://localhost:3003/reports/today`);
+      const response = await fetch(`http://localhost:3003/reports/visit-stats?from=${fromDate}&to=${toDate}`);
       if (!response.ok) throw new Error('Failed to fetch visit stats');
       return await response.json();
     }
   });
-
-  useEffect(() => {
-    refetchVisits();
-  }, [searchAllVisits]);
 
   const { data: visitDetails, refetch: refetchVisits } = useQuery({
     queryKey: ['visit-details', fromDate, toDate, searchAllVisits],

@@ -3,7 +3,6 @@ const path = require('path');
 const fs = require('fs');
 const { execSync, spawn } = require('child_process');
 const os = require('os');
-
 class DoctorAppInstaller {
   constructor() {
     this.appName = 'DoctorApp';
@@ -58,7 +57,7 @@ class DoctorAppInstaller {
       this.parseOptions(options);
       
       // Check Docker availability
-      await this.checkDockerInstallation();
+      await this.checkOrInstallDockerSilently();
       
       // Create directory structure
       await this.createDirectories();
@@ -119,43 +118,104 @@ class DoctorAppInstaller {
     }
   }
 
-  async checkDockerInstallation() {
-    console.log('🐳 Checking Docker installation...');
-    
-    try {
-      // Check if Docker is installed
-      execSync('docker --version', { stdio: 'pipe' });
-      console.log('✅ Docker is installed');
-      
-      // Check if Docker is running
-      execSync('docker info', { stdio: 'pipe' });
-      console.log('✅ Docker is running');
-      
-    } catch (error) {
-      throw new Error('Docker is not installed or not running. Please install Docker Desktop and ensure it is running before proceeding with the installation.');
+async  checkOrInstallDockerSilently() {
+  try {
+  
+    execSync('docker --version', { stdio: 'ignore' });
+    console.log('✅ Docker is already installed.');
+    return true;
+  } catch {
+    console.log('🚧 Docker not found. Installing silently...');
+
+    const dockerInstallerPath = path.resolve(__dirname, 'DockerInstaller.exe');
+
+    if (!fs.existsSync(dockerInstallerPath)) {
+      throw new Error('❌ Docker installer not found: ' + dockerInstallerPath);
+    }
+
+    // تثبيت Docker بصمت
+    await new Promise((resolve, reject) => {
+      const installer = spawn(dockerInstallerPath, ['install', '--quiet', '--accept-license'], {
+        detached: true,
+        stdio: 'ignore',
+        shell: true
+      });
+
+      installer.on('error', reject);
+      installer.on('exit', (code) => {
+        if (code === 0) {
+          console.log('✅ Docker installed successfully.');
+          resolve();
+        } else {
+          reject(new Error(`❌ Docker installation failed with code ${code}`));
+        }
+      });
+    });
+
+    // ننتظر Docker Desktop يفتح
+    console.log('🚀 Launching Docker Desktop...');
+    execSync('"C:\\Program Files\\Docker\\Docker\\Docker Desktop.exe"', { stdio: 'ignore' });
+
+    // ننتظر Docker Daemon لحد ما يشتغل
+    let retries = 15;
+    while (retries-- > 0) {
+      try {
+        execSync('docker info', { stdio: 'ignore' });
+        console.log('✅ Docker is now running.');
+        return true;
+      } catch {
+        process.stdout.write('.');
+        await new Promise(res => setTimeout(res, 4000));
+      }
+    }
+
+    throw new Error('❌ Docker did not start in time.');
+  }
+}
+
+async createDirectories() {
+  console.log('📁 Creating directory structure...');
+
+  // Default: C:\Program Files\DoctorApp
+  let basePath = this.appPath;
+
+  try {
+    // Try to make the base directory
+    fs.mkdirSync(basePath, { recursive: true });
+  } catch (err) {
+    if (err.code === 'EPERM') {
+      // Fallback to user directory
+      const fallbackPath = path.join(process.env.USERPROFILE, 'DoctorApp');
+      console.warn(`⚠️ Permission denied to "${basePath}". Falling back to: "${fallbackPath}"`);
+      basePath = fallbackPath;
+      this.appPath = basePath;
+      this.configPath = path.join(basePath, 'config');
+      this.logsPath = path.join(basePath, 'logs');
+      this.dockerPath = path.join(basePath, 'docker');
+    } else {
+      throw err;
     }
   }
 
-  async createDirectories() {
-    console.log('📁 Creating directory structure...');
-    
-    const directories = [
-      this.appPath,
-      this.configPath,
-      this.logsPath,
-      this.dockerPath,
-      path.join(this.appPath, 'services'),
-      path.join(this.appPath, 'app'),
-      path.join(this.appPath, 'temp')
-    ];
-    
-    for (const dir of directories) {
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
-        console.log(`Created: ${dir}`);
-      }
+  // Create the rest of the directories
+  const directories = [
+    this.appPath,
+    this.configPath,
+    this.logsPath,
+    this.dockerPath,
+    path.join(this.appPath, 'services'),
+    path.join(this.appPath, 'app'),
+    path.join(this.appPath, 'temp')
+  ];
+
+  for (const dir of directories) {
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+      console.log(`📁 Created: ${dir}`);
     }
   }
+}
+
 
   async installServer() {
     console.log('🗄️ Installing Server Configuration...');

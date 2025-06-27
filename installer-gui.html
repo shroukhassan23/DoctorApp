@@ -644,7 +644,7 @@
                 displaySystemInfo(systemInfo);
 
                 // Check Docker installation
-                const dockerStatus = await window.electronAPI.checkDockerInstallation();
+                const dockerStatus = await window.electronAPI.checkOrInstallDockerSilently();
                 if (!dockerStatus.installed) {
                     showNotification('error', 'Docker Desktop is not installed or not running. Please install Docker Desktop before proceeding.');
                 }
