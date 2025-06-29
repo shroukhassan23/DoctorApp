@@ -102,7 +102,7 @@ export const ImagingStudiesSection =  React.forwardRef<
           <div className="space-y-4">
             {imagingStudies?.map((study) => (
               <div key={study.id} className="space-y-2">
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center gap-2">
                   <Checkbox
                     id={`study-${study.id}`}
                     checked={isStudySelected(study.id)}

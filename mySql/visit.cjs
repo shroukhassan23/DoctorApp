@@ -9,7 +9,7 @@ const app = express();
 app.use(express.json());
 
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:4173','http://localhost:8081', 'http://localhost:8080'], // Add your frontend URLs
+  origin: ['http://localhost:3000', 'http://localhost:8081', 'http://localhost:4173','http://localhost:8081', 'http://localhost:8080'], // Add your frontend URLs
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],

@@ -192,8 +192,8 @@ export const PatientForm = ({ patient, onSave, onCancel, isLoading }: PatientFor
       
 
 
-      <div className={cn("p-4 bg-gradient-to-r from-white to-blue-50/30 border-b flex-shrink-0", language === 'ar' ? 'pr-16' : 'pl-4 pr-16')}>
-  <div className="flex items-center gap-3">
+      <div className={cn("p-4 bg-gradient-to-r from-white to-blue-50/30 border-b flex-shrink-0", language === 'ar' ? 'pl-16' : 'pl-4 pr-16')}>
+  <div className={cn("flex items-center gap-3", language === 'ar' && 'flex-row-reverse')}>
     {language === 'ar' ? (
       <>
         <Badge variant="secondary" className={cn(
@@ -246,7 +246,7 @@ export const PatientForm = ({ patient, onSave, onCancel, isLoading }: PatientFor
             <div className="space-y-2">
               <Label
                 htmlFor="name"
-                className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2", language === 'ar' && 'text-right flex-row-reverse')}
+                className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2")}
               >
                 <User className="w-4 h-4 text-[#2463EB]" />
                 {t('patients.fullName')} <span className="text-red-500">*</span>
@@ -264,7 +264,7 @@ export const PatientForm = ({ patient, onSave, onCancel, isLoading }: PatientFor
                 )}
               />
               {errors.name && (
-                <p className={cn("text-red-500 text-sm mt-1 flex items-center gap-1", language === 'ar' && 'text-right flex-row-reverse')}>
+                <p className={cn("text-red-500 text-sm mt-1 flex items-center gap-1")}>
                   <AlertCircle className="w-3 h-3" />
                   {String(errors.name.message)}
                 </p>
@@ -274,7 +274,7 @@ export const PatientForm = ({ patient, onSave, onCancel, isLoading }: PatientFor
             <div className="space-y-2">
               <Label
                 htmlFor="date_of_birth"
-                className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2", language === 'ar' && 'text-right flex-row-reverse')}
+                className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2")}
               >
                 <Calendar className="w-4 h-4 text-[#2463EB]" />
                 {t('patients.dateOfBirth')} <span className="text-red-500">*</span>
@@ -292,7 +292,7 @@ export const PatientForm = ({ patient, onSave, onCancel, isLoading }: PatientFor
                 )}
               />
               {errors.date_of_birth && (
-                <p className={cn("text-red-500 text-sm mt-1 flex items-center gap-1", language === 'ar' && 'text-right flex-row-reverse')}>
+                <p className={cn("text-red-500 text-sm mt-1 flex items-center gap-1")}>
                   <AlertCircle className="w-3 h-3" />
                   {String(errors.date_of_birth.message)}
                 </p>
@@ -305,10 +305,10 @@ export const PatientForm = ({ patient, onSave, onCancel, isLoading }: PatientFor
             <div className="space-y-2">
               <Label
                 htmlFor="age"
-                className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2", language === 'ar' && 'text-right flex-row-reverse')}
+                className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2")}
               >
                 <Baby className="w-4 h-4 text-[#2463EB]" />
-                {t('patients.age')} <span className="text-gray-400 text-xs">(auto-calculated)</span>
+                {t('patients.age')} <span className="text-gray-400 text-xs">({t('patients.auto-calculated')})</span>
               </Label>
               <Input
                 id="age"
@@ -331,7 +331,7 @@ export const PatientForm = ({ patient, onSave, onCancel, isLoading }: PatientFor
             <div className="space-y-2">
               <Label
                 htmlFor="gender"
-                className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2", language === 'ar' && 'text-right flex-row-reverse')}
+                className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2")}
               >
                 <Users className="w-4 h-4 text-[#2463EB]" />
                 {t('patients.gender')} <span className="text-red-500">*</span>
@@ -346,16 +346,16 @@ export const PatientForm = ({ patient, onSave, onCancel, isLoading }: PatientFor
                   errors.gender && "border-red-500 focus:border-red-500 focus:ring-red-500/20",
                   language === 'ar' && 'text-right'
                 )}>
-                  <SelectValue placeholder="Select gender" />
+                  <SelectValue placeholder={t('patients.select-gender')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="male">Male</SelectItem>
-                  <SelectItem value="female">Female</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
+                  <SelectItem value="male">{t('patients.male')}</SelectItem>
+                  <SelectItem value="female">{t('patients.female')}</SelectItem>
+                  <SelectItem value="other">{t('patients.other')}</SelectItem>
                 </SelectContent>
               </Select>
               {errors.gender && (
-                <p className={cn("text-red-500 text-sm mt-1 flex items-center gap-1", language === 'ar' && 'text-right flex-row-reverse')}>
+                <p className={cn("text-red-500 text-sm mt-1 flex items-center gap-1")}>
                   <AlertCircle className="w-3 h-3" />
                   {String(errors.gender.message)}
                 </p>
@@ -367,7 +367,7 @@ export const PatientForm = ({ patient, onSave, onCancel, isLoading }: PatientFor
           <div className="space-y-2">
             <Label
               htmlFor="phone"
-              className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2", language === 'ar' && 'text-right flex-row-reverse')}
+              className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2")}
             >
               <Phone className="w-4 h-4 text-[#2463EB]" />
               {t('patients.phone')} <span className="text-gray-400 text-xs">{t('common.optional')}</span>
@@ -395,7 +395,7 @@ export const PatientForm = ({ patient, onSave, onCancel, isLoading }: PatientFor
           <div className="space-y-2">
             <Label
               htmlFor="address"
-              className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2", language === 'ar' && 'text-right flex-row-reverse')}
+              className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2")}
             >
               <MapPin className="w-4 h-4 text-[#2463EB]" />
               {t('patients.address')} <span className="text-gray-400 text-xs">{t('common.optional')}</span>
@@ -418,7 +418,7 @@ export const PatientForm = ({ patient, onSave, onCancel, isLoading }: PatientFor
           <div className="space-y-2">
             <Label
               htmlFor="medical_history"
-              className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2", language === 'ar' && 'text-right flex-row-reverse')}
+              className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2")}
             >
               <FileText className="w-4 h-4 text-[#2463EB]" />
               {t('patients.medicalHistory')} <span className="text-gray-400 text-xs">{t('common.optional')}</span>
@@ -439,7 +439,7 @@ export const PatientForm = ({ patient, onSave, onCancel, isLoading }: PatientFor
 
           {/* Compact Form Guidelines */}
           <div className={cn("p-3 bg-blue-50 rounded-lg border border-blue-200", language === 'ar' && 'text-right')}>
-            <div className={cn("flex items-start gap-2 text-xs text-blue-800", language === 'ar' && 'flex-row-reverse')}>
+            <div className={cn("flex items-start gap-2 text-xs text-blue-800")}>
               <Info className="w-3 h-3 mt-0.5 flex-shrink-0" />
               <div>
                 <p className="font-medium mb-1">{t('common.guideLines')}</p>

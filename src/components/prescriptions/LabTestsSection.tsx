@@ -47,7 +47,7 @@ export const LabTestsSection = ({ selectedLabTests, setSelectedLabTests }: LabTe
         ) : (
           <div className="space-y-3">
             {labTests?.map((test) => (
-              <div key={test.id} className="flex items-center space-x-2">
+              <div key={test.id} className="flex items-center gap-2">
                 <Checkbox
                   id={test.id}
                   checked={isTestSelected(test.id)}

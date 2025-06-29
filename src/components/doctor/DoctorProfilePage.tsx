@@ -386,17 +386,14 @@ export const DoctorProfilePage = () => {
                 <div className="w-24 h-24 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto">
                   <User className="w-12 h-12 text-blue-600" />
                 </div>
-                <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
-                  <UserPlus className="w-4 h-4 text-white" />
-                </div>
               </div>
 
-              <h3 className="text-2xl font-bold text-gray-900 mb-3">{t('profile.noProfile')}</h3>
-              <p className="text-gray-600 mb-6 leading-relaxed">
+              <h3 style={{'justifySelf' : 'center'}} className="text-2xl font-bold text-gray-900 mb-3">{t('profile.noProfile')}</h3>
+              <p style={{'justifySelf' : 'center'}} className="text-gray-600 mb-6 leading-relaxed">
                 {t('profile.noProfileDescription')}
               </p>
 
-              <div className={cn(language === 'ar' && 'order-first')}>
+              <div style={{'justifySelf' : 'center'}}>
                 <Dialog open={showForm} onOpenChange={setShowForm}>
                   <DialogTrigger asChild>
                     <SaveButton

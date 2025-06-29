@@ -115,7 +115,7 @@ export const VisitPrescriptionSection = ({
       {/* Status Information */}
       {!isPrescriptionSaved && !existingPrescription && !isEditing && (
         <div className={cn("p-4 bg-blue-50 rounded-lg border border-blue-200", language === 'ar' && 'text-right')}>
-          <div className={cn("flex items-start gap-2 text-sm text-blue-800", language === 'ar' && 'flex-row-reverse')}>
+          <div className={cn("flex items-start gap-2 text-sm text-blue-800")}>
             <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
             <div>
               <p className="font-medium mb-1">{t('prescription.info')}</p>

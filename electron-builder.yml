@@ -1,0 +1,87 @@
+# electron-builder.yml
+appId: com.doctorapp.desktop
+productName: "Doctor App"
+copyright: "Copyright © 2025 Doctor App"
+directories:
+  output: "dist-installers"
+  buildResources: "build"
+
+# Files to include
+files:
+  - "dist/**/*"
+  - "electron.cjs"
+  - "preload.js"
+  - "src/utils/**/*"
+  - "package.json"
+  - "dump.sql"
+
+# Extra resources (MySQL binaries) - conditional based on what exists
+extraResources:
+  - from: "mysql-resources/mysql-macos"
+    to: "mysql-macos"
+    filter: ["**/*"]
+  - from: "mysql-resources/mysql-windows"
+    to: "mysql-windows"
+    filter: ["**/*"]
+    # This will be ignored if the directory doesn't exist
+
+# Windows configuration
+win:
+  target: 
+    - target: "nsis"
+      arch: ["x64"]
+  icon: "build/icon.ico"
+  artifactName: "DoctorApp-Setup-${version}.${ext}"
+  
+nsis:
+  oneClick: false
+  allowElevation: true
+  allowToChangeInstallationDirectory: true
+  installerIcon: "build/icon.ico"
+  uninstallerIcon: "build/icon.ico"
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  
+# macOS configuration
+mac:
+  target:
+    - target: "dmg"
+      arch: ["arm64", "x64"]
+  icon: "build/icon.icns"
+  category: "public.app-category.medical"
+  
+# Simplified DMG config without background
+dmg:
+  title: "Doctor App ${version}"
+  icon: "build/icon.icns"
+  window:
+    width: 600
+    height: 400
+  contents:
+    - x: 150
+      y: 200
+      type: "file"
+    - x: 450
+      y: 200
+      type: "link"
+      path: "/Applications"
+
+# Linux configuration
+linux:
+  target:
+    - target: "AppImage"
+      arch: ["x64"]
+  icon: "build/icon.png"
+  category: "Office"
+
+# Publishing configuration (for auto-updates)
+publish:
+  provider: "generic"
+  url: "https://your-domain.com/updates/"
+
+# Compression
+compression: "maximum"
+
+# Node modules to exclude
+asarUnpack:
+  - "node_modules/mysql2/**/*"

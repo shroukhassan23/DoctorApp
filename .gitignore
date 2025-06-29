@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+dist-installers
+mysql-resources
+mysql-9.3.0-macos15-arm64.tar.gz
