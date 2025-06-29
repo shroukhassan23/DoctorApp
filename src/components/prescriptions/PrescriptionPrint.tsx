@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Printer, Settings } from 'lucide-react';
@@ -7,7 +7,10 @@ import { format } from 'date-fns';
 import { doctorProfileUrl, getPatientByIdUrl } from '@/components/constants.js';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { PrintSettingsDialog, PrintSettings } from './PrintSettings';
+import { 
+  PrintSettings, 
+  usePrintSettings 
+} from './PrintSettings';
 
 interface PrescriptionPrintProps {
   prescription: any;
@@ -29,7 +32,10 @@ const defaultPrintSettings: PrintSettings = {
 export const PrescriptionPrint = ({ prescription, open, onOpenChange }: PrescriptionPrintProps) => {
   const printRef = useRef<HTMLDivElement>(null);
   const { t, language } = useLanguage();
-  const [printSettings, setPrintSettings] = useState<PrintSettings>(defaultPrintSettings);
+  
+const { settings: printSettings } = usePrintSettings();
+
+  
   const [showPrintSettings, setShowPrintSettings] = useState(false);
 
   const { data: doctorProfile } = useQuery({
@@ -75,14 +81,12 @@ export const PrescriptionPrint = ({ prescription, open, onOpenChange }: Prescrip
       Legal: { width: '21.6cm', height: '35.6cm' }
     };
 
-    // تحسين الهوامش
     const marginSizes = {
       narrow: '0.5cm',
       normal: '1.5cm',
       wide: '2.5cm'
     };
 
-    // تحسين أحجام الخط لتكون أوضح
     const fontSizes = {
       small: {
         base: '10px',
@@ -513,15 +517,13 @@ export const PrescriptionPrint = ({ prescription, open, onOpenChange }: Prescrip
     `;
   };
 
-  const handlePrint = (settings: PrintSettings) => {
-    setPrintSettings(settings);
-    
+  const handlePrint = () => {
     const content = printRef.current;
     if (!content) {
       console.error('Print content not found');
       return;
     }
-
+console.log(generatePrintStyles(printSettings))
     const printWindow = window.open('', '_blank', 'width=800,height=600');
 
     if (!printWindow) {
@@ -551,7 +553,7 @@ export const PrescriptionPrint = ({ prescription, open, onOpenChange }: Prescrip
                 font-size: 14px;
               }
               
-              ${generatePrintStyles(settings)}
+              ${generatePrintStyles(printSettings)}
             </style>
           </head>
           <body>
@@ -574,9 +576,7 @@ export const PrescriptionPrint = ({ prescription, open, onOpenChange }: Prescrip
     }
   };
 
-  const handleQuickPrint = () => {
-    handlePrint(printSettings);
-  };
+
 
   if (!prescription) return null;
 
@@ -594,40 +594,46 @@ export const PrescriptionPrint = ({ prescription, open, onOpenChange }: Prescrip
           </DialogHeader>
 
           <div className="flex justify-end gap-3 mb-4 no-print">
-            <Button 
-              onClick={() => setShowPrintSettings(true)} 
-              variant="outline" 
-              size="lg" 
-              className="border-blue-300 text-blue-600 hover:bg-blue-50"
-            >
-              <Settings className="w-5 h-5 mr-2" />
-              Print Settings
-            </Button>
-            <Button onClick={handleQuickPrint} size="lg" className="bg-blue-600 hover:bg-blue-700">
+          
+            <Button onClick={handlePrint} size="lg" className="bg-blue-600 hover:bg-blue-700">
               <Printer className="w-5 h-5 mr-2" />
-              Quick Print
+              Print Now
             </Button>
+          </div>
+
+          {/* عرض الإعدادات الحالية */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 no-print">
+            <div className="text-sm text-blue-800">
+              <strong>Current Settings:</strong> {printSettings.paperSize} • {printSettings.orientation} • 
+              Font: {printSettings.fontSize} • {printSettings.colorMode}
+              {!printSettings.includeHeader && ' • No Header'}
+              {!printSettings.includeFooter && ' • No Footer'}
+            </div>
           </div>
 
           <div ref={printRef} className="border rounded-lg bg-white overflow-hidden">
             <style>{generatePrintStyles(printSettings)}</style>
             <div className="prescription-container">
               <div className="prescription">
-                <div className="watermark">PRESCRIPTION</div>
-
+            
                 <div className="content">
+                
+                 </div>
+                
 
                   {/* Patient Information */}
                   <div className="patient-card">
                     <div className="patient-header">
                       <div>
                         <h3 className="patient-name">{patient?.name || 'Patient Name'}</h3>
-                        
+                      </div>
+                      <div className="prescription-id">
+                        ID: {prescription.id || 'N/A'}
                       </div>
                     </div>
 
                     <div className="patient-details">
-
+            
                       <div className="detail-item">
                         <span className="detail-label">Gender</span>
                         <span className="detail-value">{patient?.gender || 'N/A'}</span>
@@ -638,7 +644,7 @@ export const PrescriptionPrint = ({ prescription, open, onOpenChange }: Prescrip
                       </div>
                     </div>
                   </div>
-  </div>
+
                   {/* Diagnosis */}
                   {prescription.diagnosis && (
                     <div className="section">
@@ -743,7 +749,6 @@ export const PrescriptionPrint = ({ prescription, open, onOpenChange }: Prescrip
                       </div>
                     </div>
                   )}
-
                   {/* Footer */}
                   {printSettings.includeFooter && (
                     <div className="footer">
@@ -767,13 +772,7 @@ export const PrescriptionPrint = ({ prescription, open, onOpenChange }: Prescrip
           </div>
         </DialogContent>
       </Dialog>
-
-      {/* Print Settings Dialog */}
-      <PrintSettingsDialog
-        open={showPrintSettings}
-        onOpenChange={setShowPrintSettings}
-        onPrint={handlePrint}
-      />
+ 
     </div>
   );
 };

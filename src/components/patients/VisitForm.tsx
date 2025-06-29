@@ -33,6 +33,7 @@ import {
   updateVisitUrl
 } from '@/components/constants.js';
 import { PatientForm } from './PatientForm';
+import { PrintSettingsProvider } from '../prescriptions/PrintSettings';
 
 interface VisitFormProps {
   patientId: string;
@@ -545,11 +546,13 @@ export const VisitForm = ({ patientId, visit, onSave }: VisitFormProps) => {
 
       {/* Print Dialog */}
       {shouldShowPrintButton && (
+        <PrintSettingsProvider>
         <PrescriptionPrint
           prescription={getPrintablePrescription()}
           open={showPrintDialog}
           onOpenChange={setShowPrintDialog}
         />
+        </PrintSettingsProvider>
       )}
     </div>
   );

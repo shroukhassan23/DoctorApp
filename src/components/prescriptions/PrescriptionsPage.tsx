@@ -12,6 +12,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useToast } from '@/hooks/use-toast';
 import { formatDateToDDMMYYYY } from '@/lib/dateUtils';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { PrintSettingsProvider } from './PrintSettings';
 export const PrescriptionsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPrescription, setSelectedPrescription] = useState(null);
@@ -209,11 +210,13 @@ export const PrescriptionsPage = () => {
       )}
 
       {printPrescription && (
+        <PrintSettingsProvider>
         <PrescriptionPrint
           prescription={printPrescription}
           open={showPrint}
           onOpenChange={setShowPrint}
         />
+        </PrintSettingsProvider>
       )}
     </div>
   );

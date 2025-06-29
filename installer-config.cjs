@@ -24,10 +24,10 @@ class DoctorAppInstaller {
       mode: this.MODES.STANDALONE,
       database: {
         host: 'localhost',
-        port: 3306,
-        username: 'doctor_user',
+        port: 3307,
+        username: 'root',
         password: this.generatePassword(),
-        database: 'doctor',
+        database: 'doctor2',
         rootPassword: this.generatePassword()
       },
       server: {
@@ -185,7 +185,7 @@ async createDirectories() {
   } catch (err) {
     if (err.code === 'EPERM') {
       // Fallback to user directory
-      const fallbackPath = path.join(process.env.USERPROFILE, 'DoctorApp');
+      const fallbackPath = path.join(basePath, 'DoctorApp');
       console.warn(`⚠️ Permission denied to "${basePath}". Falling back to: "${fallbackPath}"`);
       basePath = fallbackPath;
       this.appPath = basePath;

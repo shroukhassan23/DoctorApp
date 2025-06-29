@@ -7,7 +7,7 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { Dashboard } from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 import { DayPickerProvider } from 'react-day-picker';
-
+import { PrintSettingsProvider } from './components/prescriptions/PrintSettings';
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -24,10 +24,14 @@ const App = () => (
           <Toaster />
           <Sonner />
           <HashRouter>
+             <PrintSettingsProvider>
+   
+  
             <Routes>
               <Route path="/*" element={<Dashboard />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
+              </PrintSettingsProvider>
           </HashRouter>
         </TooltipProvider>
       </DayPickerProvider>

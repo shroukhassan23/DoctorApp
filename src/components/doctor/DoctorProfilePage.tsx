@@ -19,7 +19,9 @@ import {
   Shield,
   Activity,
   Settings,
-  Contact
+  Contact,
+  Printer,
+  FileText
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,12 +32,27 @@ import { Separator } from '@/components/ui/separator';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import { doctorProfileUrl } from '@/components/constants.js';
+import { 
+  PrintSettingsProvider, 
+  usePrintSettings, 
+  PrintSettingsButton 
+} from '../prescriptions/PrintSettings.tsx';
 
+// Main DoctorProfilePage Component wrapped with PrintSettingsProvider
 export const DoctorProfilePage = () => {
+  return (
+    <PrintSettingsProvider>
+      <DoctorProfileContent />
+    </PrintSettingsProvider>
+  );
+};
+
+// Content component that uses print settings
+const DoctorProfileContent = () => {
   const [showForm, setShowForm] = useState(false);
   const { t, language } = useLanguage();
   const [formLoading, setFormLoading] = useState(false);
-
+  const { settings } = usePrintSettings();
 
   const { data: doctorProfile, isLoading, refetch } = useQuery({
     queryKey: ['doctor-profile'],
@@ -88,8 +105,6 @@ export const DoctorProfilePage = () => {
         <div className="flex items-center gap-4">
           {language === 'ar' ? (
             <>
-
-
               <div className={cn("order-2", language === 'ar' && 'order-1')}>
                 <div className="p-3 bg-[#2463EB] rounded-xl shadow-lg">
                 <Settings className="w-7 h-7 text-white" />
@@ -121,7 +136,15 @@ export const DoctorProfilePage = () => {
           )}
         </div>
 
-        <div >
+        <div className={cn("flex gap-3", language === 'ar' && 'flex-row-reverse')}>
+          {/* Print Settings Button */}
+          <PrintSettingsButton 
+            variant="outline" 
+            size="md" 
+            showLabel={true}
+          />
+          
+          {/* Edit Profile Button */}
           <Dialog open={showForm} onOpenChange={setShowForm}>
             <DialogTrigger asChild>
               <SaveButton
@@ -146,7 +169,7 @@ export const DoctorProfilePage = () => {
             </DialogContent>
           </Dialog>
         </div>
-      </div> {/* This is where the main header div closes */}
+      </div>
 
       {doctorProfile ? (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -336,45 +359,7 @@ export const DoctorProfilePage = () => {
                   </span>
                 </div>
               </CardContent>
-            </Card>
-
-            {/* Quick Actions Card */}
-            {/* <Card className="shadow-xl border-0 bg-gradient-to-br from-white to-purple-50/30">
-                <CardHeader>
-                  <CardTitle className={cn("flex items-center text-lg font-bold", language === 'ar' && 'flex-row-reverse text-right')}>
-                    <Activity className="w-5 h-5 mr-2 text-purple-600" />
-                    Quick Actions
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <Button 
-                      variant="outline" 
-                      className="w-full justify-start h-12 bg-white hover:bg-gray-50 border-gray-200"
-                      onClick={() => setShowForm(true)}
-                    >
-                      <Edit className="w-4 h-4 mr-3 text-blue-600" />
-                      <span className="text-sm font-medium">Edit Profile</span>
-                    </Button>
-                    
-                    <Button 
-                      variant="outline" 
-                      className="w-full justify-start h-12 bg-white hover:bg-gray-50 border-gray-200"
-                    >
-                      <User className="w-4 h-4 mr-3 text-green-600" />
-                      <span className="text-sm font-medium">View Patients</span>
-                    </Button>
-                    
-                    <Button 
-                      variant="outline" 
-                      className="w-full justify-start h-12 bg-white hover:bg-gray-50 border-gray-200"
-                    >
-                      <Calendar className="w-4 h-4 mr-3 text-purple-600" />
-                      <span className="text-sm font-medium">Schedule</span>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card> */}
+            </Card>           
           </div>
         </div>
       ) : (
@@ -396,7 +381,7 @@ export const DoctorProfilePage = () => {
                 {t('profile.noProfileDescription')}
               </p>
 
-              <div className={cn(language === 'ar' && 'order-first')}>
+              <div className={cn("flex gap-3 justify-center", language === 'ar' && 'flex-row-reverse')}>
                 <Dialog open={showForm} onOpenChange={setShowForm}>
                   <DialogTrigger asChild>
                     <SaveButton
@@ -420,6 +405,12 @@ export const DoctorProfilePage = () => {
                     <DoctorProfileForm profile={doctorProfile} onSave={handleProfileSaved} isLoading={formLoading} />
                   </DialogContent>
                 </Dialog>
+                
+                <PrintSettingsButton 
+                  variant="outline" 
+                  size="sm" 
+                  showLabel={true}
+                />
               </div>
             </div>
           </CardContent>
