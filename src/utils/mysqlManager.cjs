@@ -24,7 +24,7 @@ class MySQLManager {
       // Windows paths
       const resourcesPath = isDev ?
         path.join(appPath, 'mysql-resources') :
-        path.join(appPath, '..', '..', 'Resources');
+        path.join(appPath, '..', '..', 'resources');
 
       this.mysqlBinPath = path.join(resourcesPath, 'mysql-windows', 'bin');
       this.dataDir = path.join(path.dirname(appPath), 'mysql-data');
