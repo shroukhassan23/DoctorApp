@@ -66,7 +66,9 @@ export const ReportsDialogs = ({
                 {t('reports.viewDetails')} - {viewingPatient.name}
               </DialogTitle>
             </DialogHeader>
-            <PatientDetail patient={viewingPatient} onUpdate={() => {}} />
+            <PatientDetail patient={viewingPatient} onUpdate={() => {}}   onViewVisit={(visit) => {
+    setSelectedVisit(visit);
+  }}/>
           </DialogContent>
         </Dialog>
       )}

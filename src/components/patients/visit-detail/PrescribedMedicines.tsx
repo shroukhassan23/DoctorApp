@@ -15,6 +15,7 @@ export const PrescribedMedicines = ({ prescriptionItems }: PrescribedMedicinesPr
   if (!prescriptionItems?.length) {
     return null;
   }
+console.log("prescriptionItems", prescriptionItems);
 
 
   return (
@@ -32,11 +33,11 @@ export const PrescribedMedicines = ({ prescriptionItems }: PrescribedMedicinesPr
               <p className={cn("font-medium", language === 'ar' && 'text-right')}>{index + 1}. {item.medicines?.name || 'Medicine name not available'}</p>
               <div className={cn("grid grid-cols-1 md:grid-cols-3 gap-4 mt-2 text-sm", language === 'ar' && 'text-right')}>
                 <p><span className="font-medium">{t('medicines.dosage')}:</span> {item.dosage || 'Not specified'}</p>
-                <p><span className="font-medium">{t('common.duration')}:</span> {item.duration || 'Not specified'}</p>
-                <p><span className="font-medium">{t('common.frequency')}:</span> {item.frequency || 'Not specified'}</p>
+                <p><span className="font-medium">{t('medicines.duration')}:</span> {item.duration || 'Not specified'}</p>
+
               </div>
               {item.instructions && item.instructions.trim() !== '' && (
-                <p className={cn("text-sm mt-2", language === 'ar' && 'text-right')}><span className="font-medium">{t('common.instructions')}:</span> {item.instructions}</p>
+                <p className={cn("text-sm mt-2", language === 'ar' && 'text-right')}><span className="font-medium">{t('medicines.instructions')}:</span> {item.instructions}</p>
               )}
             </div>
           ))}

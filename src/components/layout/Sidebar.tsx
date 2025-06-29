@@ -1,10 +1,11 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Users, Pill, User, Stethoscope, FileText, ScanLine, BarChart3 } from 'lucide-react';
+import { Users, Pill, User, Stethoscope, FileText, ScanLine,  LucideCalendar, UserPlus,  } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { LanguageToggle } from '@/components/ui/language-toggle';
+import { DateSelector } from '../reports/DateSelector';
 
 export const Sidebar = () => {
   const location = useLocation();
@@ -15,7 +16,8 @@ export const Sidebar = () => {
     { name: t('nav.medicines'), href: '/medicines', icon: Pill },
     { name: t('nav.labTests'), href: '/lab-tests', icon: FileText },
     { name: t('nav.imagingStudies'), href: '/imaging-studies', icon: ScanLine },
-    { name: t('nav.reports'), href: '/reports', icon: BarChart3 },
+    { name: t('nav.reports'), href: '/reports', icon:UserPlus  },
+    { name: t('nav.dailyReports'), href: '/todayReports', icon: LucideCalendar}, 
     { name: t('nav.profile'), href: '/profile', icon: User },
   ];
 
@@ -52,7 +54,7 @@ export const Sidebar = () => {
               {language === 'ar' ? (
                 <>
                   <Icon className="w-5 h-5 mr-3" />
-                  <span>{item.name}</span>
+                  <span>&nbsp;{item.name}&nbsp;</span>
                 </>
               ) : (
                 <>

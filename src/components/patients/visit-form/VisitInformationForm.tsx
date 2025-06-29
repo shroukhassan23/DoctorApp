@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { visitStatusPatientUrl, visitTypesPatientUrl } from '@/components/constants.js';
 import { SimpleHistoryTextarea } from '@/components/prescriptions/SimpleHistoryTextarea';
 import { Calendar, Activity, Stethoscope, FileText, ClipboardList, AlertCircle } from 'lucide-react';
+import DatePicker from 'react-datepicker';
 
 interface VisitInformationFormProps {
   register: any;
@@ -31,6 +32,17 @@ export const VisitInformationForm = ({
   const [isLoadingStatuses, setIsLoadingStatuses] = useState(false);
   const [visitTypes, setVisitTypes] = useState<{ id: number, name: string }[]>([]);
   const [isLoadingTypes, setIsLoadingTypes] = useState(false);
+
+useEffect(() => {
+  const selectedStatus = watch('status');
+  if (visitStatuses.length > 0 && (!selectedStatus || selectedStatus === '')) {
+    const defaultStatus = visitStatuses.find((s) => s.name.toLowerCase() === 'waiting');
+    if (defaultStatus) {
+      setValue('status', defaultStatus.id.toString(), { shouldValidate: true });
+    }
+  }
+}, [visitStatuses]);
+
 
   useEffect(() => {
     // Always use props data if available
@@ -56,16 +68,25 @@ export const VisitInformationForm = ({
             <Calendar className="w-4 h-4 text-[#2463EB]" />
             {t('visit.date')} <span className="text-red-500">*</span>
           </Label>
-          <Input
-            id="visit_date"
-            type="date"
-            {...register('visit_date', { required: t('form.required') })}
-            className={cn(
-              "h-12 border-gray-300 bg-gray-50 focus:bg-white focus:border-[#2463EB] focus:ring-[#2463EB]/20 shadow-sm",
-              errors.visit_date && "border-red-500 focus:border-red-500 focus:ring-red-500/20",
-              language === 'ar' && 'text-right'
-            )}
-          />
+        <DatePicker
+  id="visit_date"
+  selected={watch('visit_date') ? new Date(watch('visit_date')) : null}
+  onChange={(date: Date | null) => {
+    if (date) {
+      const formatted = date.toISOString().split('T')[0];
+      setValue('visit_date', formatted, { shouldValidate: true });
+    }
+  }}
+  dateFormat="dd/MM/yyyy"
+  placeholderText="DD/MM/YYYY"
+  className={cn(
+    "h-12 w-full border border-gray-300 bg-gray-50 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#2463EB]/50",
+    errors.visit_date && "border-red-500 ring-red-500",
+    language === 'ar' && 'text-right'
+  )}
+  wrapperClassName="w-full"
+/>
+
           {errors.visit_date && (
             <p className={cn("text-red-500 text-sm mt-1 flex items-center gap-1")}>
               <AlertCircle className="w-3 h-3" />
@@ -158,7 +179,7 @@ export const VisitInformationForm = ({
               language === 'ar' && 'text-right'
             )}>
               <SelectValue
-                placeholder={isLoadingStatuses ? t('common.loading') : t('visit.selectStatus')}
+                placeholder={isLoadingStatuses ? t('common.loading') : 'waiting'}
               />
             </SelectTrigger>
             <SelectContent>
@@ -198,12 +219,12 @@ export const VisitInformationForm = ({
           className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2")}
         >
           <Stethoscope className="w-4 h-4 text-[#2463EB]" />
-          {t('visit.chiefComplaint')} <span className="text-red-500">*</span>
+          {t('visit.chiefComplaint')} 
         </Label>
         <Textarea
           id="chief_complaint"
           placeholder={t('visit.enterChiefComplaint')}
-          {...register('chief_complaint', { required: t('form.required') })}
+          {...register('chief_complaint',)}
           className={cn(
             "min-h-[100px] border-gray-300 bg-gray-50 focus:bg-white focus:border-[#2463EB] focus:ring-[#2463EB]/20 shadow-sm",
             errors.chief_complaint && "border-red-500 focus:border-red-500 focus:ring-red-500/20",
@@ -225,7 +246,7 @@ export const VisitInformationForm = ({
           className={cn("text-sm font-semibold text-gray-700 flex items-center gap-2")}
         >
           <FileText className="w-4 h-4 text-[#2463EB]" />
-          {t('visit.diagnosis')} <span className="text-red-500">*</span>
+          {t('visit.diagnosis')}
         </Label>
         <div className={cn(
           "rounded-lg border border-gray-300 bg-gray-50 focus-within:bg-white focus-within:border-[#2463EB] focus-within:ring-2 focus-within:ring-[#2463EB]/20 shadow-sm transition-all duration-200",

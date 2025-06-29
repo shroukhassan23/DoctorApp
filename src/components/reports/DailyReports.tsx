@@ -2,9 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { ReportsPageHeader } from './ReportsPageHeader';
-import { DateSelector } from './DateSelector';
+import { DailyDateSelector } from './DailyDateSelector';
 import { VisitStatsCards } from './VisitStatsCards';
-import { ReportsFilters } from './ReportsFilters';
+import { StatusFilters } from './statusFilter';
 import { ReportsDialogs } from './ReportsDialogs';
 import { VisitList } from './VisitList';
 import { formatDateToDDMMYYYY } from '@/lib/dateUtils';
@@ -14,7 +14,7 @@ import { searchText } from '@/lib/arabicUtils';
 import { SectionLoading, CardLoading } from '@/components/ui/loading-spinner';
 
 
-export const ReportsPage = () => {
+export const DailyReportsPage = () => {
   const today = new Date().toISOString().split('T')[0];
   const [fromDate, setFromDate] = useState(today);
   const [toDate, setToDate] = useState(today);
@@ -44,16 +44,11 @@ export const ReportsPage = () => {
     }
   });
 
-  useEffect(() => {
-    refetchVisits();
-  }, [searchAllVisits]);
-
   const { data: visitDetails, refetch: refetchVisits } = useQuery({
     queryKey: ['visit-details', fromDate, toDate, searchAllVisits],
     queryFn: async () => {
-      const url = searchAllVisits
-        ? 'http://localhost:3003/reports/visits/all'
-        : `http://localhost:3003/reports/visits?from=${fromDate}&to=${toDate}`;
+      const url = 
+         `http://localhost:3003/reports/visits?from=${fromDate}&to=${toDate}`;
 
       const response = await fetch(url);
       if (!response.ok) throw new Error('Failed to fetch visit details');
@@ -134,18 +129,16 @@ export const ReportsPage = () => {
     <div className={cn("p-6", language === 'ar' && "rtl")}>
       <ReportsPageHeader fromDate={fromDate} toDate={toDate} />
 
-      <DateSelector
-        fromDate={fromDate}
-        toDate={toDate}
-        onFromDateChange={setFromDate}
-        onToDateChange={setToDate}
+      <DailyDateSelector
+        reportDate={fromDate}
         onSearch={() => {
           refetch();
           refetchVisits();
-        }}
-      />
+        } } onReportDateChange={function (date: string): void {
+          throw new Error('Function not implemented.');
+        } }      />
 
-   {/*  <div className="mb-8">
+      <div className="mb-8">
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {Array.from({ length: 4 }).map((_, i) => (
@@ -155,7 +148,7 @@ export const ReportsPage = () => {
         ) : (
           <VisitStatsCards visitStats={visitStats} />
         )}
-      </div>*/}
+      </div>
 
       {isLoading ? (
         <div className="mb-6">
@@ -163,19 +156,12 @@ export const ReportsPage = () => {
         </div>
       ) : (
         <div className="mb-6">
-        <ReportsFilters
-          searchMode={searchMode}
-          setSearchMode={setSearchMode}
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          searchAllVisits={searchAllVisits}
-       setSearchAllVisits={(value) => {
-    setSearchAllVisits(value);
-  }}
+        <StatusFilters
+    
           statusFilter={statusFilter}
           setStatusFilter={setStatusFilter}
-          onPatientSelected={handlePatientSelected}
-          onAddNewPatient={handleAddNewPatient}
+      
+ 
         />
         </div>
       )}

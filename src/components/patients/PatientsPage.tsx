@@ -50,6 +50,9 @@ export const PatientsPage = () => {
   };
 
   const [deletingPatient, setDeletingPatient] = useState<string | null>(null);
+const handleViewVisit = (visit) => {
+  console.log('عرض تفاصيل الزيارة:', visit);
+};
 
 
   const handleDelete = async (patientId: string) => {
@@ -237,7 +240,7 @@ export const PatientsPage = () => {
                             {t('patients.viewAndManage')}
                           </DialogDescription>
                         </DialogHeader>
-                        <PatientDetail patient={patient} onUpdate={refetch} />
+                        <PatientDetail patient={patient} onViewVisit={handleViewVisit} onUpdate={refetch} />
                       </DialogContent>
                     </Dialog>
 

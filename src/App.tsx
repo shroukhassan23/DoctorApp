@@ -13,6 +13,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Dashboard } from "./pages/Dashboard";
 import SetupWizard from './components/Setup/SetupWizard';
 import LicenseActivation from './components/License/LicenseActivation';
+import { PrintSettingsProvider } from './components/prescriptions/PrintSettings';
 
 const queryClient = new QueryClient();
 
@@ -136,9 +137,10 @@ const AppCore = () => {
       {licenseStatus?.type === 'trial' && (
         <LicenseActivation onLicenseActivated={handleLicenseActivated} />
       )}
-      
+      <PrintSettingsProvider>
       {/* Your existing Dashboard component handles all the routing */}
       <Dashboard licenseStatus={licenseStatus} />
+      </PrintSettingsProvider>
     </HashRouter>
   );
 };

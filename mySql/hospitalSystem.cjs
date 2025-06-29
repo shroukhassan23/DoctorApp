@@ -3,10 +3,11 @@ const mysql = require('mysql2/promise');
 
 // اتصال بـ MySQL
 const db = mysql.createPool({
-  host: '147.182.180.167',
-  user: 'sa',
-  password: 'P@ssw0rd',
-  database: 'doctor',
+   host: '127.0.0.1',
+      user: 'root',
+      password: 'MyPassword123',
+       port: 3307, 
+      database: 'doctor2',
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0

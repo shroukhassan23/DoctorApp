@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -12,11 +12,11 @@ import { useToast } from '@/hooks/use-toast';
 import { MedicineSection } from './MedicineSection';
 import { LabTestsSection } from './LabTestsSection';
 import { ImagingStudiesSection } from './ImagingStudiesSection';
-import { SimpleHistoryTextarea } from './SimpleHistoryTextarea';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { SectionLoading, ButtonLoading } from '@/components/ui/loading-spinner';
 import { EditButton, SaveButton } from '../ui/enhanced-button';
-
+import { PrescriptionPrint } from '../prescriptions/PrescriptionPrint';
+import DatePicker from 'react-datepicker';
 
 interface PrescriptionFormProps {
   patientId?: string;
@@ -26,7 +26,7 @@ interface PrescriptionFormProps {
   isEmbedded?: boolean;
 }
 
-export const PrescriptionForm = ({
+export const PrescriptionForm = React.memo(({
   patientId,
   visitId,
   prescription,
@@ -34,10 +34,14 @@ export const PrescriptionForm = ({
   isEmbedded = false
 }: PrescriptionFormProps) => {
   console.log('PrescriptionForm re-rendered');
+  
+  // State with stable references
   const [medicines, setMedicines] = useState<any[]>([]);
   const [selectedLabTests, setSelectedLabTests] = useState<any[]>([]);
+  const [selectedImagingStudies, setSelectedImagingStudies] = useState<any[]>([]);
   const [selectedPatientId, setSelectedPatientId] = useState(patientId || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const { t, language } = useLanguage();
 
   const imagingStudiesRef = useRef<{ getSelectedStudies: () => any[] }>(null);
@@ -53,7 +57,8 @@ export const PrescriptionForm = ({
 
   const { toast } = useToast();
 
-  // Only fetch patients if we're in standalone mode (not embedded) and no patientId is provided
+  // Memoize the patients query to prevent unnecessary re-fetches
+  const shouldFetchPatients = !isEmbedded && !patientId;
   const { data: patients, isLoading: patientsLoading } = useQuery({
     queryKey: ['patients'],
     queryFn: async () => {
@@ -61,16 +66,19 @@ export const PrescriptionForm = ({
       if (!response.ok) throw new Error('Failed to fetch patients');
       return await response.json();
     },
-    enabled: !isEmbedded && !patientId
+    enabled: shouldFetchPatients
   });
-  const formatDate = (dateString: string) => {
+
+  // Memoized formatDate function
+  const formatDate = useCallback((dateString: string) => {
     const date = new Date(dateString);
     const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0'); // +1 because months are 0-based
+    const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
-  };
-  // Load existing prescription data when editing
+  }, []);
+
+  // Load existing prescription data when editing - memoized to prevent unnecessary effects
   useEffect(() => {
     if (prescription) {
       reset({
@@ -80,7 +88,6 @@ export const PrescriptionForm = ({
         notes: prescription.notes || '',
         diagnosis: prescription.diagnosis || ''
       });
-
 
       // Load medicines
       if (prescription.prescription_items) {
@@ -110,7 +117,7 @@ export const PrescriptionForm = ({
           name: study.imaging_studies?.name?.trim() || '',
           notes: study.comments || study.notes || ''
         }));
-        // setSelectedImagingStudies(loadedImagingStudies);
+        setSelectedImagingStudies(loadedImagingStudies);
       }
 
       // Set patient ID if available
@@ -118,11 +125,36 @@ export const PrescriptionForm = ({
         setSelectedPatientId(prescription.patient_id);
       }
     }
-  }, [prescription, reset]);
+  }, [prescription?.id, formatDate, reset]); // Only depend on prescription.id to avoid unnecessary re-runs
 
-  const onSubmit = async (data: any) => {
-    // For embedded mode or when editing, use the provided patientId or prescription's patient_id
+  // Memoized callbacks to prevent child re-renders
+  const handleMedicinesChange = useCallback((newMedicines: any[]) => {
+    setMedicines(newMedicines);
+  }, []);
+
+  const handleLabTestsChange = useCallback((newLabTests: any[]) => {
+    setSelectedLabTests(newLabTests);
+  }, []);
+
+  const handleImagingStudiesChange = useCallback((newImagingStudies: any[]) => {
+    setSelectedImagingStudies(newImagingStudies);
+  }, []);
+
+  const handlePatientChange = useCallback((value: string) => {
+    setSelectedPatientId(value);
+  }, []);
+
+  const handleDateChange = useCallback((date: Date | null) => {
+    if (date) {
+      const formattedDate = date.toISOString().split('T')[0];
+      setValue('prescription_date', formattedDate, { shouldValidate: true });
+    }
+  }, [setValue]);
+
+  // Memoized onSubmit to prevent unnecessary re-renders
+  const onSubmit = useCallback(async (data: any) => {
     const targetPatientId = patientId || prescription?.patient_id || selectedPatientId;
+
 
     if (!targetPatientId) {
       toast({
@@ -139,8 +171,7 @@ export const PrescriptionForm = ({
     }
 
     const currentSelectedLabTests = labTestsRef.current?.getSelectedTests() || selectedLabTests;
-    const currentSelectedImagingStudies = imagingStudiesRef.current?.getSelectedStudies() || [];
-
+    const currentSelectedImagingStudies = imagingStudiesRef.current?.getSelectedStudies() || selectedImagingStudies;
 
     setIsSubmitting(true);
 
@@ -149,12 +180,13 @@ export const PrescriptionForm = ({
         ...data,
         patient_id: targetPatientId,
         medicines: currentMedicines,
-        selectedLabTests,
+        selectedLabTests: currentSelectedLabTests,
         selectedImagingStudies: currentSelectedImagingStudies,
         visit_id: visitId
       };
 
       onSave(prescriptionData);
+      setSelectedImagingStudies(currentSelectedImagingStudies);
     } catch (error) {
       console.error('Error saving prescription:', error);
       toast({
@@ -165,9 +197,21 @@ export const PrescriptionForm = ({
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [
+    patientId, 
+    prescription?.patient_id, 
+    selectedPatientId, 
+    medicines, 
+    selectedLabTests, 
+    selectedImagingStudies, 
+    visitId, 
+    onSave, 
+    toast, 
+    t
+  ]);
 
-  const FormContent = () => (
+  // Memoized form content to prevent unnecessary re-renders
+  const FormContent = useMemo(() => (
     <>
       {/* Only show patient selection if not embedded and no patientId provided and not editing */}
       {!isEmbedded && !patientId && !prescription && (
@@ -178,7 +222,7 @@ export const PrescriptionForm = ({
           ) : (
             <Select
               value={selectedPatientId}
-              onValueChange={(value) => setSelectedPatientId(value)}
+              onValueChange={handlePatientChange}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select patient" />
@@ -196,23 +240,19 @@ export const PrescriptionForm = ({
       )}
 
       <div>
-        <Label htmlFor="prescription_date">{t('prescription.date')}</Label>
-        <Input
+        <Label htmlFor="prescription_date" className="mb-2 block">{t('prescription.date')}</Label>
+        <DatePicker
           id="prescription_date"
-          type="date"
-          {...register('prescription_date', { required: 'Date is required' })}
+          selected={watch('prescription_date') ? new Date(watch('prescription_date')) : null}
+          onChange={handleDateChange}
+          dateFormat="dd/MM/yyyy"
+          placeholderText="DD/MM/YYYY"
+          className="h-12 w-full border border-gray-300 bg-gray-50 rounded px-4 py-2 pl-4 focus:outline-none focus:ring-2 focus:ring-[#2463EB]/50"
         />
       </div>
 
       <div>
         <Label htmlFor="diagnosis">{t('prescription.diagnosis')}</Label>
-        {/* <SimpleHistoryTextarea
-          id="diagnosis"
-          placeholder={t('prescription.enterDiagnosis')}
-          value={watch('diagnosis')}
-          onChange={(value) => setValue('diagnosis', value)}
-          historyType="diagnosis"
-        /> */}
         <Textarea
           id="diagnosis"
           placeholder={t('prescription.enterDiagnosis')}
@@ -222,21 +262,19 @@ export const PrescriptionForm = ({
 
       <MedicineSection
         medicines={medicines}
-        setMedicines={setMedicines}
+        setMedicines={handleMedicinesChange}
       />
 
       <LabTestsSection
         selectedLabTests={selectedLabTests}
-        setSelectedLabTests={setSelectedLabTests}
+        setSelectedLabTests={handleLabTestsChange}
+      
       />
 
       <ImagingStudiesSection
         ref={imagingStudiesRef}
-        initialSelectedImagingStudies={prescription?.prescription_imaging_studies?.map((study: any) => ({
-          studyId: String(study.imaging_study_id || study.imaging_studies_id),
-          name: study.imaging_studies?.name?.trim() || '',
-          notes: study.comments || study.notes || ''
-        })) || []}
+        initialSelectedImagingStudies={selectedImagingStudies}
+        onSelectionChange={handleImagingStudiesChange}
       />
 
       <div>
@@ -270,7 +308,28 @@ export const PrescriptionForm = ({
         )}
       </div>
     </>
-  );
+  ), [
+    isEmbedded,
+    patientId,
+    prescription,
+    t,
+    patientsLoading,
+    patients,
+    selectedPatientId,
+    handlePatientChange,
+    watch,
+    handleDateChange,
+    register,
+    medicines,
+    handleMedicinesChange,
+    selectedLabTests,
+    handleLabTestsChange,
+    selectedImagingStudies,
+    handleImagingStudiesChange,
+    isSubmitting,
+    handleSubmit,
+    onSubmit
+  ]);
 
   return (
     <Card className={isEmbedded ? 'border-0 shadow-none' : ''}>
@@ -282,14 +341,16 @@ export const PrescriptionForm = ({
       <CardContent className={isEmbedded ? 'p-0' : ''}>
         {isEmbedded ? (
           <div className="space-y-6">
-            <FormContent />
+            {FormContent}
           </div>
         ) : (
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <FormContent />
+            {FormContent}
           </form>
         )}
       </CardContent>
     </Card>
   );
-};
+});
+
+PrescriptionForm.displayName = 'PrescriptionForm';

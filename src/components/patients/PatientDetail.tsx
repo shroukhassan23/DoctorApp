@@ -14,11 +14,13 @@ import { cn } from '@/lib/utils';
 interface PatientDetailProps {
   patient: any;
   onUpdate: () => void;
+    onViewVisit: (visit: any) => void;
 }
 
-export const PatientDetail = ({ patient, onUpdate }: PatientDetailProps) => {
+export const PatientDetail = ({ patient, onUpdate,onViewVisit }: PatientDetailProps) => {
   const [selectedVisit, setSelectedVisit] = useState<any>(null);
   const { t, language } = useLanguage();
+  
   const { data: visits, isLoading: visitsLoading, refetch: refetchVisits } = useQuery({
     queryKey: ['patient-visits', patient.id],
     queryFn: async () => {
@@ -73,6 +75,7 @@ export const PatientDetail = ({ patient, onUpdate }: PatientDetailProps) => {
               visits={visits}
               onVisitClick={handleVisitClick}
               onVisitUpdated={handleVisitUpdated}
+             onViewDetails={setSelectedVisit}
             />
           )}
         </TabsContent>
@@ -90,17 +93,28 @@ export const PatientDetail = ({ patient, onUpdate }: PatientDetailProps) => {
         </TabsContent>
       </Tabs>
 
-      {/* Visit Detail Dialog */}
-      {selectedVisit && (
-        <Dialog open={!!selectedVisit} onOpenChange={() => setSelectedVisit(null)}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Visit Details - {new Date(selectedVisit.visit_date).toLocaleDateString('en-GB')}</DialogTitle>
-            </DialogHeader>
-            <VisitDetail visit={selectedVisit} patient={patient} />
-          </DialogContent>
-        </Dialog>
-      )}
+{/* Visit Detail Dialog */}
+{selectedVisit && (
+ <Dialog open={!!selectedVisit} onOpenChange={() => setSelectedVisit(null)}>
+   <DialogContent
+     className={cn(
+       "max-w-4xl max-h-[90vh] overflow-y-auto",
+       language === 'ar' && "rtl"
+     )}
+   >
+     <DialogHeader className={cn(language === 'ar' && "text-right")}>
+       <DialogTitle className={cn(language === 'ar' && "text-right")}>
+         {t('visit.details')} - {new Date(selectedVisit.visit_date).toLocaleDateString('en-GB')}
+       </DialogTitle>
+     </DialogHeader>
+            
+     <div className={cn(language === 'ar' && "text-right")}>
+       <VisitDetail visit={selectedVisit} patient={patient} />
+     </div>
+   </DialogContent>
+ </Dialog>
+)}
+
     </div>
   );
 };

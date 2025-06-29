@@ -9,6 +9,7 @@ import { PrescriptionNotes } from './PrescriptionNotes';
 import { PrescriptionPrint } from '../../prescriptions/PrescriptionPrint';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
+import { PrintSettingsProvider } from '@/components/prescriptions/PrintSettings';
 
 interface PrescriptionDetailsProps {
   prescription: any;
@@ -68,11 +69,13 @@ export const PrescriptionDetails = ({ prescription }: PrescriptionDetailsProps) 
       )}
 
       {/* Print Dialog */}
+      <PrintSettingsProvider>
       <PrescriptionPrint
         prescription={prescription}
         open={showPrint}
         onOpenChange={setShowPrint}
       />
+      </PrintSettingsProvider>
     </div>
   );
 };
