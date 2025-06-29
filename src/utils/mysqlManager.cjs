@@ -19,22 +19,25 @@ class MySQLManager {
 
   initializePaths(appPath) {
     const isDev = process.env.ELECTRON_DEV === 'true';
-    
+
     if (this.isWindows) {
       // Windows paths
-      const resourcesPath = isDev ? 
-        path.join(appPath, 'mysql-resources') : 
-        path.join(appPath, 'Resources');
-      
+      const resourcesPath = isDev ?
+        path.join(appPath, 'mysql-resources') :
+        path.join(appPath, '..', '..', 'Resources');
+
       this.mysqlBinPath = path.join(resourcesPath, 'mysql-windows', 'bin');
       this.dataDir = path.join(path.dirname(appPath), 'mysql-data');
       this.configFile = path.join(path.dirname(appPath), 'my-windows.cnf');
     } else if (this.isMac) {
+      const resourcesPath = isDev ?
+        path.join(appPath, 'mysql-resources') :
+        path.join(appPath, '..', 'Resources');
       this.mysqlBinPath = path.join(resourcesPath, 'mysql-macos', 'bin');
       this.dataDir = path.join(appPath, 'mysql-data');
       this.configFile = path.join(appPath, 'my-macos.cnf');
     }
-    
+
     console.log(`MySQL paths initialized for ${this.platform}:`);
     console.log(`  Bin Path: ${this.mysqlBinPath}`);
     console.log(`  Data Dir: ${this.dataDir}`);
@@ -59,7 +62,7 @@ class MySQLManager {
     const dataDir = this.dataDir.replace(/\\/g, '/');
     const baseDir = path.dirname(this.mysqlBinPath).replace(/\\/g, '/');
     const tmpDir = path.join(this.dataDir, 'tmp').replace(/\\/g, '/');
-    
+
     return `[mysqld]
 port=${port}
 datadir="${dataDir}"
