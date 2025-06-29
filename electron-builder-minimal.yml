@@ -1,0 +1,20 @@
+appId: com.doctorapp.desktop
+productName: "Doctor App Minimal"
+directories:
+  output: "dist-installers"
+  buildResources: "build"
+
+files:
+  - "app_dist/**/*"
+  - "electron-minimal.cjs"
+  - "preload-minimal.js"
+
+extraMetadata:
+  main: "electron-minimal.cjs"
+
+mac:
+  target: "dmg"
+  icon: "build/icon.icns"
+  identity: null
+
+asar: false

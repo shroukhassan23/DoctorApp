@@ -1,4 +1,4 @@
-# electron-builder.yml
+# electron-builder.yml - Fixed with proper node_modules location
 appId: com.doctorapp.desktop
 productName: "Doctor App"
 copyright: "Copyright © 2025 Doctor App"
@@ -6,82 +6,56 @@ directories:
   output: "dist-installers"
   buildResources: "build"
 
-# Files to include
 files:
-  - "dist/**/*"
+  - "app_dist/**/*"
   - "electron.cjs"
   - "preload.js"
   - "src/utils/**/*"
-  - "package.json"
   - "dump.sql"
+  - "initDb.cjs"
+  - "patient.cjs"
+  - "visit.cjs" 
+  - "reports.cjs"
+  - "!package.json"
 
-# Extra resources (MySQL binaries) - conditional based on what exists
+# Put node_modules in the app folder this time
+extraFiles:
+  - from: "node_modules/mysql2"
+    to: "app/node_modules/mysql2"
+    filter: ["**/*"]
+  - from: "node_modules/express"
+    to: "app/node_modules/express"
+    filter: ["**/*"]
+  - from: "node_modules/cors"
+    to: "app/node_modules/cors"
+    filter: ["**/*"]
+  - from: "node_modules/multer"
+    to: "app/node_modules/multer"
+    filter: ["**/*"]
+  - from: "node_modules/node-machine-id"
+    to: "app/node_modules/node-machine-id"
+    filter: ["**/*"]
+
+extraMetadata:
+  name: "doctor-app-desktop"
+  version: "1.0.0"
+  main: "electron.cjs"
+  type: "commonjs"
+  dependencies: {}
+
 extraResources:
   - from: "mysql-resources/mysql-macos"
     to: "mysql-macos"
     filter: ["**/*"]
-  - from: "mysql-resources/mysql-windows"
-    to: "mysql-windows"
-    filter: ["**/*"]
-    # This will be ignored if the directory doesn't exist
 
-# Windows configuration
-win:
-  target: 
-    - target: "nsis"
-      arch: ["x64"]
-  icon: "build/icon.ico"
-  artifactName: "DoctorApp-Setup-${version}.${ext}"
-  
-nsis:
-  oneClick: false
-  allowElevation: true
-  allowToChangeInstallationDirectory: true
-  installerIcon: "build/icon.ico"
-  uninstallerIcon: "build/icon.ico"
-  createDesktopShortcut: true
-  createStartMenuShortcut: true
-  
-# macOS configuration
 mac:
   target:
-    - target: "dmg"
-      arch: ["arm64", "x64"]
+    - target: "dir"
+      arch: ["arm64"]
   icon: "build/icon.icns"
-  category: "public.app-category.medical"
-  
-# Simplified DMG config without background
-dmg:
-  title: "Doctor App ${version}"
-  icon: "build/icon.icns"
-  window:
-    width: 600
-    height: 400
-  contents:
-    - x: 150
-      y: 200
-      type: "file"
-    - x: 450
-      y: 200
-      type: "link"
-      path: "/Applications"
+  identity: null
+  hardenedRuntime: false
+  gatekeeperAssess: false
 
-# Linux configuration
-linux:
-  target:
-    - target: "AppImage"
-      arch: ["x64"]
-  icon: "build/icon.png"
-  category: "Office"
-
-# Publishing configuration (for auto-updates)
-publish:
-  provider: "generic"
-  url: "https://your-domain.com/updates/"
-
-# Compression
-compression: "maximum"
-
-# Node modules to exclude
-asarUnpack:
-  - "node_modules/mysql2/**/*"
+asar: false
+compression: "normal"

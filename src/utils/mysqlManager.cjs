@@ -17,20 +17,24 @@ class MySQLManager {
     this.configFile = null;
   }
 
-  // Initialize MySQL paths based on platform
   initializePaths(appPath) {
     const isDev = process.env.ELECTRON_DEV === 'true';
-    const resourcesPath = isDev ? path.join(appPath, 'mysql-resources') : path.join(appPath, 'resources');
+    const resourcesPath = isDev ? path.join(appPath, 'mysql-resources') : path.join(appPath, '..', 'Resources');
 
     if (this.isWindows) {
       this.mysqlBinPath = path.join(resourcesPath, 'mysql-windows', 'bin');
-      this.dataDir = path.join(resourcesPath, 'mysql-data');
-      this.configFile = path.join(resourcesPath, 'my-windows.cnf');
+      this.dataDir = path.join(appPath, 'mysql-data');
+      this.configFile = path.join(appPath, 'my-windows.cnf');
     } else if (this.isMac) {
       this.mysqlBinPath = path.join(resourcesPath, 'mysql-macos', 'bin');
-      this.dataDir = path.join(resourcesPath, 'mysql-data');
-      this.configFile = path.join(resourcesPath, 'my-macos.cnf');
+      this.dataDir = path.join(appPath, 'mysql-data');
+      this.configFile = path.join(appPath, 'my-macos.cnf');
     }
+    
+    console.log(`MySQL paths initialized for ${this.platform}:`);
+    console.log(`  Bin Path: ${this.mysqlBinPath}`);
+    console.log(`  Data Dir: ${this.dataDir}`);
+    console.log(`  Config: ${this.configFile}`);
   }
 
   // Create MySQL configuration file

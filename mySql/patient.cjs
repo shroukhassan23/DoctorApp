@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const initDatabase = require('../initDb.cjs'); 
+const initDatabase = require('./initDb.cjs'); 
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -8,8 +8,23 @@ let db;
 
 (async () => {
   try {
-    db = await initDatabase(); 
-    console.log("✅ Database initialized.");
+    const dbConfig = {
+      host: process.env.DB_HOST || 'localhost',
+      port: parseInt(process.env.DB_PORT || '3306'),
+      user: process.env.DB_USER || 'root',
+      password: process.env.DB_PASSWORD || '',
+      database: process.env.DB_NAME || 'doctor'
+    };
+
+    console.log('Patient service starting with DB config:', { 
+      host: dbConfig.host, 
+      port: dbConfig.port, 
+      user: dbConfig.user,
+      database: dbConfig.database
+    });
+
+    db = await initDatabase(dbConfig); 
+    console.log("✅ Patient service database initialized.");
     // GET all Patients
     app.get('/Patients', async (req, res) => {
       try {

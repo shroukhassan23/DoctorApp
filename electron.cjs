@@ -1,9 +1,10 @@
-// electron.cjs (Enhanced version)
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs').promises;
 const MySQLManager = require('./src/utils/mysqlManager.cjs');
 const LicenseManager = require('./src/utils/licenseManager.cjs');
+const ConfigManager = require('./src/utils/configManager.cjs');
+const BackendManager = require('./src/utils/backendManager.cjs');
 
 const isDev = process.env.ELECTRON_DEV === 'true';
 
@@ -12,6 +13,8 @@ class DoctorApp {
     this.mainWindow = null;
     this.mysqlManager = new MySQLManager();
     this.licenseManager = new LicenseManager();
+    this.configManager = null;
+    this.backendManager = null;
     this.appDataPath = null;
     this.isSetupComplete = false;
   }
@@ -25,8 +28,14 @@ class DoctorApp {
     await this.licenseManager.initialize(this.appDataPath);
 
     // Initialize MySQL paths
-    const appPath = isDev ? process.cwd() : path.dirname(process.execPath);
+    const appPath = isDev ? 
+      process.cwd() : 
+      path.join(__dirname, '..');  // Point to Resources folder
     this.mysqlManager.initializePaths(appPath);
+
+    // Initialize other managers
+    this.configManager = new ConfigManager(this.appDataPath);
+    this.backendManager = new BackendManager(__dirname);
 
     // Check if setup is complete
     await this.checkSetupStatus();
@@ -37,24 +46,18 @@ class DoctorApp {
 
   async checkSetupStatus() {
     try {
-      const configPath = path.join(this.appDataPath, 'app-config.json');
-      const configData = await fs.readFile(configPath, 'utf8');
-      const config = JSON.parse(configData);
-      this.isSetupComplete = config.setupComplete || false;
+      this.isSetupComplete = await this.configManager.isSetupComplete();
     } catch {
       this.isSetupComplete = false;
     }
   }
 
   async saveSetupConfig(installationType, config) {
-    const configPath = path.join(this.appDataPath, 'app-config.json');
-    const configData = {
-      setupComplete: true,
-      installationType,
-      ...config,
-      setupDate: new Date().toISOString()
-    };
-    await fs.writeFile(configPath, JSON.stringify(configData, null, 2));
+    if (installationType === 'master') {
+      await this.configManager.saveMasterConfig(config);
+    } else {
+      await this.configManager.saveClientConfig(config);
+    }
     this.isSetupComplete = true;
   }
 
@@ -117,7 +120,16 @@ class DoctorApp {
 
     ipcMain.handle('setup-master-installation', async (event, config) => {
       try {
-        console.log('Setting up master installation (MySQL disabled for testing)');
+        console.log('Setting up master installation...');
+        
+        // Start MySQL
+        await this.mysqlManager.startMySQL(config.mysqlPort);
+        console.log('MySQL started successfully');
+        
+        // Import database schema
+        const schemaPath = path.join(isDev ? process.cwd() : path.dirname(process.execPath), 'dump.sql');
+        await this.mysqlManager.importSchema(schemaPath, config.mysqlPort);
+        console.log('Database schema imported');
         
         // Create shared folder
         await fs.mkdir(config.sharedFolderPath, { recursive: true });
@@ -126,6 +138,11 @@ class DoctorApp {
         // Save configuration
         await this.saveSetupConfig('master', config);
         console.log('Configuration saved');
+        
+        // Start backend services
+        const fullConfig = await this.configManager.getConfig();
+        await this.backendManager.startServices('master', fullConfig);
+        console.log('Backend services started');
     
         return { success: true };
       } catch (error) {
@@ -144,6 +161,11 @@ class DoctorApp {
 
         // Save configuration
         await this.saveSetupConfig('client', config);
+        
+        // Start backend services
+        const fullConfig = await this.configManager.getConfig();
+        await this.backendManager.startServices('client', fullConfig);
+        console.log('Backend services started');
 
         return { success: true };
       } catch (error) {
@@ -236,19 +258,22 @@ class DoctorApp {
 
     this.createWindow();
 
-    // If this is a master installation, start MySQL
+    // If this is a setup complete, start services
     if (this.isSetupComplete) {
       try {
-        const configPath = path.join(this.appDataPath, 'app-config.json');
-        const configData = await fs.readFile(configPath, 'utf8');
-        const config = JSON.parse(configData);
+        const config = await this.configManager.getConfig();
         
         if (config.installationType === 'master') {
           console.log('Starting MySQL for master installation...');
-          await this.mysqlManager.startMySQL(config.mysqlPort || 3306);
+          await this.mysqlManager.startMySQL(config.database.port || 3306);
         }
+        
+        // Start backend services
+        await this.backendManager.startServices(config.installationType, config);
+        console.log('Backend services started');
+        
       } catch (error) {
-        console.error('Error starting MySQL:', error);
+        console.error('Error starting services:', error);
       }
     }
   }
@@ -257,6 +282,12 @@ class DoctorApp {
     // Stop license tracking
     if (this.licenseManager) {
       this.licenseManager.stopUsageTracking();
+    }
+    
+    // Stop backend services
+    if (this.backendManager) {
+      console.log('Stopping backend services...');
+      await this.backendManager.stopAllServices();
     }
     
     // Stop MySQL if running

@@ -10,6 +10,8 @@ import { PrescriptionsPage } from '@/components/prescriptions/PrescriptionsPage'
 import { DoctorProfilePage } from '@/components/doctor/DoctorProfilePage';
 import { ReportsPage } from '@/components/reports/ReportsPage';
 import { DailyReportsPage } from '@/components/reports/DailyReports';
+import LicenseTest from '@/components/License/LicenseTest';
+
 
 export const Dashboard = () => {
   return (
@@ -26,6 +28,7 @@ export const Dashboard = () => {
           <Route path="/reports" element={<ReportsPage />} />
           <Route path="/todayReports" element={<DailyReportsPage />} />
           <Route path="/profile" element={<DoctorProfilePage />} />
+          <Route path="/license-test" element={<LicenseTest />} />
         </Routes>
       </div>
     </div>

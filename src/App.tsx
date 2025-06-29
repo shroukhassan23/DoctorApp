@@ -32,8 +32,17 @@ const AppCore = () => {
       // Check if we're in Electron environment
       if (!window.electron) {
         console.warn('Running in browser mode - setup and license features disabled');
-        setSetupComplete(true); // Skip setup in browser mode
+        setSetupComplete(true);
         setLicenseStatus({ isValid: true, type: 'browser' });
+        setLoading(false);
+        return;
+      }
+
+      // Check if setup functions exist (for minimal build compatibility)
+      if (!window.electron.isSetupComplete || !window.electron.checkLicense) {
+        console.warn('Running in minimal mode - skipping setup and license');
+        setSetupComplete(true);
+        setLicenseStatus({ isValid: true, type: 'minimal' });
         setLoading(false);
         return;
       }

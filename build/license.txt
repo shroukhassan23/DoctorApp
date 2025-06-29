@@ -1,0 +1,25 @@
+END USER LICENSE AGREEMENT
+
+Doctor App
+
+This End User License Agreement ("Agreement") is a legal agreement between you and Doctor App.
+
+1. LICENSE GRANT
+Subject to the terms of this Agreement, Doctor App grants you a limited, non-exclusive, non-transferable license to use the Software.
+
+2. RESTRICTIONS
+You may not:
+- Copy, modify, or distribute the Software
+- Reverse engineer or attempt to extract the source code
+- Use the Software for unlawful purposes
+
+3. TRIAL VERSION
+The trial version is limited to 20 hours of usage time.
+
+4. SUPPORT
+Support is provided as-is with no warranty.
+
+5. TERMINATION
+This license is effective until terminated.
+
+By installing and using this software, you agree to these terms.

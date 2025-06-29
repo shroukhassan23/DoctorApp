@@ -4,7 +4,8 @@ const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const db = require('./hospitalSystem.cjs');
+const initDatabase = require('./initDb.cjs');
+let db;
 const app = express();
 app.use(express.json());
 
@@ -15,6 +16,42 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   exposedHeaders: ['Content-Disposition', 'Content-Type', 'Content-Length']
 }));
+
+
+// Add this entire section after the CORS setup and before the multer configuration
+(async () => {
+  try {
+    const dbConfig = {
+      host: process.env.DB_HOST || 'localhost',
+      port: parseInt(process.env.DB_PORT || '3306'),
+      user: process.env.DB_USER || 'root',
+      password: process.env.DB_PASSWORD || '',
+      database: process.env.DB_NAME || 'doctor'
+    };
+
+    console.log('Visit service starting with DB config:', { 
+      host: dbConfig.host, 
+      port: dbConfig.port, 
+      user: dbConfig.user,
+      database: dbConfig.database
+    });
+
+    db = await initDatabase(dbConfig); 
+    console.log("✅ Visit service database initialized.");
+
+    // All your existing routes go here...
+    // (Keep all the existing app.get, app.post, etc. routes)
+    
+    const PORT = 3002;
+    app.listen(PORT, () => {
+      console.log(`🚀 Visit service running at http://localhost:${PORT}`);
+    });
+
+  } catch (error) {
+    console.error("❌ Failed to initialize visit service:", error.message);
+    process.exit(1);
+  }
+})();
 
 
 // Configure multer for file uploads
@@ -1307,11 +1344,4 @@ app.put('/visits/:id/status', async (req, res) => {
     console.error('Error updating visit status:', err);
     res.status(500).json({ error: err.message });
   }
-});
-
-
-
-const PORT = 3002;
-app.listen(PORT, () => {
-  console.log('🚀 Server running at http://localhost:${PORT}');
 });

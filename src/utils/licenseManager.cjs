@@ -1,6 +1,6 @@
-// src/utils/licenseManager.js - Updated for ES modules
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 const { machineId: getMachineId } = require('node-machine-id');
 
 class LicenseManager {
@@ -9,33 +9,64 @@ class LicenseManager {
     this.trialDurationHours = 20;
     this.configPath = null;
     this.machineId = null;
+    this.platform = os.platform();
+    this.isWindows = this.platform === 'win32';
+    this.registryPath = 'HKCU\\Software\\DoctorApp';
   }
 
   async initialize(appDataPath) {
     this.configPath = path.join(appDataPath, 'license.dat');
     this.machineId = await getMachineId();
+    
+    // Initialize registry access for Windows
+    if (this.isWindows) {
+      await this.initializeWindowsRegistry();
+    }
+  }
+
+  async initializeWindowsRegistry() {
+    try {
+      const { execSync } = require('child_process');
+      // Create registry key if it doesn't exist
+      execSync(`reg add "${this.registryPath}" /f`, { stdio: 'ignore' });
+    } catch (error) {
+      console.warn('Could not initialize Windows registry:', error.message);
+    }
   }
 
   // Encrypt data using machine ID as key
   async loadLicenseData() {
-    try {
-      const data = await fs.promises.readFile(this.configPath, 'utf8');
-      const licenseData = JSON.parse(data);
-      return licenseData;
-    } catch (error) {
-      console.log('No existing license data found');
-      return null;
+    if (this.isWindows) {
+      return await this.loadFromRegistry();
+    } else {
+      return await this.loadFromFile();
     }
   }
 
-  // Decrypt data using machine ID as key
   async saveLicenseData(data) {
-    try {
-      await fs.promises.writeFile(this.configPath, JSON.stringify(data, null, 2), 'utf8');
-    } catch (error) {
-      console.error('Error saving license data:', error);
-      throw error;
+    if (this.isWindows) {
+      await this.saveToRegistry(data);
+    } else {
+      await this.saveToFile(data);
     }
+  }
+
+  async loadFromRegistry() {
+    try {
+      const { execSync } = require('child_process');
+      const result = execSync(`reg query "${this.registryPath}" /v LicenseData`, { encoding: 'utf8' });
+      
+      // Parse registry output
+      const match = result.match(/LicenseData\s+REG_SZ\s+(.+)/);
+      if (match) {
+        const encodedData = match[1].trim();
+        const jsonData = Buffer.from(encodedData, 'base64').toString('utf8');
+        return JSON.parse(jsonData);
+      }
+    } catch (error) {
+      console.log('No existing license data found in registry');
+    }
+    return null;
   }
 
   // Load license data from file
@@ -49,6 +80,20 @@ class LicenseManager {
     return null;
   }
 
+  async saveToRegistry(data) {
+    try {
+      const { execSync } = require('child_process');
+      const jsonData = JSON.stringify(data);
+      const encodedData = Buffer.from(jsonData).toString('base64');
+      
+      execSync(`reg add "${this.registryPath}" /v LicenseData /t REG_SZ /d "${encodedData}" /f`, { stdio: 'ignore' });
+    } catch (error) {
+      console.error('Error saving license data to registry:', error);
+      // Fallback to file storage
+      await this.saveToFile(data);
+    }
+  }
+
   // Save license data to file
   async saveLicenseData(data) {
     try {
@@ -56,6 +101,25 @@ class LicenseManager {
       await fs.promises.writeFile(this.configPath, JSON.stringify(data, null, 2), 'utf8');
     } catch (error) {
       console.error('Error saving license data:', error);
+      throw error;
+    }
+  }
+
+  async loadFromFile() {
+    try {
+      const data = await fs.promises.readFile(this.configPath, 'utf8');
+      return JSON.parse(data);
+    } catch (error) {
+      console.log('No existing license data found in file');
+    }
+    return null;
+  }
+
+  async saveToFile(data) {
+    try {
+      await fs.promises.writeFile(this.configPath, JSON.stringify(data, null, 2), 'utf8');
+    } catch (error) {
+      console.error('Error saving license data to file:', error);
       throw error;
     }
   }
