@@ -24,11 +24,11 @@ class MySQLManager {
       // Windows paths
       const resourcesPath = isDev ?
         path.join(appPath, 'mysql-resources') :
-        path.join(appPath, '..', '..', 'resources');
+        path.join(path.dirname(appPath), 'resources');
 
       this.mysqlBinPath = path.join(resourcesPath, 'mysql-windows', 'bin');
-      this.dataDir = path.join(path.dirname(appPath), 'mysql-data');
-      this.configFile = path.join(path.dirname(appPath), 'my-windows.cnf');
+      this.dataDir = path.join(path.dirname(path.dirname(appPath)), 'mysql-data');  // Go up to win-unpacked level
+      this.configFile = path.join(path.dirname(path.dirname(appPath)), 'my-windows.cnf');
     } else if (this.isMac) {
       const resourcesPath = isDev ?
         path.join(appPath, 'mysql-resources') :
@@ -58,17 +58,17 @@ class MySQLManager {
   }
 
   getWindowsConfig(port) {
-    // For Windows, use forward slashes but ensure paths are correct
+    // For Windows, use forward slashes and no quotes around paths
     const dataDir = this.dataDir.replace(/\\/g, '/');
     const baseDir = path.dirname(this.mysqlBinPath).replace(/\\/g, '/');
     const tmpDir = path.join(this.dataDir, 'tmp').replace(/\\/g, '/');
-
+    
     return `[mysqld]
 port=${port}
-datadir="${dataDir}"
-basedir="${baseDir}"
-tmpdir="${tmpDir}"
-log-error="${dataDir}/error.log"
+datadir=${dataDir}
+basedir=${baseDir}
+tmpdir=${tmpDir}
+log-error=${dataDir}/error.log
 bind-address=0.0.0.0
 skip-networking=false
 default-storage-engine=InnoDB
@@ -78,6 +78,7 @@ innodb_buffer_pool_size=128M
 innodb_log_file_size=10M
 max_allowed_packet=16M
 default-time-zone=SYSTEM
+lc-messages-dir=${baseDir}/share
 
 [mysql]
 default-character-set=utf8mb4
@@ -167,9 +168,18 @@ socket=${path.join(this.dataDir, 'mysql.sock')}`;
       ];
 
       return new Promise((resolve, reject) => {
+        console.log(`Executing: ${mysqldPath} ${initArgs.join(' ')}`);
+        
         const initProcess = spawn(mysqldPath, initArgs, {
-          stdio: ['pipe', 'pipe', 'pipe']
+          stdio: ['pipe', 'pipe', 'pipe'],
+          cwd: path.dirname(mysqldPath)  // Set working directory to MySQL bin
         });
+
+        // Add timeout
+        const timeout = setTimeout(() => {
+          initProcess.kill();
+          reject(new Error('MySQL initialization timed out after 60 seconds'));
+        }, 60000);
 
         let errorOutput = '';
 
@@ -179,6 +189,7 @@ socket=${path.join(this.dataDir, 'mysql.sock')}`;
         });
 
         initProcess.on('close', (code) => {
+          clearTimeout(timeout);
           if (code === 0) {
             console.log('MySQL data directory initialized successfully');
             resolve(true);
@@ -186,6 +197,12 @@ socket=${path.join(this.dataDir, 'mysql.sock')}`;
             console.error('MySQL initialization failed:', errorOutput);
             reject(new Error(`MySQL initialization failed with code ${code}: ${errorOutput}`));
           }
+        });
+
+        initProcess.on('error', (error) => {
+          clearTimeout(timeout);
+          console.error('Failed to start MySQL initialization:', error);
+          reject(error);
         });
       });
     } catch (error) {
