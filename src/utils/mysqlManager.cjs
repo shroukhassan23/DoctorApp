@@ -19,12 +19,16 @@ class MySQLManager {
 
   initializePaths(appPath) {
     const isDev = process.env.ELECTRON_DEV === 'true';
-    const resourcesPath = isDev ? path.join(appPath, 'mysql-resources') : path.join(appPath, '..', 'Resources');
-
+    
     if (this.isWindows) {
+      // Windows paths
+      const resourcesPath = isDev ? 
+        path.join(appPath, 'mysql-resources') : 
+        path.join(appPath, 'Resources');
+      
       this.mysqlBinPath = path.join(resourcesPath, 'mysql-windows', 'bin');
-      this.dataDir = path.join(appPath, 'mysql-data');
-      this.configFile = path.join(appPath, 'my-windows.cnf');
+      this.dataDir = path.join(path.dirname(appPath), 'mysql-data');
+      this.configFile = path.join(path.dirname(appPath), 'my-windows.cnf');
     } else if (this.isMac) {
       this.mysqlBinPath = path.join(resourcesPath, 'mysql-macos', 'bin');
       this.dataDir = path.join(appPath, 'mysql-data');
@@ -51,14 +55,17 @@ class MySQLManager {
   }
 
   getWindowsConfig(port) {
+    // For Windows, use forward slashes but ensure paths are correct
+    const dataDir = this.dataDir.replace(/\\/g, '/');
+    const baseDir = path.dirname(this.mysqlBinPath).replace(/\\/g, '/');
+    const tmpDir = path.join(this.dataDir, 'tmp').replace(/\\/g, '/');
+    
     return `[mysqld]
 port=${port}
-datadir=${this.dataDir.replace(/\\/g, '/')}
-basedir=${path.dirname(this.mysqlBinPath).replace(/\\/g, '/')}
-tmpdir=${path.join(this.dataDir, 'tmp').replace(/\\/g, '/')}
-socket=${path.join(this.dataDir, 'mysql.sock').replace(/\\/g, '/')}
-pid-file=${path.join(this.dataDir, 'mysql.pid').replace(/\\/g, '/')}
-log-error=${path.join(this.dataDir, 'error.log').replace(/\\/g, '/')}
+datadir="${dataDir}"
+basedir="${baseDir}"
+tmpdir="${tmpDir}"
+log-error="${dataDir}/error.log"
 bind-address=0.0.0.0
 skip-networking=false
 default-storage-engine=InnoDB
@@ -67,14 +74,14 @@ innodb_log_buffer_size=1M
 innodb_buffer_pool_size=128M
 innodb_log_file_size=10M
 max_allowed_packet=16M
+default-time-zone=SYSTEM
 
 [mysql]
 default-character-set=utf8mb4
 
 [client]
 default-character-set=utf8mb4
-port=${port}
-socket=${path.join(this.dataDir, 'mysql.sock').replace(/\\/g, '/')}`;
+port=${port}`;
   }
 
   getMacConfig(port) {
@@ -123,7 +130,13 @@ socket=${path.join(this.dataDir, 'mysql.sock')}`;
         // Remove any partial/corrupted data - more aggressive cleanup
         try {
           const { execSync } = require('child_process');
-          execSync(`rm -rf "${this.dataDir}"`, { stdio: 'ignore' });
+          if (this.isWindows) {
+            // Windows command
+            execSync(`rmdir /s /q "${this.dataDir}"`, { stdio: 'ignore' });
+          } else {
+            // Unix/Mac command
+            execSync(`rm -rf "${this.dataDir}"`, { stdio: 'ignore' });
+          }
           console.log('Removed existing data directory');
         } catch (e) {
           console.log('Cleanup error (ignoring):', e.message);
@@ -145,8 +158,9 @@ socket=${path.join(this.dataDir, 'mysql.sock')}`;
 
       const initArgs = [
         '--initialize-insecure',
-        `--datadir=${this.dataDir}`,
-        `--basedir=${path.dirname(this.mysqlBinPath)}`
+        `--datadir="${this.dataDir}"`,
+        `--basedir="${path.dirname(this.mysqlBinPath)}"`,
+        '--default-authentication-plugin=mysql_native_password'
       ];
 
       return new Promise((resolve, reject) => {
