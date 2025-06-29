@@ -1,20 +1,42 @@
 import React, { useState, useContext, createContext, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Settings, Printer, Download, FileText, Save, RotateCcw } from 'lucide-react';
+import { Settings, Printer, Download, FileText, Save, RotateCcw, Move, Ruler } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 
-// Print Settings Types
+// Enhanced Print Settings Types
 export interface PrintSettings {
   paperSize: 'A4' | 'A5' | 'Letter' | 'Legal';
   orientation: 'portrait' | 'landscape';
-  margins: 'normal' | 'narrow' | 'wide';
+  margins: 'normal' | 'narrow' | 'wide' | 'custom';
   fontSize: 'small' | 'medium' | 'large';
   includeHeader: boolean;
   includeFooter: boolean;
   colorMode: 'color' | 'grayscale';
   quality: 'draft' | 'normal' | 'high';
+  // New content spacing settings
+  contentPadding: {
+    top: number;
+    right: number;
+    bottom: number;
+    left: number;
+  };
+  contentMargin: {
+    top: number;
+    right: number;
+    bottom: number;
+    left: number;
+  };
+  // Page margins (different from content margins)
+  pageMargins: {
+    top: number;
+    right: number;
+    bottom: number;
+    left: number;
+  };
+  lineHeight: number;
+  paragraphSpacing: number;
 }
 
 const defaultSettings: PrintSettings = {
@@ -25,7 +47,27 @@ const defaultSettings: PrintSettings = {
   includeHeader: true,
   includeFooter: true,
   colorMode: 'color',
-  quality: 'normal'
+  quality: 'normal',
+  contentPadding: {
+    top: 16,
+    right: 16,
+    bottom: 16,
+    left: 16
+  },
+  contentMargin: {
+    top: 20,
+    right: 20,
+    bottom: 20,
+    left: 20
+  },
+  pageMargins: {
+    top: 25,
+    right: 25,
+    bottom: 25,
+    left: 25
+  },
+  lineHeight: 1.5,
+  paragraphSpacing: 12
 };
 
 // Print Context
@@ -35,12 +77,14 @@ const PrintContext = createContext<{
   showSettingsDialog: boolean;
   setShowSettingsDialog: (show: boolean) => void;
   handlePrint: (content?: string) => void;
+  getContentStyles: () => React.CSSProperties;
 }>({
   settings: defaultSettings,
   updateSettings: () => {},
   showSettingsDialog: false,
   setShowSettingsDialog: () => {},
-  handlePrint: () => {}
+  handlePrint: () => {},
+  getContentStyles: () => ({})
 });
 
 // Print Settings Provider
@@ -48,6 +92,7 @@ export const PrintSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
   const [settings, setSettings] = useState<PrintSettings>(defaultSettings);
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
   const { t, language } = useLanguage();
+
   // Load settings from localStorage on component mount
   useEffect(() => {
     const savedSettings = localStorage.getItem('prescription-print-settings');
@@ -67,14 +112,77 @@ export const PrintSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
     localStorage.setItem('prescription-print-settings', JSON.stringify(newSettings));
   };
 
-  const handlePrint = (content?: string) => {
-    // Implementation for actual printing logic
-    console.log('Printing with settings:', settings);
-    if (content) {
-      console.log('Content to print:', content);
-    }
-    // Here you would implement the actual printing logic
+  const getContentStyles = (): React.CSSProperties => {
+    return {
+      padding: `${settings.contentPadding.top}px ${settings.contentPadding.right}px ${settings.contentPadding.bottom}px ${settings.contentPadding.left}px`,
+      margin: `${settings.contentMargin.top}px ${settings.contentMargin.right}px ${settings.contentMargin.bottom}px ${settings.contentMargin.left}px`,
+      lineHeight: settings.lineHeight,
+      fontSize: settings.fontSize === 'small' ? '12px' : settings.fontSize === 'large' ? '16px' : '14px',
+    };
   };
+const handlePrint = (content?: string) => {
+  const printContentHtml = content || document.querySelector('.print-content')?.innerHTML;
+  if (!printContentHtml) {
+    console.warn("No content found to print.");
+    return;
+  }
+
+  const printStyles = `
+    <style>
+      @media print {
+        @page {
+          margin: ${settings.pageMargins.top}mm ${settings.pageMargins.right}mm ${settings.pageMargins.bottom}mm ${settings.pageMargins.left}mm;
+          size: ${settings.paperSize} ${settings.orientation};
+        }
+
+        body {
+          background: white !important;
+          margin: 0;
+          padding: 0;
+        }
+
+        header, .no-print {
+          display: none !important;
+        }
+
+        .print-content {
+          padding: ${settings.contentPadding.top}px ${settings.contentPadding.right}px ${settings.contentPadding.bottom}px ${settings.contentPadding.left}px;
+          margin: ${settings.contentMargin.top}px ${settings.contentMargin.right}px ${settings.contentMargin.bottom}px ${settings.contentMargin.left}px;
+          line-height: ${settings.lineHeight};
+          font-size: ${settings.fontSize === 'small' ? '12px' : settings.fontSize === 'large' ? '16px' : '14px'};
+        }
+
+        .print-content p {
+          margin-bottom: ${settings.paragraphSpacing}px;
+        }
+      }
+    </style>
+  `;
+
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) {
+    alert("Popup blocked. Please allow popups for this site.");
+    return;
+  }
+
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>Print Preview</title>
+        ${printStyles}
+      </head>
+      <body>
+        <div class="print-content">
+          ${printContentHtml}
+        </div>
+      </body>
+    </html>
+  `);
+  printWindow.document.close();
+  printWindow.focus();
+  printWindow.print();
+  printWindow.close();
+};
 
   return (
     <PrintContext.Provider value={{
@@ -82,7 +190,8 @@ export const PrintSettingsProvider: React.FC<{ children: React.ReactNode }> = ({
       updateSettings,
       showSettingsDialog,
       setShowSettingsDialog,
-      handlePrint
+      handlePrint,
+      getContentStyles
     }}>
       {children}
       <GlobalPrintSettingsDialog />
@@ -99,13 +208,198 @@ export const usePrintSettings = () => {
   return context;
 };
 
+// Spacing Control Component
+const SpacingControl: React.FC<{
+  label: string;
+  description: string;
+  values: { top: number; right: number; bottom: number; left: number };
+  onChange: (values: { top: number; right: number; bottom: number; left: number }) => void;
+  min?: number;
+  max?: number;
+  step?: number;
+  unit?: string;
+}> = ({ label, description, values, onChange, min = 0, max = 100, step = 1, unit = 'px' }) => {
+  const [isLinked, setIsLinked] = useState(false);
+  const { t } = useLanguage();
+
+  const handleValueChange = (side: keyof typeof values, value: number) => {
+    if (isLinked) {
+      // Update all sides when linked
+      onChange({
+        top: value,
+        right: value,
+        bottom: value,
+        left: value
+      });
+    } else {
+      // Update only the specific side
+      onChange({
+        ...values,
+        [side]: value
+      });
+    }
+  };
+
+  const presetValues = [
+    { name: t('print.none'), value: 0 },
+    { name: t('print.small'), value: 8 },
+    { name: t('print.medium'), value: 16 },
+    { name: t('print.large'), value: 24 },
+    { name: t('print.extraLarge'), value: 32 }
+  ];
+
+  return (
+    <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
+      <div className="flex items-center justify-between">
+        <div>
+          <h4 className="font-semibold text-gray-800">{label}</h4>
+          <p className="text-sm text-gray-600">{description}</p>
+        </div>
+        <button
+          onClick={() => setIsLinked(!isLinked)}
+          className={`p-2 rounded ${isLinked ? 'bg-blue-100 text-blue-600' : 'bg-gray-200 text-gray-600'}`}
+          title={isLinked ? t('print.unlink') : t('print.link')}
+        >
+          <Move className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* Quick Presets */}
+      <div className="flex flex-wrap gap-2">
+        {presetValues.map((preset) => (
+          <button
+            key={preset.name}
+            onClick={() => onChange({
+              top: preset.value,
+              right: preset.value,
+              bottom: preset.value,
+              left: preset.value
+            })}
+            className="px-3 py-1 text-xs bg-white border rounded hover:bg-gray-50"
+          >
+            {preset.name}
+          </button>
+        ))}
+      </div>
+
+      {/* Individual Controls */}
+      <div className="grid grid-cols-2 gap-4">
+        {/* Top */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-gray-700">{t('print.top')}</label>
+          <div className="flex items-center gap-2">
+            <input
+              type="range"
+              min={min}
+              max={max}
+              step={step}
+              value={values.top}
+              onChange={(e) => handleValueChange('top', Number(e.target.value))}
+              className="flex-1"
+            />
+            <input
+              type="number"
+              min={min}
+              max={max}
+              step={step}
+              value={values.top}
+              onChange={(e) => handleValueChange('top', Number(e.target.value))}
+              className="w-16 px-2 py-1 text-sm border rounded"
+            />
+            <span className="text-xs text-gray-500">{unit}</span>
+          </div>
+        </div>
+
+        {/* Right */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-gray-700">{t('print.right')}</label>
+          <div className="flex items-center gap-2">
+            <input
+              type="range"
+              min={min}
+              max={max}
+              step={step}
+              value={values.right}
+              onChange={(e) => handleValueChange('right', Number(e.target.value))}
+              className="flex-1"
+            />
+            <input
+              type="number"
+              min={min}
+              max={max}
+              step={step}
+              value={values.right}
+              onChange={(e) => handleValueChange('right', Number(e.target.value))}
+              className="w-16 px-2 py-1 text-sm border rounded"
+            />
+            <span className="text-xs text-gray-500">{unit}</span>
+          </div>
+        </div>
+
+        {/* Bottom */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-gray-700">{t('print.bottom')}</label>
+          <div className="flex items-center gap-2">
+            <input
+              type="range"
+              min={min}
+              max={max}
+              step={step}
+              value={values.bottom}
+              onChange={(e) => handleValueChange('bottom', Number(e.target.value))}
+              className="flex-1"
+            />
+            <input
+              type="number"
+              min={min}
+              max={max}
+              step={step}
+              value={values.bottom}
+              onChange={(e) => handleValueChange('bottom', Number(e.target.value))}
+              className="w-16 px-2 py-1 text-sm border rounded"
+            />
+            <span className="text-xs text-gray-500">{unit}</span>
+          </div>
+        </div>
+
+        {/* Left */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-gray-700">{t('print.left')}</label>
+          <div className="flex items-center gap-2">
+            <input
+              type="range"
+              min={min}
+              max={max}
+              step={step}
+              value={values.left}
+              onChange={(e) => handleValueChange('left', Number(e.target.value))}
+              className="flex-1"
+            />
+            <input
+              type="number"
+              min={min}
+              max={max}
+              step={step}
+              value={values.left}
+              onChange={(e) => handleValueChange('left', Number(e.target.value))}
+              className="w-16 px-2 py-1 text-sm border rounded"
+            />
+            <span className="text-xs text-gray-500">{unit}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Enhanced Print Settings Dialog Component
 const GlobalPrintSettingsDialog = () => {
   const { settings, updateSettings, showSettingsDialog, setShowSettingsDialog } = usePrintSettings();
   const [tempSettings, setTempSettings] = useState<PrintSettings>(settings);
-  const [activeTab, setActiveTab] = useState<'layout' | 'format' | 'advanced'>('layout');
+  const [activeTab, setActiveTab] = useState<'layout' | 'format' | 'spacing'>('layout');
   const [isSaving, setIsSaving] = useState(false);
   const { t, language } = useLanguage();
+
   // Update temp settings when dialog opens
   useEffect(() => {
     if (showSettingsDialog) {
@@ -123,13 +417,14 @@ const GlobalPrintSettingsDialog = () => {
   const marginOptions = [
     { value: 'narrow', label: t('print.narrow'), description: t('print.moreSpace') },
     { value: 'normal', label: t('print.normal'), description: t('print.balancedLayout') },
-    { value: 'wide', label: t('print.wide'), description: t('print.spaces') }
+    { value: 'wide', label: t('print.wide'), description: t('print.spaces') },
+    { value: 'custom', label: t('print.custom'), description: t('print.customSpacing') }
   ];
 
   const fontSizes = [
-    { value: 'small', label: t('print.small'),  },
-    { value: 'medium', label: t('print.medium'), },
-    { value: 'large', label: t('print.large'),  }
+    { value: 'small', label: t('print.small') },
+    { value: 'medium', label: t('print.medium') },
+    { value: 'large', label: t('print.large') }
   ];
 
   const handleSettingChange = <K extends keyof PrintSettings>(
@@ -192,40 +487,14 @@ const GlobalPrintSettingsDialog = () => {
     </div>
   );
 
-  const CheckboxOption = ({ 
-    label, 
-    description, 
-    checked, 
-    onChange 
-  }: { 
-    label: string; 
-    description: string; 
-    checked: boolean; 
-    onChange: (checked: boolean) => void;
-  }) => (
-    <div className="flex items-start gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={(e) => onChange(e.target.checked)}
-        className="mt-1 w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-      />
-      <div>
-        <div className="font-medium text-sm text-gray-800">{label}</div>
-        <div className="text-xs text-gray-600 mt-1">{description}</div>
-      </div>
-    </div>
-  );
-
   return (
     <Dialog open={showSettingsDialog} onOpenChange={setShowSettingsDialog}>
-      <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
             <Settings className="w-6 h-6 text-blue-600" />
             {t('print.general')}
           </DialogTitle>
-         
         </DialogHeader>
 
         {/* Current Settings Preview */}
@@ -235,8 +504,8 @@ const GlobalPrintSettingsDialog = () => {
               <h3 className="font-semibold text-green-800">{t('print.currentSettings')}</h3>
               <p className="text-sm text-green-600 mt-1">
                 {t('print.size')}: {paperSizes.find(p => p.value === tempSettings.paperSize)?.label} | 
-              
-                {t('print.font')}: {fontSizes.find(f => f.value === tempSettings.fontSize)?.label}
+                {t('print.font')}: {fontSizes.find(f => f.value === tempSettings.fontSize)?.label} |
+                Padding: {tempSettings.contentPadding.top}px
               </p>
             </div>
             <div className="flex gap-2">
@@ -257,7 +526,7 @@ const GlobalPrintSettingsDialog = () => {
         <div className="flex gap-2 mb-6 overflow-x-auto">
           <TabButton tab="layout" label={t('print.layout')} icon={FileText} />
           <TabButton tab="format" label={t('print.format')} icon={Settings} />
-        
+          <TabButton tab="spacing" label={t('print.spacing')} icon={Ruler} />
         </div>
 
         {/* Tab Content */}
@@ -279,14 +548,11 @@ const GlobalPrintSettingsDialog = () => {
                   ))}
                 </div>
               </div>
-
-        
-      
-
+              
               {/* Margins */}
               <div>
                 <h3 className="text-lg font-semibold mb-3 text-gray-800">{t('print.margin')}</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
                   {marginOptions.map((margin) => (
                     <OptionCard
                       key={margin.value}
@@ -317,15 +583,98 @@ const GlobalPrintSettingsDialog = () => {
                     />
                   ))}
                 </div>
-              </div> 
+              </div>
+
+              {/* Line Height */}
+              <div>
+                <h3 className="text-lg font-semibold mb-3 text-gray-800">{t('print.lineHeight')}</h3>
+                <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
+                  <input
+                    type="range"
+                    min="1"
+                    max="3"
+                    step="0.1"
+                    value={tempSettings.lineHeight}
+                    onChange={(e) => handleSettingChange('lineHeight', Number(e.target.value))}
+                    className="flex-1"
+                  />
+                  <input
+                    type="number"
+                    min="1"
+                    max="3"
+                    step="0.1"
+                    value={tempSettings.lineHeight}
+                    onChange={(e) => handleSettingChange('lineHeight', Number(e.target.value))}
+                    className="w-20 px-2 py-1 border rounded"
+                  />
+                </div>
+              </div>
+
+              {/* Paragraph Spacing */}
+              <div>
+                <h3 className="text-lg font-semibold mb-3 text-gray-800">{t('print.paragraphSpacing')}</h3>
+                <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
+                  <input
+                    type="range"
+                    min="0"
+                    max="40"
+                    value={tempSettings.paragraphSpacing}
+                    onChange={(e) => handleSettingChange('paragraphSpacing', Number(e.target.value))}
+                    className="flex-1"
+                  />
+                  <input
+                    type="number"
+                    min="0"
+                    max="40"
+                    value={tempSettings.paragraphSpacing}
+                    onChange={(e) => handleSettingChange('paragraphSpacing', Number(e.target.value))}
+                    className="w-20 px-2 py-1 border rounded"
+                  />
+                  <span className="text-sm text-gray-500">px</span>
+                </div>
+              </div>
+            </>
+          )}
+
+          {activeTab === 'spacing' && (
+            <>
+              {/* Content Padding */}
+              <SpacingControl
+                label={t('print.contentPadding')}
+                description={''}
+                values={tempSettings.contentPadding}
+                onChange={(values) => handleSettingChange('contentPadding', values)}
+                max={50}
+                unit="px"
+              />
+
+              {/* Content Margin */}
+              <SpacingControl
+                label={t('print.contentMargin')}
+                description={''}
+                values={tempSettings.contentMargin}
+                onChange={(values) => handleSettingChange('contentMargin', values)}
+                max={100}
+                unit="px"
+              />
+
+              {/* Page Margins */}
+              <SpacingControl
+                label={t('print.pageMargins')}
+                description={''}
+                values={tempSettings.pageMargins}
+                onChange={(values) => handleSettingChange('pageMargins', values)}
+                max={50}
+                unit="mm"
+              />
             </>
           )}
         </div>
+
         {/* Action Buttons */}
-     
         <div className="flex justify-between items-center pt-6 border-t">
           <Button variant="outline" onClick={() => setShowSettingsDialog(false)}>
-             {t('common.cancel')}
+            {t('common.cancel')}
           </Button>
           
           <div className="flex gap-3">
@@ -353,43 +702,42 @@ const GlobalPrintSettingsDialog = () => {
   );
 };
 
-// Print Settings Button Component
+// Print Settings Button Component (unchanged)
 export const PrintSettingsButton: React.FC<{ 
   variant?: 'primary' | 'secondary' | 'outline';
   size?: 'sm' | 'md' | 'lg';
   showLabel?: boolean;
 }> = ({ variant = 'outline', size = 'md', showLabel = true }) => {
   const { setShowSettingsDialog } = usePrintSettings();
-
-  const buttonClasses = {
-    primary: 'bg-blue-600 hover:bg-blue-700 text-white',
-    secondary: 'bg-gray-600 hover:bg-gray-700 text-white',
-    outline: 'border border-blue-600 text-blue-600 hover:bg-blue-50'
-  };
-
-  const sizeClasses = {
-    sm: 'px-3 py-2 text-sm',
-    md: 'px-4 py-2',
-    lg: 'px-6 py-3 text-lg'
-  };
   const { t, language } = useLanguage();
 
   return (
-    <>
-<Button
-  onClick={() => setShowSettingsDialog(true)}
-  className={cn(
-    "bg-[#2463EB] hover:bg-blue-700 text-white shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-2",
-   'flex-row-reverse'
-  )}
->
- 
-  {t('prescription.settings')}
-
-
+    <Button
+      onClick={() => setShowSettingsDialog(true)}
+      className={cn(
+        "bg-[#2463EB] hover:bg-blue-700 text-white shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-2",
+        'flex-row-reverse'
+      )}
+    >
+      {t('prescription.settings')}
       <Settings className={`${size === 'sm' ? 'w-4 h-4' : size === 'lg' ? 'w-6 h-6' : 'w-5 h-5'}`} />
-    
-    </Button></>
+    </Button>
   );
 };
 
+// Hook to apply print styles to content
+export const usePrintableContent = () => {
+  const { getContentStyles } = usePrintSettings();
+  
+  return {
+    printableStyles: getContentStyles(),
+    PrintableWrapper: ({ children, className = '' }: { children: React.ReactNode; className?: string }) => (
+      <div 
+        className={`print-content ${className}`}
+        style={getContentStyles()}
+      >
+        {children}
+      </div>
+    )
+  };
+};

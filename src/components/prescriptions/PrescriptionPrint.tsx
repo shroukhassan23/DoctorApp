@@ -18,16 +18,6 @@ interface PrescriptionPrintProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const defaultPrintSettings: PrintSettings = {
-  paperSize: 'A4',
-  orientation: 'portrait',
-  margins: 'normal',
-  fontSize: 'medium',
-  includeHeader: true,
-  includeFooter: true,
-  colorMode: 'color',
-  quality: 'normal'
-};
 
 export const PrescriptionPrint = ({ prescription, open, onOpenChange }: PrescriptionPrintProps) => {
   const printRef = useRef<HTMLDivElement>(null);
@@ -72,8 +62,7 @@ const { settings: printSettings } = usePrintSettings();
     }
   };
 
-  // Generate dynamic styles based on print settings
-  const generatePrintStyles = (settings: PrintSettings) => {
+ const generatePrintStyles = (settings: PrintSettings) => {
     const paperSizes = {
       A4: { width: '21cm', height: '29.7cm' },
       A5: { width: '14.8cm', height: '21cm' },
@@ -84,7 +73,8 @@ const { settings: printSettings } = usePrintSettings();
     const marginSizes = {
       narrow: '0.5cm',
       normal: '1.5cm',
-      wide: '2.5cm'
+      wide: '2.5cm',
+      custom: `${settings.pageMargins.top}mm`
     };
 
     const fontSizes = {
@@ -114,6 +104,11 @@ const { settings: printSettings } = usePrintSettings();
     const paper = paperSizes[settings.paperSize];
     const isLandscape = settings.orientation === 'landscape';
     const fonts = fontSizes[settings.fontSize];
+    
+    // استخدام الإعدادات الفعلية للـ margins
+    const actualMargins = settings.margins === 'custom' 
+      ? `${settings.pageMargins.top}mm ${settings.pageMargins.right}mm ${settings.pageMargins.bottom}mm ${settings.pageMargins.left}mm`
+      : `${marginSizes[settings.margins]} ${marginSizes[settings.margins]} ${marginSizes[settings.margins]} ${marginSizes[settings.margins]}`;
 
     return `
       .prescription-container {
@@ -132,14 +127,19 @@ const { settings: printSettings } = usePrintSettings();
       .prescription { 
         width: 100%;
         min-height: ${isLandscape ? paper.width : paper.height};
-        padding: ${marginSizes[settings.margins]};
+        padding: ${settings.contentPadding.top}px ${settings.contentPadding.right}px ${settings.contentPadding.bottom}px ${settings.contentPadding.left}px;
+        margin: ${settings.contentMargin.top}px ${settings.contentMargin.right}px ${settings.contentMargin.bottom}px ${settings.contentMargin.left}px;
         background: #ffffff;
         position: relative;
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-        line-height: 1.4; 
+        line-height: ${settings.lineHeight}; 
         color: ${settings.colorMode === 'grayscale' ? '#000000' : '#1f2937'};
         font-size: ${fonts.base};
         ${settings.colorMode === 'grayscale' ? 'filter: grayscale(100%);' : ''}
+      }
+      
+      .prescription p {
+        margin-bottom: ${settings.paragraphSpacing}px;
       }
       
       .header {
@@ -312,7 +312,7 @@ const { settings: printSettings } = usePrintSettings();
         border-radius: 8px;
         padding: 15px;
         font-size: ${fonts.subheading};
-        line-height: 1.5;
+        line-height: ${settings.lineHeight};
         color: ${settings.colorMode === 'grayscale' ? '#000000' : '#92400e'};
       }
       
@@ -411,7 +411,7 @@ const { settings: printSettings } = usePrintSettings();
         border-radius: 10px;
         padding: 15px;
         font-size: ${fonts.subheading};
-        line-height: 1.5;
+        line-height: ${settings.lineHeight};
         color: ${settings.colorMode === 'grayscale' ? '#000000' : '#374151'};
         font-style: italic;
       }
@@ -478,13 +478,18 @@ const { settings: printSettings } = usePrintSettings();
           border-radius: 0;
           transform: none !important;
           max-width: none;
+          margin: 0;
         }
         .prescription { 
-          margin: 0; 
-          padding: ${marginSizes[settings.margins]};
+          margin: ${settings.contentMargin.top}px ${settings.contentMargin.right}px ${settings.contentMargin.bottom}px ${settings.contentMargin.left}px;
+          padding: ${settings.contentPadding.top}px ${settings.contentPadding.right}px ${settings.contentPadding.bottom}px ${settings.contentPadding.left}px;
           box-shadow: none;
           min-height: auto;
           page-break-inside: avoid;
+          line-height: ${settings.lineHeight};
+        }
+        .prescription p {
+          margin-bottom: ${settings.paragraphSpacing}px;
         }
         .no-print { 
           display: none !important; 
@@ -495,7 +500,7 @@ const { settings: printSettings } = usePrintSettings();
         }
         @page {
           size: ${settings.paperSize} ${settings.orientation};
-          margin: 0;
+          margin: ${actualMargins};
         }
       }
       
@@ -504,7 +509,8 @@ const { settings: printSettings } = usePrintSettings();
           transform: scale(0.8);
         }
         .prescription {
-          padding: 1cm;
+          padding: ${Math.min(settings.contentPadding.top, 15)}px;
+          margin: ${Math.min(settings.contentMargin.top, 10)}px;
         }
         .contact-info {
           flex-direction: column;
