@@ -378,11 +378,8 @@ const DoctorProfileContent = () => {
                 {t('profile.noProfileDescription')}
               </p>
 
-<<<<<<< HEAD
               <div style={{'justifySelf' : 'center'}}>
-=======
               <div className={cn("flex gap-3 justify-center", language === 'ar' && 'flex-row-reverse')}>
->>>>>>> 3bbb343d5a3757cdf919ccc03324f38cb875cc90
                 <Dialog open={showForm} onOpenChange={setShowForm}>
                   <DialogTrigger asChild>
                     <SaveButton
@@ -413,6 +410,7 @@ const DoctorProfileContent = () => {
                   showLabel={true}
                 />
               </div>
+            </div>
             </div>
           </CardContent>
         </Card>
