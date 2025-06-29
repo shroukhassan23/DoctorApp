@@ -597,14 +597,14 @@ console.log(generatePrintStyles(printSettings))
           
             <Button onClick={handlePrint} size="lg" className="bg-blue-600 hover:bg-blue-700">
               <Printer className="w-5 h-5 mr-2" />
-              Print Now
+              {t('print.printNow')}
             </Button>
           </div>
 
           {/* عرض الإعدادات الحالية */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 no-print">
             <div className="text-sm text-blue-800">
-              <strong>Current Settings:</strong> {printSettings.paperSize} • {printSettings.orientation} • 
+              <strong>{t('print.currentSettings')}:</strong> {printSettings.paperSize} • {printSettings.orientation} • 
               Font: {printSettings.fontSize} • {printSettings.colorMode}
               {!printSettings.includeHeader && ' • No Header'}
               {!printSettings.includeFooter && ' • No Footer'}

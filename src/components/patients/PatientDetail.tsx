@@ -93,17 +93,28 @@ export const PatientDetail = ({ patient, onUpdate,onViewVisit }: PatientDetailPr
         </TabsContent>
       </Tabs>
 
-      {/* Visit Detail Dialog */}
-      {selectedVisit && (
-        <Dialog open={!!selectedVisit} onOpenChange={() => setSelectedVisit(null)}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Visit Details - {new Date(selectedVisit.visit_date).toLocaleDateString('en-GB')}</DialogTitle>
-            </DialogHeader>
-            <VisitDetail visit={selectedVisit} patient={patient} />
-          </DialogContent>
-        </Dialog>
-      )}
+{/* Visit Detail Dialog */}
+{selectedVisit && (
+ <Dialog open={!!selectedVisit} onOpenChange={() => setSelectedVisit(null)}>
+   <DialogContent
+     className={cn(
+       "max-w-4xl max-h-[90vh] overflow-y-auto",
+       language === 'ar' && "rtl"
+     )}
+   >
+     <DialogHeader className={cn(language === 'ar' && "text-right")}>
+       <DialogTitle className={cn(language === 'ar' && "text-right")}>
+         {t('visit.details')} - {new Date(selectedVisit.visit_date).toLocaleDateString('en-GB')}
+       </DialogTitle>
+     </DialogHeader>
+            
+     <div className={cn(language === 'ar' && "text-right")}>
+       <VisitDetail visit={selectedVisit} patient={patient} />
+     </div>
+   </DialogContent>
+ </Dialog>
+)}
+
     </div>
   );
 };

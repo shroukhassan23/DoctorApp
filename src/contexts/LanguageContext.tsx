@@ -419,7 +419,8 @@ const translations = {
 'print.spaces':'Professional spaces',
 'print.small':'Small',
 'print.medium':'Medium',
-'print.large':'Large'
+'print.large':'Large',
+'print.printNow':'Print Now'
   },
   ar: {
     'print.general':'إعدادات الطباعة العامة',
@@ -446,6 +447,7 @@ const translations = {
 'print.medium':'متوسط',
 'print.large':'كبير',
 'print.currentSettings':'الإعدادات الحالية',
+'print.printNow':'طباعه الان',
     // Navigation
     'nav.patients': ' المرضى ',
     'nav.medicines': ' الأدوية ',
