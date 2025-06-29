@@ -27,7 +27,7 @@ class MySQLManager {
         path.join(path.dirname(appPath), 'resources');
 
       this.mysqlBinPath = path.join(resourcesPath, 'mysql-windows', 'bin');
-      this.dataDir = path.join(path.dirname(path.dirname(appPath)), 'mysql-data');  // Go up to win-unpacked level
+      this.dataDir = path.join(require('os').homedir(), 'DoctorApp', 'mysql-data');
       this.configFile = path.join(path.dirname(path.dirname(appPath)), 'my-windows.cnf');
     } else if (this.isMac) {
       const resourcesPath = isDev ?
@@ -162,9 +162,10 @@ socket=${path.join(this.dataDir, 'mysql.sock')}`;
 
       const initArgs = [
         '--initialize-insecure',
-        `--datadir="${this.dataDir}"`,
-        `--basedir="${path.dirname(this.mysqlBinPath)}"`,
-        '--default-authentication-plugin=mysql_native_password'
+        `--datadir=${this.dataDir}`,
+        `--basedir=${path.dirname(this.mysqlBinPath)}`,
+        '--default-authentication-plugin=mysql_native_password',
+        `--lc-messages-dir=${path.dirname(this.mysqlBinPath)}/share`
       ];
 
       return new Promise((resolve, reject) => {
