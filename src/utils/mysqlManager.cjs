@@ -120,7 +120,7 @@ socket=${path.join(this.dataDir, 'mysql.sock')}`;
     try {
       // Create data directory if it doesn't exist
       await fs.promises.mkdir(this.dataDir, { recursive: true });
-      await fs.promises.mkdir(path.join(this.dataDir, 'tmp'), { recursive: true });
+
 
       // Check if MySQL is already initialized
       const mysqlDir = path.join(this.dataDir, 'mysql');
@@ -135,8 +135,10 @@ socket=${path.join(this.dataDir, 'mysql.sock')}`;
         try {
           const { execSync } = require('child_process');
           if (this.isWindows) {
-            // Windows command
-            execSync(`rmdir /s /q "${this.dataDir}"`, { stdio: 'ignore' });
+            // Windows command - use force deletion
+            execSync(`rmdir /s /q "${this.dataDir}" 2>nul || echo "Directory cleaned"`, { stdio: 'inherit' });
+            // Additional cleanup with del command for stubborn files
+            execSync(`del /f /s /q "${this.dataDir}\\*.*" 2>nul || echo "Files cleaned"`, { stdio: 'inherit' });
           } else {
             // Unix/Mac command
             execSync(`rm -rf "${this.dataDir}"`, { stdio: 'ignore' });
@@ -151,7 +153,7 @@ socket=${path.join(this.dataDir, 'mysql.sock')}`;
 
         // Recreate directories
         await fs.promises.mkdir(this.dataDir, { recursive: true });
-        await fs.promises.mkdir(path.join(this.dataDir, 'tmp'), { recursive: true });
+
         console.log('Created fresh data directories');
       }
 
