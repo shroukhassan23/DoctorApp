@@ -325,19 +325,18 @@ class MySQLManager {
 
       this.mysqlProcess = spawn(mysqldPath, [
         `--defaults-file=${configPath}`,
-        '--console',
-        '--skip-grant-tables', // تجاهل جداول الصلاحيات مؤقتاً
-        '--skip-networking=false'
-      ], {
-        stdio: ['pipe', 'pipe', 'pipe'],
+        '--console'
+        // Removed --skip-grant-tables and --skip-networking=false as they're now in config
+    ], {
+        stdio: ['ignore', 'pipe', 'pipe'],
         cwd: this.mysqlPath,
         env: {
-          ...process.env,
-          MYSQL_HOME: this.mysqlPath,
-          TMPDIR: this.dataPath,
-          PATH: `${path.join(this.mysqlPath, 'bin')};${process.env.PATH}`
+            ...process.env,
+            MYSQL_HOME: this.mysqlPath,
+            TMPDIR: this.dataPath,
+            PATH: `${path.join(this.mysqlPath, 'bin')};${process.env.PATH}`
         }
-      });
+    });
 
       return new Promise((resolve, reject) => {
         let isResolved = false;
@@ -460,7 +459,11 @@ class MySQLManager {
 basedir=${this.mysqlPath.replace(/\\/g, '/')}
 datadir=${this.dataPath.replace(/\\/g, '/')}
 port=${port}
-bind-address=127.0.0.1
+bind-address=0.0.0.0
+
+# Enable TCP/IP explicitly for Windows
+skip-networking=0
+enable-named-pipe=1
 
 # Character set
 character-set-server=utf8mb4
