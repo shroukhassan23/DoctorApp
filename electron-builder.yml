@@ -11,13 +11,11 @@ files:
   - "electron.cjs"
   - "preload.js"
   - "src/utils/**/*"
-  - "dump.sql"
   - "initDb.cjs"
   - "patient.cjs"
   - "visit.cjs" 
   - "reports.cjs"
   - "!package.json"
-  - "dump.sql"
 
 extraFiles:
   - from: "node_modules/mysql2"
@@ -35,8 +33,6 @@ extraFiles:
   - from: "node_modules/node-machine-id"
     to: "app/node_modules/node-machine-id"
     filter: ["**/*"]
-  - from: "dump.sql"
-    to: "dump.sql"
 
 extraMetadata:
   name: "doctor-app-desktop"
@@ -55,12 +51,9 @@ win:
     - from: "mysql-resources/mysql-windows"
       to: "mysql-windows"
       filter: ["**/*"]
-    - from: "mySql/patient.cjs"
-      to: "Resources/app.asar.unpacked/patient.cjs" 
-    - from: "mySql/visit.cjs"
-      to: "Resources/app.asar.unpacked/visit.cjs"
-    - from: "mySql/reports.cjs"
-      to: "Resources/app.asar.unpacked/reports.cjs"
+    - from: "dump.sql"
+      to: "dump.sql"
+
 # macOS configuration  
 mac:
   target:
@@ -74,6 +67,8 @@ mac:
     - from: "mysql-resources/mysql-macos"
       to: "mysql-macos"
       filter: ["**/*"]
+    - from: "dump.sql"
+      to: "dump.sql"
 
 asar: false
 compression: "normal"

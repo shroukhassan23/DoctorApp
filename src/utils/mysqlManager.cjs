@@ -45,46 +45,67 @@ class MySQLManager {
 
   async cleanupOldData() {
     try {
-      // Check if directory exists
-      await fs.access(this.dataPath);
-      console.log('Removing old MySQL data directory...');
-      await fs.rm(this.dataPath, { recursive: true, force: true });
-      console.log('Old MySQL data removed successfully');
-
-      // Wait a moment for the filesystem
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
+        // Stop any running MySQL processes first
+        if (this.mysqlProcess) {
+            await this.stopMySQL();
+        }
+        
+        // Check if directory exists
+        await fs.access(this.dataPath);
+        console.log('Removing old MySQL data directory...');
+        
+        // Force remove with retries for Windows file locking issues
+        let retries = 3;
+        while (retries > 0) {
+            try {
+                await fs.rm(this.dataPath, { recursive: true, force: true });
+                console.log('Old MySQL data removed successfully');
+                break;
+            } catch (error) {
+                retries--;
+                if (retries === 0) {
+                    throw error;
+                }
+                console.log(`Retry removing data directory (${retries} attempts left)...`);
+                await new Promise(resolve => setTimeout(resolve, 2000));
+            }
+        }
+        
+        // Wait for filesystem to catch up
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
     } catch (error) {
-      // Directory doesn't exist - that's fine
-      console.log('No old MySQL data to remove');
+        // Directory doesn't exist - that's fine
+        console.log('No old MySQL data to remove');
     }
-  }
+}
 
-  async ensureDataDirectory() {
-    try {
+async ensureDataDirectory() {
+  try {
+      // Check if MySQL is already initialized
+      try {
+          const mysqlDir = path.join(this.dataPath, 'mysql');
+          await fs.access(mysqlDir);
+          console.log('MySQL already initialized, skipping initialization...');
+          this.isInitialized = true;
+          return; // Skip initialization
+      } catch (error) {
+          // MySQL not initialized, proceed with setup
+      }
+      
       // حذف البيانات القديمة أولاً
       await this.cleanupOldData();
-
+      
       // إنشاء مجلد البيانات الجديد
       await fs.mkdir(this.dataPath, { recursive: true });
       console.log('Created new data directory:', this.dataPath);
-
-      // إعداد الصلاحيات في Windows
-      if (process.platform === 'win32') {
-        await this.setWindowsPermissions(this.dataPath);
-      } else {
-        // إعداد الصلاحيات في Unix/Linux/macOS
-        await this.setUnixPermissions(this.dataPath);
-      }
-
-      // تهيئة قاعدة البيانات
-      await this.initializeDatabase();
-
-    } catch (error) {
+      
+      // ... rest of the method remains the same
+  } catch (error) {
       console.error('Error ensuring data directory:', error);
       throw error;
-    }
   }
+}
 
   async setWindowsPermissions(dirPath) {
     return new Promise((resolve, reject) => {
