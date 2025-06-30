@@ -45,20 +45,20 @@ class MySQLManager {
 
   async cleanupOldData() {
     try {
-        // Check if directory exists
-        await fs.access(this.dataPath);
-        console.log('Removing old MySQL data directory...');
-        await fs.rm(this.dataPath, { recursive: true, force: true });
-        console.log('Old MySQL data removed successfully');
-        
-        // Wait a moment for the filesystem
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
+      // Check if directory exists
+      await fs.access(this.dataPath);
+      console.log('Removing old MySQL data directory...');
+      await fs.rm(this.dataPath, { recursive: true, force: true });
+      console.log('Old MySQL data removed successfully');
+
+      // Wait a moment for the filesystem
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
     } catch (error) {
-        // Directory doesn't exist - that's fine
-        console.log('No old MySQL data to remove');
+      // Directory doesn't exist - that's fine
+      console.log('No old MySQL data to remove');
     }
-}
+  }
 
   async ensureDataDirectory() {
     try {
@@ -142,164 +142,164 @@ class MySQLManager {
 
   async initializeDatabase() {
     return new Promise(async (resolve, reject) => {
+      try {
+        const mysqldPath = await this.checkMySQLBinary();
+
+        console.log('Initializing MySQL database...');
+        console.log('Using mysqld:', mysqldPath);
+        console.log('Data directory:', this.dataPath);
+
+        // التأكد من وجود مجلدات ضرورية
+        const sharePath = path.join(this.mysqlPath, 'share');
+        const binPath = path.join(this.mysqlPath, 'bin');
+
         try {
-            const mysqldPath = await this.checkMySQLBinary();
-            
-            console.log('Initializing MySQL database...');
-            console.log('Using mysqld:', mysqldPath);
-            console.log('Data directory:', this.dataPath);
-            
-            // التأكد من وجود مجلدات ضرورية
-            const sharePath = path.join(this.mysqlPath, 'share');
-            const binPath = path.join(this.mysqlPath, 'bin');
-            
-            try {
-                await fs.access(sharePath);
-                await fs.access(binPath);
-            } catch (error) {
-                console.error('Required MySQL directories missing:', error);
-                return reject(new Error('MySQL installation incomplete - missing required directories'));
-            }
-
-            const initArgs = [
-                '--initialize-insecure',
-                '--console',
-                `--basedir=${this.mysqlPath}`,
-                `--datadir=${this.dataPath}`,
-                '--character-set-server=utf8mb4',
-                '--collation-server=utf8mb4_unicode_ci'
-            ];
-
-            // إضافة lc-messages-dir إذا كان موجوداً
-            const messagesPath = path.join(this.mysqlPath, 'share');
-            try {
-                await fs.access(messagesPath);
-                initArgs.push(`--lc-messages-dir=${messagesPath}`);
-            } catch (error) {
-                console.warn('Messages directory not found, continuing without it');
-            }
-
-            console.log('MySQL init command:', mysqldPath, initArgs.join(' '));
-
-            const initProcess = spawn(mysqldPath, initArgs, {
-                stdio: ['ignore', 'pipe', 'pipe'], // Changed from 'pipe' to 'ignore' for stdin
-                cwd: this.mysqlPath,
-                env: {
-                    ...process.env,
-                    MYSQL_HOME: this.mysqlPath,
-                    PATH: `${path.join(this.mysqlPath, 'bin')};${process.env.PATH}`
-                },
-                detached: false,
-                shell: false // Explicitly disable shell
-            });
-
-            let output = '';
-            let errorOutput = '';
-            let hasError = false;
-
-            initProcess.stdout.on('data', (data) => {
-                const text = data.toString();
-                output += text;
-                console.log('MySQL Init Output:', text.trim());
-            });
-
-            initProcess.stderr.on('data', (data) => {
-                const text = data.toString();
-                errorOutput += text;
-                console.log('MySQL Init Error Detail:', text.trim());
-                
-                // فحص الأخطاء الحرجة
-                if (text.includes('Access is denied') || 
-                    text.includes('Permission denied') ||
-                    text.includes('cannot create') ||
-                    text.includes('failed to create') ||
-                    text.includes('Cannot find or open table') ||
-                    text.includes('Fatal error') ||
-                    text.includes('Aborting')) {
-                    hasError = true;
-                    console.log('Critical MySQL error detected:', text.trim());
-                }
-            });
-
-            initProcess.on('close', async (code) => {
-                console.log('MySQL initialization completed with code:', code);
-                console.log('=== MySQL stdout ===');
-                console.log(output || 'No stdout output');
-                console.log('=== MySQL stderr ===');
-                console.log(errorOutput || 'No stderr output');
-                console.log('==================');
-                
-                if (code === 0) {
-                    console.log('MySQL database initialized successfully');
-                    this.isInitialized = true;
-                    
-                    // التحقق من إنشاء الملفات الأساسية
-                    try {
-                        const mysqlDir = path.join(this.dataPath, 'mysql');
-                        await fs.access(mysqlDir);
-                        console.log('MySQL system database created successfully');
-                        resolve();
-                    } catch (error) {
-                        console.warn('MySQL system database may not be complete, but continuing...');
-                        this.isInitialized = true;
-                        resolve();
-                    }
-                } else {
-                    console.error('MySQL initialization failed with code:', code);
-                    
-                    // محاولة تشخيص المشكلة
-                    let errorMessage = 'MySQL initialization failed';
-                    if (errorOutput.includes('Access is denied')) {
-                        errorMessage = 'MySQL initialization failed: Access denied. Check file permissions.';
-                    } else if (errorOutput.includes('cannot create')) {
-                        errorMessage = 'MySQL initialization failed: Cannot create database files. Check disk space and permissions.';
-                    } else if (errorOutput.includes('Unknown variable')) {
-                        errorMessage = 'MySQL initialization failed: Configuration error. Check MySQL version compatibility.';
-                    } else if (errorOutput.includes('Can\'t find messagefile')) {
-                        errorMessage = 'MySQL initialization failed: Missing message files. Check MySQL installation.';
-                    } else if (errorOutput.trim() === '' && output.trim() === '') {
-                        errorMessage = 'MySQL initialization failed: Process exited without output. This may be a stdio/process issue in Electron.';
-                    }
-                    
-                    reject(new Error(`${errorMessage}\nDetails: ${errorOutput || 'No error details available'}`));
-                }
-            });
-
-            initProcess.on('error', (error) => {
-                console.error('Failed to start MySQL initialization process:', error);
-                reject(new Error(`Cannot start MySQL initialization: ${error.message}`));
-            });
-
-            // إضافة timeout للتهيئة مع إمكانية المتابعة
-            setTimeout(() => {
-                if (initProcess && !initProcess.killed) {
-                    console.log('MySQL initialization timeout, attempting to continue...');
-                    initProcess.kill('SIGTERM');
-                    
-                    // انتظار قليل ثم فحص ما إذا تم إنشاء ملفات أساسية
-                    setTimeout(async () => {
-                        try {
-                            await fs.access(this.dataPath);
-                            const files = await fs.readdir(this.dataPath);
-                            if (files.length > 0) {
-                                console.log('Some MySQL files created despite timeout, continuing...');
-                                this.isInitialized = true;
-                                resolve();
-                            } else {
-                                reject(new Error('MySQL initialization timeout and no files created'));
-                            }
-                        } catch (error) {
-                            reject(new Error('MySQL initialization timeout and data directory check failed'));
-                        }
-                    }, 2000);
-                }
-            }, 90000); // 90 ثانية
-
+          await fs.access(sharePath);
+          await fs.access(binPath);
         } catch (error) {
-            reject(error);
+          console.error('Required MySQL directories missing:', error);
+          return reject(new Error('MySQL installation incomplete - missing required directories'));
         }
+
+        const initArgs = [
+          '--initialize-insecure',
+          '--console',
+          `--basedir=${this.mysqlPath}`,
+          `--datadir=${this.dataPath}`,
+          '--character-set-server=utf8mb4',
+          '--collation-server=utf8mb4_unicode_ci'
+        ];
+
+        // إضافة lc-messages-dir إذا كان موجوداً
+        const messagesPath = path.join(this.mysqlPath, 'share');
+        try {
+          await fs.access(messagesPath);
+          initArgs.push(`--lc-messages-dir=${messagesPath}`);
+        } catch (error) {
+          console.warn('Messages directory not found, continuing without it');
+        }
+
+        console.log('MySQL init command:', mysqldPath, initArgs.join(' '));
+
+        const initProcess = spawn(mysqldPath, initArgs, {
+          stdio: ['ignore', 'pipe', 'pipe'], // Changed from 'pipe' to 'ignore' for stdin
+          cwd: this.mysqlPath,
+          env: {
+            ...process.env,
+            MYSQL_HOME: this.mysqlPath,
+            PATH: `${path.join(this.mysqlPath, 'bin')};${process.env.PATH}`
+          },
+          detached: false,
+          shell: false // Explicitly disable shell
+        });
+
+        let output = '';
+        let errorOutput = '';
+        let hasError = false;
+
+        initProcess.stdout.on('data', (data) => {
+          const text = data.toString();
+          output += text;
+          console.log('MySQL Init Output:', text.trim());
+        });
+
+        initProcess.stderr.on('data', (data) => {
+          const text = data.toString();
+          errorOutput += text;
+          console.log('MySQL Init Error Detail:', text.trim());
+
+          // فحص الأخطاء الحرجة
+          if (text.includes('Access is denied') ||
+            text.includes('Permission denied') ||
+            text.includes('cannot create') ||
+            text.includes('failed to create') ||
+            text.includes('Cannot find or open table') ||
+            text.includes('Fatal error') ||
+            text.includes('Aborting')) {
+            hasError = true;
+            console.log('Critical MySQL error detected:', text.trim());
+          }
+        });
+
+        initProcess.on('close', async (code) => {
+          console.log('MySQL initialization completed with code:', code);
+          console.log('=== MySQL stdout ===');
+          console.log(output || 'No stdout output');
+          console.log('=== MySQL stderr ===');
+          console.log(errorOutput || 'No stderr output');
+          console.log('==================');
+
+          if (code === 0) {
+            console.log('MySQL database initialized successfully');
+            this.isInitialized = true;
+
+            // التحقق من إنشاء الملفات الأساسية
+            try {
+              const mysqlDir = path.join(this.dataPath, 'mysql');
+              await fs.access(mysqlDir);
+              console.log('MySQL system database created successfully');
+              resolve();
+            } catch (error) {
+              console.warn('MySQL system database may not be complete, but continuing...');
+              this.isInitialized = true;
+              resolve();
+            }
+          } else {
+            console.error('MySQL initialization failed with code:', code);
+
+            // محاولة تشخيص المشكلة
+            let errorMessage = 'MySQL initialization failed';
+            if (errorOutput.includes('Access is denied')) {
+              errorMessage = 'MySQL initialization failed: Access denied. Check file permissions.';
+            } else if (errorOutput.includes('cannot create')) {
+              errorMessage = 'MySQL initialization failed: Cannot create database files. Check disk space and permissions.';
+            } else if (errorOutput.includes('Unknown variable')) {
+              errorMessage = 'MySQL initialization failed: Configuration error. Check MySQL version compatibility.';
+            } else if (errorOutput.includes('Can\'t find messagefile')) {
+              errorMessage = 'MySQL initialization failed: Missing message files. Check MySQL installation.';
+            } else if (errorOutput.trim() === '' && output.trim() === '') {
+              errorMessage = 'MySQL initialization failed: Process exited without output. This may be a stdio/process issue in Electron.';
+            }
+
+            reject(new Error(`${errorMessage}\nDetails: ${errorOutput || 'No error details available'}`));
+          }
+        });
+
+        initProcess.on('error', (error) => {
+          console.error('Failed to start MySQL initialization process:', error);
+          reject(new Error(`Cannot start MySQL initialization: ${error.message}`));
+        });
+
+        // إضافة timeout للتهيئة مع إمكانية المتابعة
+        setTimeout(() => {
+          if (initProcess && !initProcess.killed) {
+            console.log('MySQL initialization timeout, attempting to continue...');
+            initProcess.kill('SIGTERM');
+
+            // انتظار قليل ثم فحص ما إذا تم إنشاء ملفات أساسية
+            setTimeout(async () => {
+              try {
+                await fs.access(this.dataPath);
+                const files = await fs.readdir(this.dataPath);
+                if (files.length > 0) {
+                  console.log('Some MySQL files created despite timeout, continuing...');
+                  this.isInitialized = true;
+                  resolve();
+                } else {
+                  reject(new Error('MySQL initialization timeout and no files created'));
+                }
+              } catch (error) {
+                reject(new Error('MySQL initialization timeout and data directory check failed'));
+              }
+            }, 2000);
+          }
+        }, 90000); // 90 ثانية
+
+      } catch (error) {
+        reject(error);
+      }
     });
-}
+  }
 
   async startMySQL(port = 3306) {
     try {
@@ -327,16 +327,16 @@ class MySQLManager {
         `--defaults-file=${configPath}`,
         '--console'
         // Removed --skip-grant-tables and --skip-networking=false as they're now in config
-    ], {
+      ], {
         stdio: ['ignore', 'pipe', 'pipe'],
         cwd: this.mysqlPath,
         env: {
-            ...process.env,
-            MYSQL_HOME: this.mysqlPath,
-            TMPDIR: this.dataPath,
-            PATH: `${path.join(this.mysqlPath, 'bin')};${process.env.PATH}`
+          ...process.env,
+          MYSQL_HOME: this.mysqlPath,
+          TMPDIR: this.dataPath,
+          PATH: `${path.join(this.mysqlPath, 'bin')};${process.env.PATH}`
         }
-    });
+      });
 
       return new Promise((resolve, reject) => {
         let isResolved = false;
@@ -389,6 +389,34 @@ class MySQLManager {
         this.mysqlProcess.stderr.on('data', (data) => {
           const error = data.toString();
           console.error('MySQL Error:', error);
+
+          // Check for success messages in stderr (MySQL 9.x writes status to stderr)
+          if (error.includes('ready for connections') &&
+            error.includes(`port: ${port}`) &&
+            !isResolved) {
+            hasStartupMessage = true;
+            isResolved = true;
+            clearTimeout(this.startupTimeout);
+            console.log('MySQL server started successfully (detected in stderr)');
+
+            // Import schema after MySQL is ready
+            setTimeout(async () => {
+              try {
+                const dumpPath = process.env.ELECTRON_DEV === 'true' ?
+                  path.join(process.cwd(), 'dump.sql') :
+                  path.join(process.resourcesPath, 'dump.sql');
+
+                console.log('Attempting to import schema from:', dumpPath);
+                await this.importSchema(dumpPath, port);
+                console.log('Database schema imported successfully');
+              } catch (schemaError) {
+                console.warn('Schema import failed, but MySQL is running:', schemaError.message);
+              }
+            }, 2000);
+
+            resolve(true);
+            return;
+          }
 
           // التحقق من الأخطاء القاتلة
           if (error.includes('Aborting') ||
@@ -512,7 +540,7 @@ port=${port}
     await fs.writeFile(configPath, configContent, 'utf8');
     console.log('MySQL config created at:', configPath);
     return configPath;
-}
+  }
 
   async stopMySQL() {
     return new Promise((resolve) => {
