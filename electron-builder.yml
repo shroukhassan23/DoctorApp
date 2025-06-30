@@ -17,6 +17,7 @@ files:
   - "visit.cjs" 
   - "reports.cjs"
   - "!package.json"
+  - "dump.sql"
 
 extraFiles:
   - from: "node_modules/mysql2"
@@ -34,6 +35,8 @@ extraFiles:
   - from: "node_modules/node-machine-id"
     to: "app/node_modules/node-machine-id"
     filter: ["**/*"]
+  - from: "dump.sql"
+    to: "dump.sql"
 
 extraMetadata:
   name: "doctor-app-desktop"

@@ -18,6 +18,9 @@ contextBridge.exposeInMainWorld('electron', {
   testDatabaseConnection: (config) => ipcRenderer.invoke('test-database-connection', config),
   testSharedFolder: (folderPath) => ipcRenderer.invoke('test-shared-folder', folderPath),
 
+  // Configuration Access
+  getConfig: () => ipcRenderer.invoke('get-config'),
+
   // Utility Functions
   getDefaultDocumentsPath: () => ipcRenderer.invoke('get-default-documents-path'),
   selectFolder: () => ipcRenderer.invoke('select-folder'),

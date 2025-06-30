@@ -323,7 +323,7 @@ class MySQLManager {
                     }
                 }, 45000);
 
-                this.mysqlProcess.stdout.on('data', (data) => {
+                this.mysqlProcess.stdout.on('data', async (data) => {
                     const output = data.toString();
                     console.log('MySQL Output:', output);
                     
@@ -336,6 +336,14 @@ class MySQLManager {
                             isResolved = true;
                             clearTimeout(this.startupTimeout);
                             console.log('MySQL server started successfully');
+                            try {
+                              const dumpPath = path.join(process.resourcesPath, 'dump.sql');
+                              await this.importSchema(dumpPath, port);
+                              console.log('Database schema imported successfully');
+                            } catch (schemaError) {
+                              console.warn('Schema import failed:', schemaError.message);
+                              // Continue anyway - schema might already exist
+                            }
                             resolve(true);
                         }
                     }
@@ -503,60 +511,66 @@ socket=${path.join(this.dataPath, 'mysql.sock').replace(/\\/g, '/')}
     }
 
     async importSchema(schemaPath, port = 3306) {
-        return new Promise(async (resolve, reject) => {
-            try {
-                const mysqlPath = path.join(this.mysqlPath, 'bin', 
-                    process.platform === 'win32' ? 'mysql.exe' : 'mysql');
-
-                await fs.access(mysqlPath);
-                console.log('Importing schema from:', schemaPath);
-
-                const importProcess = spawn(mysqlPath, [
-                    '-h', '127.0.0.1',
-                    '-P', port.toString(),
-                    '-u', 'root',
-                    '--execute', `CREATE DATABASE IF NOT EXISTS doctor; USE doctor; SOURCE ${schemaPath.replace(/\\/g, '/')};`
-                ], {
-                    stdio: ['pipe', 'pipe', 'pipe'],
-                    cwd: this.mysqlPath,
-                    env: {
-                        ...process.env,
-                        PATH: `${path.join(this.mysqlPath, 'bin')};${process.env.PATH}`
-                    }
-                });
-
-                let output = '';
-                let errorOutput = '';
-
-                importProcess.stdout.on('data', (data) => {
-                    output += data.toString();
-                    console.log('MySQL Import:', data.toString());
-                });
-
-                importProcess.stderr.on('data', (data) => {
-                    errorOutput += data.toString();
-                    console.log('MySQL Import Error:', data.toString());
-                });
-
-                importProcess.on('close', (code) => {
-                    if (code === 0) {
-                        console.log('Schema imported successfully');
-                        resolve(true);
-                    } else {
-                        console.error('Schema import failed with code:', code);
-                        reject(new Error(`Schema import failed: ${errorOutput}`));
-                    }
-                });
-
-                importProcess.on('error', (error) => {
-                    console.error('Failed to start schema import:', error);
-                    reject(error);
-                });
-            } catch (error) {
-                reject(new Error(`MySQL client not found: ${error.message}`));
-            }
-        });
-    }
+      return new Promise(async (resolve, reject) => {
+          try {
+              // Check if schema file exists
+              await fs.access(schemaPath);
+              
+              const mysqlPath = path.join(this.mysqlPath, 'bin', 
+                  process.platform === 'win32' ? 'mysql.exe' : 'mysql');
+  
+              await fs.access(mysqlPath);
+              console.log('Importing schema from:', schemaPath);
+  
+              // Read the SQL file and execute it
+              const sqlContent = await fs.readFile(schemaPath, 'utf8');
+              
+              const importProcess = spawn(mysqlPath, [
+                  '-h', '127.0.0.1',
+                  '-P', port.toString(),
+                  '-u', 'root',
+                  '--execute', `CREATE DATABASE IF NOT EXISTS doctor; USE doctor; ${sqlContent}`
+              ], {
+                  stdio: ['pipe', 'pipe', 'pipe'],
+                  cwd: this.mysqlPath,
+                  env: {
+                      ...process.env,
+                      PATH: `${path.join(this.mysqlPath, 'bin')};${process.env.PATH}`
+                  }
+              });
+  
+              let output = '';
+              let errorOutput = '';
+  
+              importProcess.stdout.on('data', (data) => {
+                  output += data.toString();
+                  console.log('MySQL Import:', data.toString());
+              });
+  
+              importProcess.stderr.on('data', (data) => {
+                  errorOutput += data.toString();
+                  console.log('MySQL Import Error:', data.toString());
+              });
+  
+              importProcess.on('close', (code) => {
+                  if (code === 0) {
+                      console.log('Schema imported successfully');
+                      resolve(true);
+                  } else {
+                      console.error('Schema import failed with code:', code);
+                      reject(new Error(`Schema import failed: ${errorOutput}`));
+                  }
+              });
+  
+              importProcess.on('error', (error) => {
+                  console.error('Failed to start schema import:', error);
+                  reject(error);
+              });
+          } catch (error) {
+              reject(new Error(`Schema file not found or MySQL client missing: ${error.message}`));
+          }
+      });
+  }
 
     // دالة مساعدة لتشخيص المشاكل
     async diagnoseIssues() {

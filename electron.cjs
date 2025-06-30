@@ -28,8 +28,8 @@ class DoctorApp {
     await this.licenseManager.initialize(this.appDataPath);
 
     // Initialize MySQL paths
-    const appPath = isDev ? 
-      process.cwd() : 
+    const appPath = isDev ?
+      process.cwd() :
       path.join(__dirname, '..');  // Point to Resources folder
     this.mysqlManager.initializePaths(appPath);
 
@@ -121,33 +121,44 @@ class DoctorApp {
     ipcMain.handle('setup-master-installation', async (event, config) => {
       try {
         console.log('Setting up master installation...');
-        
+
         // Start MySQL
         await this.mysqlManager.startMySQL(config.mysqlPort);
         console.log('MySQL started successfully');
-        
+
         // Import database schema
-        const schemaPath = path.join(isDev ? process.cwd() : path.dirname(process.execPath), 'dump.sql');
+        const schemaPath = isDev ?
+          path.join(process.cwd(), 'dump.sql') :
+          path.join(process.resourcesPath, 'dump.sql');
         await this.mysqlManager.importSchema(schemaPath, config.mysqlPort);
         console.log('Database schema imported');
-        
+
         // Create shared folder
         await fs.mkdir(config.sharedFolderPath, { recursive: true });
         console.log('Created shared folder:', config.sharedFolderPath);
-    
+
         // Save configuration
         await this.saveSetupConfig('master', config);
         console.log('Configuration saved');
-        
+
         // Start backend services
         const fullConfig = await this.configManager.getConfig();
         await this.backendManager.startServices('master', fullConfig);
         console.log('Backend services started');
-    
+
         return { success: true };
       } catch (error) {
         console.error('Master installation failed:', error);
         throw error;
+      }
+    });
+
+    ipcMain.handle('get-config', async () => {
+      try {
+        return await this.configManager.getConfig();
+      } catch (error) {
+        console.error('Failed to get config:', error);
+        return {};
       }
     });
 
@@ -161,7 +172,7 @@ class DoctorApp {
 
         // Save configuration
         await this.saveSetupConfig('client', config);
-        
+
         // Start backend services
         const fullConfig = await this.configManager.getConfig();
         await this.backendManager.startServices('client', fullConfig);
@@ -198,7 +209,7 @@ class DoctorApp {
         properties: ['openDirectory'],
         title: 'Select Shared Folder Location'
       });
-      
+
       if (!result.canceled && result.filePaths.length > 0) {
         return result.filePaths[0];
       }
@@ -235,10 +246,10 @@ class DoctorApp {
         password: config.password,
         connectTimeout: 5000
       });
-      
+
       await connection.execute('SELECT 1');
       await connection.end();
-      
+
       return { success: true };
     } catch (error) {
       return { success: false, error: error.message };
@@ -250,7 +261,7 @@ class DoctorApp {
 
     // Check license before creating window
     const licenseStatus = await this.licenseManager.checkLicense();
-    
+
     if (!licenseStatus.isValid) {
       // License expired - still create window but it will show activation screen
       console.log('License expired or invalid');
@@ -262,16 +273,16 @@ class DoctorApp {
     if (this.isSetupComplete) {
       try {
         const config = await this.configManager.getConfig();
-        
+
         if (config.installationType === 'master') {
           console.log('Starting MySQL for master installation...');
           await this.mysqlManager.startMySQL(config.database.port || 3306);
         }
-        
+
         // Start backend services
         await this.backendManager.startServices(config.installationType, config);
         console.log('Backend services started');
-        
+
       } catch (error) {
         console.error('Error starting services:', error);
       }
@@ -283,13 +294,13 @@ class DoctorApp {
     if (this.licenseManager) {
       this.licenseManager.stopUsageTracking();
     }
-    
+
     // Stop backend services
     if (this.backendManager) {
       console.log('Stopping backend services...');
       await this.backendManager.stopAllServices();
     }
-    
+
     // Stop MySQL if running
     if (this.mysqlManager && this.mysqlManager.mysqlProcess) {
       console.log('Stopping MySQL...');
