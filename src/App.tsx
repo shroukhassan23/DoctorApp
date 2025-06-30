@@ -40,10 +40,9 @@ const AppCore = () => {
 
       // Check if setup functions exist (for minimal build compatibility)
       if (!window.electron.isSetupComplete || !window.electron.checkLicense) {
-        console.warn('Running in minimal mode - skipping setup and license');
-        setSetupComplete(true);
-        setLicenseStatus({ isValid: true, type: 'minimal' });
+        console.error('Setup functions not available - this may be a build issue');
         setLoading(false);
+        // Don't set setupComplete to true - let it show setup wizard
         return;
       }
 

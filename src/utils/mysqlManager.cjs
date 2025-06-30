@@ -202,7 +202,7 @@ class MySQLManager {
         initProcess.stderr.on('data', (data) => {
           const text = data.toString();
           errorOutput += text;
-          console.log('MySQL Init Error:', text);
+          console.log('MySQL Init Error Detail:', text); // ← Add this detailed logging
 
           // فحص الأخطاء الحرجة
           if (text.includes('Access is denied') ||
@@ -244,6 +244,8 @@ class MySQLManager {
               errorMessage = 'MySQL initialization failed: Cannot create database files. Check disk space and permissions.';
             } else if (errorOutput.includes('Unknown variable')) {
               errorMessage = 'MySQL initialization failed: Configuration error. Check MySQL version compatibility.';
+            } else if (errorOutput.includes('Can\'t find messagefile')) {
+              errorMessage = 'MySQL initialization failed: Missing message files. Check MySQL installation.';
             }
 
             reject(new Error(`${errorMessage}\nDetails: ${errorOutput}`));
