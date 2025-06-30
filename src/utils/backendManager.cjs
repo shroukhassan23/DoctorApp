@@ -1,5 +1,6 @@
 const { spawn } = require('child_process');
 const path = require('path');
+const fs = require('fs');
 
 class BackendManager {
     constructor(appPath) {
@@ -22,59 +23,127 @@ class BackendManager {
     async startService(service, config) {
         try {
             const isDev = process.env.ELECTRON_DEV === 'true';
-            const servicePath = isDev ? 
-                path.join(this.appPath, service.file) : 
-                path.join(this.appPath, '..', 'Resources', 'app.asar.unpacked', service.file);
+            let servicePath;
             
-            // Check if service file exists
-            const fs = require('fs');
-            if (!fs.existsSync(servicePath)) {
-                console.error(`Service file not found: ${servicePath}`);
-                // Try alternative path for Windows
-                const altPath = path.join(this.appPath, 'resources', 'app.asar.unpacked', service.file);
-                if (fs.existsSync(altPath)) {
-                    servicePath = altPath;
-                } else {
-                    throw new Error(`Service file not found: ${service.file}`);
+            // تحديد مسار الخدمة بشكل أفضل
+            if (isDev) {
+                servicePath = path.join(this.appPath, service.file);
+            } else {
+                // محاولة مسارات مختلفة للـ production
+                const possiblePaths = [
+                    path.join(this.appPath, '..', 'Resources', 'app.asar.unpacked', service.file),
+                    path.join(this.appPath, 'resources', 'app.asar.unpacked', service.file),
+                    path.join(process.resourcesPath, 'app.asar.unpacked', service.file),
+                    path.join(this.appPath, service.file),
+                    path.join(__dirname, service.file)
+                ];
+                
+                for (const testPath of possiblePaths) {
+                    if (fs.existsSync(testPath)) {
+                        servicePath = testPath;
+                        break;
+                    }
                 }
             }
-            
+
+            // التحقق من وجود ملف الخدمة
+            if (!servicePath || !fs.existsSync(servicePath)) {
+                throw new Error(`Service file not found: ${service.file}. Searched paths: ${isDev ? path.join(this.appPath, service.file) : 'multiple production paths'}`);
+            }
+
+            console.log(`Found service file at: ${servicePath}`);
+
             const env = {
                 ...process.env,
-                DB_HOST: config.database?.host || 'localhost',
+                DB_HOST: config.database?.host || '127.0.0.1',
                 DB_PORT: config.database?.port || '3306',
                 DB_USER: config.database?.user || 'root',
                 DB_PASSWORD: config.database?.password || '',
                 DB_NAME: 'doctor',
                 SHARED_FOLDER_PATH: config.sharedFolderPath || '',
-                NODE_ENV: 'production'
+                NODE_ENV: isDev ? 'development' : 'production',
+                PORT: service.port.toString()
             };
 
-            // Determine node executable path
-            const nodeExecutable = process.platform === 'win32' ? 'node.exe' : 'node';
-            const nodePath = isDev ? nodeExecutable : path.join(process.resourcesPath, 'node_modules', '.bin', nodeExecutable);
+            // تحديد مسار Node.js بشكل أفضل
+            let nodeExecutable;
+            if (isDev) {
+                nodeExecutable = 'node';
+            } else {
+                // للـ production في Electron
+                if (process.platform === 'win32') {
+                    nodeExecutable = path.join(process.resourcesPath, 'node.exe') || 'node';
+                } else {
+                    nodeExecutable = path.join(process.resourcesPath, 'node') || 'node';
+                }
+                
+                // التحقق من وجود Node.js في المسار المحدد
+                if (!fs.existsSync(nodeExecutable)) {
+                    nodeExecutable = 'node'; // استخدام Node.js من النظام
+                }
+            }
 
-            const serviceProcess = spawn(nodePath, [servicePath], {
+            console.log(`Starting ${service.name} with node: ${nodeExecutable}`);
+
+            const serviceProcess = spawn(nodeExecutable, [servicePath], {
                 env,
                 stdio: ['pipe', 'pipe', 'pipe'],
-                cwd: path.dirname(servicePath)
+                cwd: path.dirname(servicePath),
+                detached: false,
+                shell: process.platform === 'win32' // استخدام shell في Windows
             });
 
+            // إضافة timeout للتأكد من بدء الخدمة
+            const startupTimeout = setTimeout(() => {
+                if (serviceProcess && !serviceProcess.killed) {
+                    console.warn(`${service.name} startup timeout - but keeping process running`);
+                }
+            }, 10000);
+
             serviceProcess.stdout.on('data', (data) => {
-                console.log(`${service.name}:`, data.toString());
+                const output = data.toString().trim();
+                if (output) {
+                    console.log(`${service.name}:`, output);
+                    // إذا رأينا رسالة نجاح البدء، نلغي الـ timeout
+                    if (output.includes('listening') || output.includes('started') || output.includes(`${service.port}`)) {
+                        clearTimeout(startupTimeout);
+                    }
+                }
             });
 
             serviceProcess.stderr.on('data', (data) => {
-                console.error(`${service.name} Error:`, data.toString());
+                const error = data.toString().trim();
+                if (error) {
+                    console.error(`${service.name} Error:`, error);
+                }
             });
 
-            serviceProcess.on('close', (code) => {
-                console.log(`${service.name} process exited with code ${code}`);
+            serviceProcess.on('error', (error) => {
+                console.error(`Failed to start ${service.name}:`, error);
+                clearTimeout(startupTimeout);
                 this.processes.delete(service.name);
             });
 
-            this.processes.set(service.name, serviceProcess);
-            console.log(`Started ${service.name} service on port ${service.port}`);
+            serviceProcess.on('close', (code, signal) => {
+                console.log(`${service.name} process exited with code ${code}, signal: ${signal}`);
+                clearTimeout(startupTimeout);
+                this.processes.delete(service.name);
+            });
+
+            // التحقق من أن العملية بدأت بنجاح
+            if (serviceProcess.pid) {
+                this.processes.set(service.name, serviceProcess);
+                console.log(`Started ${service.name} service (PID: ${serviceProcess.pid}) on port ${service.port}`);
+            } else {
+                throw new Error(`Failed to start ${service.name} service - no PID assigned`);
+            }
+
+            // انتظار قصير للتأكد من عدم انهيار العملية فوراً
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            if (serviceProcess.killed || serviceProcess.exitCode !== null) {
+                throw new Error(`${service.name} process died immediately after start`);
+            }
 
         } catch (error) {
             console.error(`Error starting ${service.name} service:`, error);
@@ -83,21 +152,78 @@ class BackendManager {
     }
 
     async stopAllServices() {
+        console.log('Stopping all services...');
+        
         for (const [name, process] of this.processes) {
             try {
-                if (process.platform === 'win32') {
-                    // Windows requires different approach
-                    process.kill('SIGKILL');
-                } else {
-                    // Unix-like systems
-                    process.kill('SIGTERM');
+                if (!process.killed && process.exitCode === null) {
+                    console.log(`Stopping ${name} service (PID: ${process.pid})`);
+                    
+                    if (process.platform === 'win32') {
+                        // Windows
+                        spawn('taskkill', ['/pid', process.pid, '/f', '/t'], { stdio: 'inherit' });
+                    } else {
+                        // Unix-like systems
+                        process.kill('SIGTERM');
+                        
+                        // إعطاء وقت للإنهاء السليم ثم فرض الإنهاء إذا لزم الأمر
+                        setTimeout(() => {
+                            if (!process.killed && process.exitCode === null) {
+                                process.kill('SIGKILL');
+                            }
+                        }, 5000);
+                    }
                 }
-                console.log(`Stopped ${name} service`);
             } catch (error) {
                 console.error(`Error stopping ${name} service:`, error);
             }
         }
+        
         this.processes.clear();
+        console.log('All services stopped');
+    }
+
+    // دالة للتحقق من حالة الخدمات
+    getServicesStatus() {
+        const status = {};
+        for (const [name, process] of this.processes) {
+            status[name] = {
+                running: !process.killed && process.exitCode === null,
+                pid: process.pid,
+                exitCode: process.exitCode
+            };
+        }
+        return status;
+    }
+
+    // دالة لإعادة تشغيل خدمة معينة
+    async restartService(serviceName, config) {
+        const process = this.processes.get(serviceName);
+        if (process) {
+            // إيقاف الخدمة أولاً
+            try {
+                if (process.platform === 'win32') {
+                    process.kill('SIGKILL');
+                } else {
+                    process.kill('SIGTERM');
+                }
+            } catch (error) {
+                console.error(`Error stopping ${serviceName}:`, error);
+            }
+            this.processes.delete(serviceName);
+        }
+
+        // إعادة تشغيل الخدمة
+        const services = [
+            { name: 'patient', file: 'patient.cjs', port: 3001 },
+            { name: 'visit', file: 'visit.cjs', port: 3002 },
+            { name: 'reports', file: 'reports.cjs', port: 3003 }
+        ];
+
+        const service = services.find(s => s.name === serviceName);
+        if (service) {
+            await this.startService(service, config);
+        }
     }
 }
 

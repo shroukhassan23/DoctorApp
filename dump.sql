@@ -1,6 +1,12 @@
-CREATE DATABASE IF NOT EXISTS doctor CHARACTER SET utf8 COLLATE utf8_general_ci;
+SET NAMES utf8mb4;
+SET FOREIGN_KEY_CHECKS = 0;
+-- Removed NO_AUTO_CREATE_USER which is deprecated in MySQL 8.0+
+SET SESSION sql_mode = 'NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';
 
-use doctor;
+CREATE DATABASE IF NOT EXISTS doctor CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+USE doctor;
+
 --
 -- Table structure for table `imaging_studies`
 --
@@ -12,10 +18,10 @@ CREATE TABLE `imaging_studies` (
   `name_ar` varchar(100) DEFAULT NULL,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=9 ;
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 LOCK TABLES `imaging_studies` WRITE;
-INSERT INTO `imaging_studies` VALUES (1,'CT Scan Abdomen',NULL,NOW()),(2,'CT Scan Head',NULL,NOW()),(3,'Echocardiogram',NULL,NOW()),(4,'Mammography\n',NULL,NOW()),(5,'MRI Brain',NULL,NOW()),(6,'Ultrasound Abdomen',NULL,NOW()),(7,'\nX-Ray Chest',NULL,NOW()),(8,'\nX-Ray Spine',NULL,NOW());
+INSERT INTO `imaging_studies` VALUES (1,'CT Scan Abdomen',NULL,NOW()),(2,'CT Scan Head',NULL,NOW()),(3,'Echocardiogram',NULL,NOW()),(4,'Mammography',NULL,NOW()),(5,'MRI Brain',NULL,NOW()),(6,'Ultrasound Abdomen',NULL,NOW()),(7,'X-Ray Chest',NULL,NOW()),(8,'X-Ray Spine',NULL,NOW());
 UNLOCK TABLES;
 
 --
@@ -30,7 +36,7 @@ CREATE TABLE `lab_tests` (
   `description` TEXT NULL,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=10 ;
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 LOCK TABLES `lab_tests` WRITE;
 INSERT INTO `lab_tests` VALUES (1,'Blood Sugar',NULL,NULL,NOW()),(2,'Complete Blood Count (CBC)',NULL,NULL,NOW()),(3,'ECG',NULL,NULL,NOW()),(4,'Kidney Function Test',NULL,NULL,NOW()),(5,'Lipid Profile',NULL,NULL,NOW()),(6,'Liver Function Test',NULL,NULL,NOW()),(7,'Thyroid Function Test',NULL,NULL,NOW()),(8,'Urine Analysis',NULL,NULL,NOW()),(9,'X-Ray Chest',NULL,NULL,NOW());
@@ -53,7 +59,7 @@ CREATE TABLE `medicine` (
   `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `name` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 ;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 LOCK TABLES `medicine` WRITE;
 INSERT INTO `medicine` VALUES (1,'Amoxicilin',NULL,NULL,NULL,NULL,NULL,NOW(),NOW()),(2,'Cetrizine',NULL,NULL,NULL,NULL,NULL,NOW(),NOW()),(3,'Ibuprofen',NULL,NULL,NULL,NULL,NULL,NOW(),NOW()),(4,'Omeprazole',NULL,NULL,NULL,NULL,NULL,NOW(),NOW()),(5,'Panadol',NULL,NULL,NULL,NULL,NULL,NOW(),NOW()),(6,'Paracetamol',NULL,NULL,NULL,NULL,NULL,NOW(),NOW());
@@ -76,10 +82,10 @@ CREATE TABLE `patients` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `deleted_at` TIMESTAMP NULL DEFAULT NULL، 
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=36 ;
+) ENGINE=InnoDB AUTO_INCREMENT=36 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 LOCK TABLES `patients` WRITE;
-INSERT INTO `patients` VALUES (34,'mona',19,'2005-10-06','female','4445',NULL,NULL,'2025-06-11 11:54:01'),(35,'sara',29,'1995-10-12','female',NULL,NULL,NULL,'2025-06-11 12:08:18');
+INSERT INTO `patients` VALUES (34,'mona',19,'2005-10-06','female','4445',NULL,NULL,'2025-06-11 11:54:01',NULL),(35,'sara',29,'1995-10-12','female',NULL,NULL,NULL,'2025-06-11 12:08:18',NULL);
 UNLOCK TABLES;
 
 --
@@ -93,7 +99,7 @@ CREATE TABLE `status` (
   `name_ar` varchar(50) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `name` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 ;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 LOCK TABLES `status` WRITE;
 INSERT INTO `status` VALUES (1,'waiting',NULL),(2,'completed',NULL),(3,'cancelled',NULL);
@@ -109,12 +115,11 @@ CREATE TABLE `type` (
   `name` varchar(50) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `name` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=11 ;
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 LOCK TABLES `type` WRITE;
 INSERT INTO `type` VALUES (10,'follow up'),(9,'primary');
 UNLOCK TABLES;
-
 
 --
 -- Table structure for table `visits`
@@ -142,7 +147,7 @@ CREATE TABLE `visits` (
   CONSTRAINT `visits_ibfk_1` FOREIGN KEY (`patient_id`) REFERENCES `patients` (`id`),
   CONSTRAINT `visits_ibfk_2` FOREIGN KEY (`type_id`) REFERENCES `type` (`id`),
   CONSTRAINT `visits_ibfk_3` FOREIGN KEY (`status_id`) REFERENCES `status` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 ;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 LOCK TABLES `visits` WRITE;
 INSERT INTO `visits` VALUES (1,34,'2025-06-13',10,2,'','','',NULL,NOW()),(2,34,'2025-06-13',10,2,'s','s','s',NULL,NOW()),(3,34,'2025-06-13',10,2,'h','d','d',NULL,NOW()),(4,34,'2025-06-13',10,2,'f','f','f',NULL,NOW());
@@ -152,6 +157,7 @@ UNLOCK TABLES;
 -- Table structure for table `doctor_profile`
 --
 
+DROP TABLE IF EXISTS `doctor_profile`;
 CREATE TABLE `doctor_profile` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `name` VARCHAR(255) NOT NULL,
@@ -164,12 +170,13 @@ CREATE TABLE `doctor_profile` (
     `email` VARCHAR(255),
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Table structure for table `patient_files`
 --
 
+DROP TABLE IF EXISTS `patient_files`;
 CREATE TABLE `patient_files` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `patient_id` INT NOT NULL,
@@ -184,12 +191,13 @@ CREATE TABLE `patient_files` (
     KEY `idx_patient_files_visit_id` (`visit_id`),
     FOREIGN KEY (`patient_id`) REFERENCES `patients`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`visit_id`) REFERENCES `visits`(`id`) ON DELETE CASCADE
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Table structure for table `dosage_history`
 --
 
+DROP TABLE IF EXISTS `dosage_history`;
 CREATE TABLE `dosage_history` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `text` VARCHAR(255) NOT NULL UNIQUE,
@@ -197,12 +205,13 @@ CREATE TABLE `dosage_history` (
     `last_used` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     KEY `idx_dosage_usage` (`usage_count` DESC, `last_used` DESC)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Table structure for table `duration_history`
 --
 
+DROP TABLE IF EXISTS `duration_history`;
 CREATE TABLE `duration_history` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `text` VARCHAR(255) NOT NULL UNIQUE,
@@ -210,12 +219,13 @@ CREATE TABLE `duration_history` (
     `last_used` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     KEY `idx_duration_usage` (`usage_count` DESC, `last_used` DESC)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Table structure for table `diagnosis_history`
 --
 
+DROP TABLE IF EXISTS `diagnosis_history`;
 CREATE TABLE `diagnosis_history` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `text` VARCHAR(255) NOT NULL,
@@ -224,12 +234,13 @@ CREATE TABLE `diagnosis_history` (
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY `unique_diagnosis` (`text`),
     KEY `idx_diagnosis_usage` (`usage_count` DESC, `last_used` DESC)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Table structure for table `notes_history`
 --
 
+DROP TABLE IF EXISTS `notes_history`;
 CREATE TABLE `notes_history` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `text` VARCHAR(255) NOT NULL,
@@ -238,12 +249,13 @@ CREATE TABLE `notes_history` (
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY `unique_notes` (`text`),
     KEY `idx_notes_usage` (`usage_count` DESC, `last_used` DESC)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Table structure for table `instruction_history`
 --
 
+DROP TABLE IF EXISTS `instruction_history`;
 CREATE TABLE `instruction_history` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `text` TEXT NOT NULL,
@@ -251,9 +263,7 @@ CREATE TABLE `instruction_history` (
     `last_used` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     KEY `idx_instruction_usage` (`usage_count` DESC, `last_used` DESC)
-) ENGINE=InnoDB;
-
-
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Table structure for table `prescription`
@@ -275,28 +285,7 @@ CREATE TABLE `prescription` (
   KEY `idx_prescription_patient_id` (`patient_id`),
   CONSTRAINT `fk_patientid` FOREIGN KEY (`patient_id`) REFERENCES `patients` (`id`),
   CONSTRAINT `fk_visitid` FOREIGN KEY (`visit_id`) REFERENCES `visits` (`id`)
-) ENGINE=InnoDB ;
-
-LOCK TABLES `prescription` WRITE;
-UNLOCK TABLES;
-
---
--- Table structure for table `prescription_imaging_studies`
---
-
-DROP TABLE IF EXISTS `prescription_imaging_studies`;
-CREATE TABLE `prescription_imaging_studies` (
-  `prescription_id` int NOT NULL,
-  `imaging_studies_id` int NOT NULL,
-  `comments` text,
-  PRIMARY KEY (`prescription_id`,`imaging_studies_id`),
-  KEY `imaging_studies_id` (`imaging_studies_id`),
-  CONSTRAINT `prescription_imaging_studies_ibfk_1` FOREIGN KEY (`prescription_id`) REFERENCES `prescription` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `prescription_imaging_studies_ibfk_2` FOREIGN KEY (`imaging_studies_id`) REFERENCES `imaging_studies` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB ;
-
-LOCK TABLES `prescription_imaging_studies` WRITE;
-UNLOCK TABLES;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Table structure for table `prescription_items`
@@ -314,7 +303,7 @@ CREATE TABLE `prescription_items` (
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (`prescription_id`) REFERENCES `prescription`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`medicine_id`) REFERENCES `medicine`(`id`) ON DELETE CASCADE
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Table structure for table `prescription_lab_tests`
@@ -327,8 +316,7 @@ CREATE TABLE `prescription_lab_tests` (
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (`prescription_id`) REFERENCES `prescription`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`lab_test_id`) REFERENCES `lab_tests`(`id`) ON DELETE CASCADE
-) ENGINE=InnoDB;
-
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Table structure for table `visit_medicines`
@@ -348,10 +336,9 @@ CREATE TABLE `visit_medicines` (
   KEY `medicine_id` (`medicine_id`),
   CONSTRAINT `visit_medicines_ibfk_1` FOREIGN KEY (`prescription_id`) REFERENCES `prescription` (`id`),
   CONSTRAINT `visit_medicines_ibfk_2` FOREIGN KEY (`medicine_id`) REFERENCES `medicine` (`id`)
-) ENGINE=InnoDB ;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 LOCK TABLES `visit_medicines` WRITE;
 UNLOCK TABLES;
 
-
--- Dump completed on 2025-06-13 15:20:28
+SET FOREIGN_KEY_CHECKS = 1;

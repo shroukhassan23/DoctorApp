@@ -52,7 +52,12 @@ win:
     - from: "mysql-resources/mysql-windows"
       to: "mysql-windows"
       filter: ["**/*"]
-
+    - from: "mySql/patient.cjs"
+      to: "Resources/app.asar.unpacked/patient.cjs" 
+    - from: "mySql/visit.cjs"
+      to: "Resources/app.asar.unpacked/visit.cjs"
+    - from: "mySql/reports.cjs"
+      to: "Resources/app.asar.unpacked/reports.cjs"
 # macOS configuration  
 mac:
   target:
