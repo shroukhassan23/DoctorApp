@@ -153,7 +153,7 @@ export const PatientForm = ({ patient, onSave, onCancel, isLoading }: PatientFor
       }
 
       if (patient) {
-        const response = await fetch(`http://localhost:3001/Patients/${patient.id}`, {
+        const response = await fetch(`${patientUrl}/${patient.id}`, {
           method: "PUT",
           headers: {
             'Content-Type': 'application/json'

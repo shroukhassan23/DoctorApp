@@ -12,6 +12,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import { searchText } from '@/lib/arabicUtils';
 import { SectionLoading, CardLoading } from '@/components/ui/loading-spinner';
+import { reportBaseUrl } from '@/components/constants.js';
 
 
 export const ReportsPage = () => {
@@ -52,8 +53,8 @@ export const ReportsPage = () => {
     queryKey: ['visit-details', fromDate, toDate, searchAllVisits],
     queryFn: async () => {
       const url = searchAllVisits
-        ? 'http://localhost:3003/reports/visits/all'
-        : `http://localhost:3003/reports/visits?from=${fromDate}&to=${toDate}`;
+        ? `${reportBaseUrl}/reports/visits/all`
+        : `${reportBaseUrl}/reports/visits?from=${fromDate}&to=${toDate}`;
 
       const response = await fetch(url);
       if (!response.ok) throw new Error('Failed to fetch visit details');

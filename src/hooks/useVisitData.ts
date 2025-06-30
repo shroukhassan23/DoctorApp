@@ -1,8 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { getVisitPrescriptionUrl } from '@/components/constants.js';
+import { visitBaseUrl } from '@/components/constants.js'
 
 // Add these endpoints to your constants.js file
-const getVisitFilesUrl = (visitId: string) => `http://localhost:3002/visits/${visitId}/files`;
+const getVisitFilesUrl = (visitId: string) => `${visitBaseUrl}/visits/${visitId}/files`;
 
 export const useVisitData = (visitId: string) => {
   const { data: prescription, isLoading: isLoadingPrescription, error: prescriptionError } = useQuery({

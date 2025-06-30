@@ -32,6 +32,8 @@ const getBaseUrls = () => {
   // Patient Management APIs
   export const patientUrl = `${urls.patient}/Patients`;
   export const editPatientUrl = (patientId) => `${urls.patient}/Patients/${patientId}`;
+  export const visitBaseUrl = `${urls.visit}`
+  export const reportBaseUrl = `${urls.report}`
   
   // Visit Management APIs
   export const visitTypesPatientUrl = `${urls.visit}/Visittypes`;

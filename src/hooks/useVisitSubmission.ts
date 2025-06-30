@@ -6,6 +6,7 @@ import {
   addPrescriptionLabTestsUrl,
   addPrescriptionImagingStudiesUrl
 } from '@/components/constants.js';
+import { visitBaseUrl } from '@/components/constants.js'
 
 export const useVisitSubmission = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -122,7 +123,7 @@ export const useVisitSubmission = () => {
         formData.append('description', fileData.description || '');
         formData.append('visitId', visitId);
 
-        const response = await fetch(`http://localhost:3002/patients/${patientId}/files`, {
+        const response = await fetch(`${visitBaseUrl}/patients/${patientId}/files`, {
           method: 'POST',
           body: formData
         });

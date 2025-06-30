@@ -6,6 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { formatDateToDDMMYYYY } from '@/lib/dateUtils';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
+import { visitBaseUrl } from '@/components/constants.js'
 
 interface VisitFilesProps {
   files: any[];
@@ -21,7 +22,7 @@ export const VisitFiles = ({ files, patientId }: VisitFilesProps) => {
   const handleDownload = async (file: any) => {
     try {
       // Use your MySQL file download endpoint
-      const downloadUrl = `http://localhost:3002/patients/${patientId}/files/${file.id}/download`;
+      const downloadUrl = `${visitBaseUrl}/patients/${patientId}/files/${file.id}/download`;
       
       // Open the download URL in a new tab/window
       window.open(downloadUrl, '_blank');

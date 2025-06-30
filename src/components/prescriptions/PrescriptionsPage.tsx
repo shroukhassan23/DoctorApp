@@ -13,6 +13,8 @@ import { useToast } from '@/hooks/use-toast';
 import { formatDateToDDMMYYYY } from '@/lib/dateUtils';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { PrintSettingsProvider } from './PrintSettings';
+import { visitBaseUrl } from '@/components/constants.js'
+
 export const PrescriptionsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPrescription, setSelectedPrescription] = useState(null);
@@ -26,7 +28,7 @@ export const PrescriptionsPage = () => {
     queryKey: ['prescriptions'],
     queryFn: async () => {
       // Get all prescriptions with patient and related data
-      const response = await fetch('http://localhost:3002/prescriptions/all');
+      const response = await fetch(`${visitBaseUrl}/prescriptions/all`);
       if (!response.ok) throw new Error('Failed to fetch prescriptions');
       return await response.json();
     },
@@ -49,7 +51,7 @@ export const PrescriptionsPage = () => {
 
   const handleDeletePrescription = async (prescriptionId: string) => {
     try {
-      const response = await fetch(`http://localhost:3002/prescriptions/${prescriptionId}`, {
+      const response = await fetch(`${visitBaseUrl}/prescriptions/${prescriptionId}`, {
         method: 'DELETE'
       });
 

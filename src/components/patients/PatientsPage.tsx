@@ -59,7 +59,7 @@ const handleViewVisit = (visit) => {
     setDeletingPatient(patientId);
 
     try {
-      const response = await fetch(`http://localhost:3001/Patients/${patientId}`, {
+      const response = await fetch(`${patientUrl}/${patientId}`, {
         method: "DELETE",
 
       });
