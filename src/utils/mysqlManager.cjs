@@ -18,20 +18,20 @@ class MySQLManager {
     if (isDev) {
       // Development mode - MySQL is in mysql-resources folder
       if (process.platform === 'win32') {
-        this.mysqlPath = path.join(process.cwd(), 'mysql-resources', 'mysql-windows');
+        this.mysqlPath = path.join(appPath, 'mysql-resources', 'mysql-windows');
       } else if (process.platform === 'darwin') {
-        this.mysqlPath = path.join(process.cwd(), 'mysql-resources', 'mysql-macos');
+        this.mysqlPath = path.join(appPath, 'mysql-resources', 'mysql-macos');
       } else {
-        this.mysqlPath = path.join(process.cwd(), 'mysql-resources', 'mysql-linux');
+        this.mysqlPath = path.join(appPath, 'mysql-resources', 'mysql-linux');
       }
     } else {
-      // Production mode - MySQL is in resources folder
+      // Production mode - MySQL is directly in resources folder
       if (process.platform === 'win32') {
-        this.mysqlPath = path.join(process.resourcesPath, 'mysql-windows');
+        this.mysqlPath = path.join(appPath, 'mysql-windows');
       } else if (process.platform === 'darwin') {
-        this.mysqlPath = path.join(process.resourcesPath, 'mysql-macos');
+        this.mysqlPath = path.join(appPath, 'mysql-macos');
       } else {
-        this.mysqlPath = path.join(process.resourcesPath, 'mysql-linux');
+        this.mysqlPath = path.join(appPath, 'mysql-linux');
       }
     }
 

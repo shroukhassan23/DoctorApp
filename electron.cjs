@@ -30,7 +30,7 @@ class DoctorApp {
     // Initialize MySQL paths
     const appPath = isDev ?
       process.cwd() :
-      path.join(__dirname, '..');  // Point to Resources folder
+      process.resourcesPath;  // Point to Resources folder
     this.mysqlManager.initializePaths(appPath);
 
     // Initialize other managers
