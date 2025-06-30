@@ -470,7 +470,6 @@ collation-server=utf8mb4_unicode_ci
 default-storage-engine=INNODB
 innodb_file_per_table=1
 innodb_buffer_pool_size=64M
-innodb_log_file_size=32M
 innodb_flush_log_at_trx_commit=2
 
 # Network
@@ -493,6 +492,10 @@ slow-query-log=0
 
 # MyISAM
 key_buffer_size=16M
+
+# Disable problematic features for embedded use
+skip-log-bin=1
+mysqlx=0
 
 [mysql]
 default-character-set=utf8mb4
