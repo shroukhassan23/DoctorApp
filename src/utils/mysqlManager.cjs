@@ -45,18 +45,20 @@ class MySQLManager {
 
   async cleanupOldData() {
     try {
-      // حذف البيانات القديمة التي قد تحتوي على مشاكل صلاحيات
-      const stats = await fs.stat(this.dataPath);
-      if (stats.isDirectory()) {
+        // Check if directory exists
+        await fs.access(this.dataPath);
         console.log('Removing old MySQL data directory...');
         await fs.rm(this.dataPath, { recursive: true, force: true });
         console.log('Old MySQL data removed successfully');
-      }
+        
+        // Wait a moment for the filesystem
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
     } catch (error) {
-      // تجاهل الخطأ إذا لم يكن المجلد موجوداً
-      console.log('No old MySQL data to remove');
+        // Directory doesn't exist - that's fine
+        console.log('No old MySQL data to remove');
     }
-  }
+}
 
   async ensureDataDirectory() {
     try {
@@ -165,8 +167,7 @@ class MySQLManager {
                 `--basedir=${this.mysqlPath}`,
                 `--datadir=${this.dataPath}`,
                 '--character-set-server=utf8mb4',
-                '--collation-server=utf8mb4_unicode_ci',
-                '--default-authentication-plugin=mysql_native_password'
+                '--collation-server=utf8mb4_unicode_ci'
             ];
 
             // إضافة lc-messages-dir إذا كان موجوداً
@@ -460,7 +461,6 @@ basedir=${this.mysqlPath.replace(/\\/g, '/')}
 datadir=${this.dataPath.replace(/\\/g, '/')}
 port=${port}
 bind-address=127.0.0.1
-socket=${path.join(this.dataPath, 'mysql.sock').replace(/\\/g, '/')}
 
 # Character set
 character-set-server=utf8mb4
@@ -478,14 +478,12 @@ max_connections=50
 wait_timeout=28800
 interactive_timeout=28800
 
-# Security (تم تخفيفها لحل مشاكل الصلاحيات)
+# Security
 skip-name-resolve=1
 local-infile=0
 secure-file-priv=""
 
 # Performance
-query_cache_size=0
-query_cache_type=0
 tmp_table_size=32M
 max_heap_table_size=32M
 
@@ -502,14 +500,13 @@ default-character-set=utf8mb4
 [client]
 default-character-set=utf8mb4
 port=${port}
-socket=${path.join(this.dataPath, 'mysql.sock').replace(/\\/g, '/')}
 `;
 
     const configPath = path.join(this.dataPath, 'my.cnf');
     await fs.writeFile(configPath, configContent, 'utf8');
     console.log('MySQL config created at:', configPath);
     return configPath;
-  }
+}
 
   async stopMySQL() {
     return new Promise((resolve) => {
