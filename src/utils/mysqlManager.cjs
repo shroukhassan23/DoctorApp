@@ -202,20 +202,29 @@ class MySQLManager {
         initProcess.stderr.on('data', (data) => {
           const text = data.toString();
           errorOutput += text;
-          console.log('MySQL Init Error Detail:', text); // ← Add this detailed logging
+          console.log('MySQL Init Error Detail:', text); // ← Make sure this line exists
 
           // فحص الأخطاء الحرجة
           if (text.includes('Access is denied') ||
             text.includes('Permission denied') ||
             text.includes('cannot create') ||
             text.includes('failed to create') ||
-            text.includes('Cannot find or open table')) {
+            text.includes('Cannot find or open table') ||
+            text.includes('Can\'t find messagefile') ||
+            text.includes('Unknown variable') ||
+            text.includes('Fatal error')) {
             hasError = true;
+            console.log('Critical MySQL error detected:', text);
           }
         });
 
         initProcess.on('close', async (code) => {
           console.log('MySQL initialization completed with code:', code);
+          console.log('=== MySQL stdout ===');
+          console.log(output || 'No stdout output');
+          console.log('=== MySQL stderr ===');
+          console.log(errorOutput || 'No stderr output');
+          console.log('==================');
 
           if (code === 0) {
             console.log('MySQL database initialized successfully');
@@ -234,7 +243,6 @@ class MySQLManager {
             }
           } else {
             console.error('MySQL initialization failed with code:', code);
-            console.error('Full error output:', errorOutput);
 
             // محاولة تشخيص المشكلة
             let errorMessage = 'MySQL initialization failed';
@@ -246,9 +254,11 @@ class MySQLManager {
               errorMessage = 'MySQL initialization failed: Configuration error. Check MySQL version compatibility.';
             } else if (errorOutput.includes('Can\'t find messagefile')) {
               errorMessage = 'MySQL initialization failed: Missing message files. Check MySQL installation.';
+            } else if (errorOutput.trim() === '') {
+              errorMessage = 'MySQL initialization failed: No error output (possible missing dependencies or corrupted binary).';
             }
 
-            reject(new Error(`${errorMessage}\nDetails: ${errorOutput}`));
+            reject(new Error(`${errorMessage}\nDetails: ${errorOutput || 'No error details available'}`));
           }
         });
 
