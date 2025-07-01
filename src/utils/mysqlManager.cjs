@@ -35,7 +35,7 @@ class MySQLManager {
       }
     }
 
-    // استخدام مجلد آمن للبيانات
+    // Use safe directory for data
     const { app } = require('electron');
     this.dataPath = path.join(app.getPath('userData'), 'mysql-data');
 
@@ -55,9 +55,14 @@ class MySQLManager {
         console.log('Removing old MySQL data directory...');
         
         // Force remove with retries for Windows file locking issues
-        let retries = 3;
+        let retries = 5;
         while (retries > 0) {
             try {
+                // First try to remove read-only attributes on Windows
+                if (process.platform === 'win32') {
+                    await this.removeReadOnlyAttributes(this.dataPath);
+                }
+                
                 await fs.rm(this.dataPath, { recursive: true, force: true });
                 console.log('Old MySQL data removed successfully');
                 break;
@@ -67,80 +72,153 @@ class MySQLManager {
                     throw error;
                 }
                 console.log(`Retry removing data directory (${retries} attempts left)...`);
-                await new Promise(resolve => setTimeout(resolve, 2000));
+                await new Promise(resolve => setTimeout(resolve, 3000));
             }
         }
         
         // Wait for filesystem to catch up
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 2000));
         
     } catch (error) {
         // Directory doesn't exist - that's fine
         console.log('No old MySQL data to remove');
     }
-}
-
-async ensureDataDirectory() {
-  try {
-      // Check if MySQL is already initialized
-      try {
-          const mysqlDir = path.join(this.dataPath, 'mysql');
-          await fs.access(mysqlDir);
-          console.log('MySQL already initialized, skipping initialization...');
-          this.isInitialized = true;
-          return; // Skip initialization
-      } catch (error) {
-          // MySQL not initialized, proceed with setup
-      }
-      
-      // حذف البيانات القديمة أولاً
-      await this.cleanupOldData();
-      
-      // إنشاء مجلد البيانات الجديد
-      await fs.mkdir(this.dataPath, { recursive: true });
-      console.log('Created new data directory:', this.dataPath);
-      
-      // ... rest of the method remains the same
-  } catch (error) {
-      console.error('Error ensuring data directory:', error);
-      throw error;
   }
-}
 
-  async setWindowsPermissions(dirPath) {
-    return new Promise((resolve, reject) => {
-      const username = os.userInfo().username;
-      const commands = [
-        // إعطاء صلاحيات كاملة للمستخدم الحالي
-        `icacls "${dirPath}" /grant "${username}:(OI)(CI)F" /T`,
-        // إعطاء صلاحيات للـ System
-        `icacls "${dirPath}" /grant "SYSTEM:(OI)(CI)F" /T`,
-        // إعطاء صلاحيات للـ Administrators
-        `icacls "${dirPath}" /grant "Administrators:(OI)(CI)F" /T`
-      ];
-
-      let completedCommands = 0;
-
-      commands.forEach(command => {
-        exec(command, (error, stdout, stderr) => {
-          if (error) {
-            console.warn('Permission command failed:', command, error.message);
-          } else {
-            console.log('Permission set:', stdout);
-          }
-
-          completedCommands++;
-          if (completedCommands === commands.length) {
-            resolve();
-          }
-        });
+  async removeReadOnlyAttributes(dirPath) {
+    return new Promise((resolve) => {
+      // Remove read-only attributes recursively on Windows
+      exec(`attrib -R "${dirPath}\\*" /S /D`, (error, stdout, stderr) => {
+        if (error) {
+          console.warn('Could not remove read-only attributes:', error.message);
+        } else {
+          console.log('Read-only attributes removed');
+        }
+        resolve();
       });
     });
   }
 
+  async ensureDataDirectory() {
+    try {
+        // Check if MySQL is already initialized
+        try {
+            const mysqlDir = path.join(this.dataPath, 'mysql');
+            await fs.access(mysqlDir);
+            
+            // Check if ibdata1 exists and is writable
+            const ibdata1Path = path.join(this.dataPath, 'ibdata1');
+            try {
+                await fs.access(ibdata1Path, fs.constants.W_OK);
+                console.log('MySQL already initialized and writable, skipping initialization...');
+                this.isInitialized = true;
+                return;
+            } catch (writeError) {
+                console.log('MySQL exists but not writable, reinitializing...');
+                await this.cleanupOldData();
+            }
+        } catch (error) {
+            // MySQL not initialized, proceed with setup
+            console.log('MySQL not initialized, proceeding with setup...');
+        }
+        
+        // Clean up old data first
+        await this.cleanupOldData();
+        
+        // Create new data directory
+        await fs.mkdir(this.dataPath, { recursive: true });
+        console.log('Created new data directory:', this.dataPath);
+        
+        // CRITICAL: Set permissions BEFORE initializing database
+        await this.setDirectoryPermissions(this.dataPath);
+        
+        // Initialize database
+        if (!this.isInitialized) {
+          await this.initializeDatabase();
+        }
+        
+    } catch (error) {
+        console.error('Error ensuring data directory:', error);
+        throw error;
+    }
+  }
+
+  async setDirectoryPermissions(dirPath) {
+    if (process.platform === 'win32') {
+      await this.setWindowsPermissions(dirPath);
+    } else {
+      await this.setUnixPermissions(dirPath);
+    }
+  }
+
+  async setWindowsPermissions(dirPath) {
+    return new Promise((resolve, reject) => {
+      const username = os.userInfo().username;
+      
+      // Execute commands sequentially to avoid conflicts
+      const executeCommand = (command) => {
+        return new Promise((cmdResolve) => {
+          exec(command, { timeout: 30000 }, (error, stdout, stderr) => {
+            if (error) {
+              console.warn(`Permission command failed: ${command}`, error.message);
+            } else {
+              console.log(`Permission command succeeded: ${command.split(' ')[0]}`);
+            }
+            cmdResolve(); // Always resolve to continue with next command
+          });
+        });
+      };
+
+      const commands = [
+        // Take ownership first
+        `takeown /F "${dirPath}" /R /D Y`,
+        // Remove inheritance and copy existing permissions
+        `icacls "${dirPath}" /inheritance:d /T /Q`,
+        // Grant full control to current user
+        `icacls "${dirPath}" /grant "${username}:(OI)(CI)F" /T /Q`,
+        // Grant full control to SYSTEM
+        `icacls "${dirPath}" /grant "SYSTEM:(OI)(CI)F" /T /Q`,
+        // Grant full control to Administrators
+        `icacls "${dirPath}" /grant "Administrators:(OI)(CI)F" /T /Q`
+      ];
+
+      // Execute commands sequentially
+      const executeSequentially = async () => {
+        for (const command of commands) {
+          await executeCommand(command);
+          // Small delay between commands
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        
+        // Final verification - try to create a test file
+        try {
+          await this.verifyWritePermissions(dirPath);
+          console.log('Windows permissions set successfully');
+          resolve();
+        } catch (verifyError) {
+          console.error('Write permission verification failed:', verifyError);
+          reject(verifyError);
+        }
+      };
+
+      executeSequentially().catch(reject);
+    });
+  }
+
+  async verifyWritePermissions(dirPath) {
+    const testFile = path.join(dirPath, 'write_test.tmp');
+    try {
+      await fs.writeFile(testFile, 'test', 'utf8');
+      await fs.unlink(testFile);
+      console.log('Write permissions verified successfully');
+    } catch (error) {
+      throw new Error(`Cannot write to directory ${dirPath}: ${error.message}`);
+    }
+  }
+
   async setUnixPermissions(dirPath) {
     try {
-      // إعطاء صلاحيات قراءة وكتابة للمالك
+      // Give read, write, execute permissions to owner
       await fs.chmod(dirPath, 0o755);
       console.log('Unix permissions set for:', dirPath);
     } catch (error) {
@@ -170,7 +248,7 @@ async ensureDataDirectory() {
         console.log('Using mysqld:', mysqldPath);
         console.log('Data directory:', this.dataPath);
 
-        // التأكد من وجود مجلدات ضرورية
+        // Ensure required directories exist
         const sharePath = path.join(this.mysqlPath, 'share');
         const binPath = path.join(this.mysqlPath, 'bin');
 
@@ -188,10 +266,12 @@ async ensureDataDirectory() {
           `--basedir=${this.mysqlPath}`,
           `--datadir=${this.dataPath}`,
           '--character-set-server=utf8mb4',
-          '--collation-server=utf8mb4_unicode_ci'
+          '--collation-server=utf8mb4_unicode_ci',
+          '--innodb-file-per-table=1',
+          '--innodb-buffer-pool-size=64M'
         ];
 
-        // إضافة lc-messages-dir إذا كان موجوداً
+        // Add lc-messages-dir if it exists
         const messagesPath = path.join(this.mysqlPath, 'share');
         try {
           await fs.access(messagesPath);
@@ -203,7 +283,7 @@ async ensureDataDirectory() {
         console.log('MySQL init command:', mysqldPath, initArgs.join(' '));
 
         const initProcess = spawn(mysqldPath, initArgs, {
-          stdio: ['ignore', 'pipe', 'pipe'], // Changed from 'pipe' to 'ignore' for stdin
+          stdio: ['ignore', 'pipe', 'pipe'],
           cwd: this.mysqlPath,
           env: {
             ...process.env,
@@ -211,12 +291,11 @@ async ensureDataDirectory() {
             PATH: `${path.join(this.mysqlPath, 'bin')};${process.env.PATH}`
           },
           detached: false,
-          shell: false // Explicitly disable shell
+          shell: false
         });
 
         let output = '';
         let errorOutput = '';
-        let hasError = false;
 
         initProcess.stdout.on('data', (data) => {
           const text = data.toString();
@@ -228,61 +307,45 @@ async ensureDataDirectory() {
           const text = data.toString();
           errorOutput += text;
           console.log('MySQL Init Error Detail:', text.trim());
-
-          // فحص الأخطاء الحرجة
-          if (text.includes('Access is denied') ||
-            text.includes('Permission denied') ||
-            text.includes('cannot create') ||
-            text.includes('failed to create') ||
-            text.includes('Cannot find or open table') ||
-            text.includes('Fatal error') ||
-            text.includes('Aborting')) {
-            hasError = true;
-            console.log('Critical MySQL error detected:', text.trim());
-          }
         });
 
         initProcess.on('close', async (code) => {
           console.log('MySQL initialization completed with code:', code);
-          console.log('=== MySQL stdout ===');
-          console.log(output || 'No stdout output');
-          console.log('=== MySQL stderr ===');
-          console.log(errorOutput || 'No stderr output');
-          console.log('==================');
-
+          
           if (code === 0) {
             console.log('MySQL database initialized successfully');
-            this.isInitialized = true;
-
-            // التحقق من إنشاء الملفات الأساسية
+            
+            // Set permissions on all created files AGAIN after initialization
+            await this.setDirectoryPermissions(this.dataPath);
+            
+            // Verify critical files are writable
             try {
-              const mysqlDir = path.join(this.dataPath, 'mysql');
-              await fs.access(mysqlDir);
-              console.log('MySQL system database created successfully');
-              resolve();
+              const ibdata1Path = path.join(this.dataPath, 'ibdata1');
+              await fs.access(ibdata1Path, fs.constants.W_OK);
+              console.log('ibdata1 file is writable');
             } catch (error) {
-              console.warn('MySQL system database may not be complete, but continuing...');
-              this.isInitialized = true;
-              resolve();
+              console.warn('ibdata1 file may not be writable, attempting to fix...');
+              // Try to fix permissions specifically for ibdata1
+              if (process.platform === 'win32') {
+                await this.fixFilePermissions(path.join(this.dataPath, 'ibdata1'));
+              }
             }
+            
+            this.isInitialized = true;
+            resolve();
           } else {
             console.error('MySQL initialization failed with code:', code);
-
-            // محاولة تشخيص المشكلة
             let errorMessage = 'MySQL initialization failed';
+            
             if (errorOutput.includes('Access is denied')) {
               errorMessage = 'MySQL initialization failed: Access denied. Check file permissions.';
             } else if (errorOutput.includes('cannot create')) {
               errorMessage = 'MySQL initialization failed: Cannot create database files. Check disk space and permissions.';
-            } else if (errorOutput.includes('Unknown variable')) {
-              errorMessage = 'MySQL initialization failed: Configuration error. Check MySQL version compatibility.';
-            } else if (errorOutput.includes('Can\'t find messagefile')) {
-              errorMessage = 'MySQL initialization failed: Missing message files. Check MySQL installation.';
-            } else if (errorOutput.trim() === '' && output.trim() === '') {
-              errorMessage = 'MySQL initialization failed: Process exited without output. This may be a stdio/process issue in Electron.';
+            } else if (errorOutput.includes('must be writable')) {
+              errorMessage = 'MySQL initialization failed: Database files must be writable. Check permissions.';
             }
-
-            reject(new Error(`${errorMessage}\nDetails: ${errorOutput || 'No error details available'}`));
+            
+            reject(new Error(`${errorMessage}\nDetails: ${errorOutput}`));
           }
         });
 
@@ -291,30 +354,14 @@ async ensureDataDirectory() {
           reject(new Error(`Cannot start MySQL initialization: ${error.message}`));
         });
 
-        // إضافة timeout للتهيئة مع إمكانية المتابعة
+        // Timeout with better error handling
         setTimeout(() => {
           if (initProcess && !initProcess.killed) {
-            console.log('MySQL initialization timeout, attempting to continue...');
+            console.log('MySQL initialization timeout, terminating...');
             initProcess.kill('SIGTERM');
-
-            // انتظار قليل ثم فحص ما إذا تم إنشاء ملفات أساسية
-            setTimeout(async () => {
-              try {
-                await fs.access(this.dataPath);
-                const files = await fs.readdir(this.dataPath);
-                if (files.length > 0) {
-                  console.log('Some MySQL files created despite timeout, continuing...');
-                  this.isInitialized = true;
-                  resolve();
-                } else {
-                  reject(new Error('MySQL initialization timeout and no files created'));
-                }
-              } catch (error) {
-                reject(new Error('MySQL initialization timeout and data directory check failed'));
-              }
-            }, 2000);
+            reject(new Error('MySQL initialization timeout'));
           }
-        }, 90000); // 90 ثانية
+        }, 120000); // 2 minutes
 
       } catch (error) {
         reject(error);
@@ -322,9 +369,39 @@ async ensureDataDirectory() {
     });
   }
 
+  // New method to fix specific file permissions
+  async fixFilePermissions(filePath) {
+    if (process.platform !== 'win32') return;
+
+    return new Promise((resolve) => {
+      const username = os.userInfo().username;
+      const commands = [
+        `takeown /F "${filePath}" /D Y`,
+        `icacls "${filePath}" /grant "${username}:F" /Q`,
+        `icacls "${filePath}" /grant "SYSTEM:F" /Q`,
+        `icacls "${filePath}" /grant "Administrators:F" /Q`
+      ];
+
+      let completed = 0;
+      commands.forEach((command) => {
+        exec(command, (error) => {
+          if (error) {
+            console.warn(`File permission command failed: ${command}`, error.message);
+          } else {
+            console.log(`File permission command succeeded: ${command.split(' ')[0]}`);
+          }
+          completed++;
+          if (completed === commands.length) {
+            resolve();
+          }
+        });
+      });
+    });
+  }
+
   async startMySQL(port = 3306) {
     try {
-      // إيقاف أي عملية MySQL قديمة
+      // Stop any existing MySQL process
       if (this.mysqlProcess) {
         console.log('Stopping existing MySQL process...');
         await this.stopMySQL();
@@ -332,13 +409,18 @@ async ensureDataDirectory() {
 
       console.log('Starting MySQL server...');
 
-      // التأكد من إعداد مجلد البيانات والصلاحيات
+      // Ensure data directory and permissions
       await this.ensureDataDirectory();
 
       const mysqldPath = await this.checkMySQLBinary();
 
-      // إنشاء ملف الإعدادات
+      // Create configuration file
       const configPath = await this.createTempConfig(port);
+
+      // CRITICAL: Set permissions on config file
+      if (process.platform === 'win32') {
+        await this.fixFilePermissions(configPath);
+      }
 
       console.log('Starting MySQL with config:', configPath);
       console.log('MySQL executable:', mysqldPath);
@@ -346,8 +428,8 @@ async ensureDataDirectory() {
 
       this.mysqlProcess = spawn(mysqldPath, [
         `--defaults-file=${configPath}`,
-        '--console'
-        // Removed --skip-grant-tables and --skip-networking=false as they're now in config
+        '--console',
+        `--port=${port}`
       ], {
         stdio: ['ignore', 'pipe', 'pipe'],
         cwd: this.mysqlPath,
@@ -361,47 +443,42 @@ async ensureDataDirectory() {
 
       return new Promise((resolve, reject) => {
         let isResolved = false;
-        let hasStartupMessage = false;
 
         this.startupTimeout = setTimeout(() => {
           if (!isResolved) {
             isResolved = true;
-            console.error('MySQL startup timeout - MySQL did not start within 45 seconds');
+            console.error('MySQL startup timeout');
             this.stopMySQL();
             reject(new Error('MySQL startup timeout'));
           }
-        }, 45000);
+        }, 60000); // 1 minute timeout
 
         this.mysqlProcess.stdout.on('data', async (data) => {
           const output = data.toString();
           console.log('MySQL Output:', output);
 
-          // البحث عن رسائل نجاح البدء
           if (output.includes('ready for connections') ||
-            output.includes(`port: ${port}`) ||
-            output.includes('mysqld: ready for connections')) {
-            hasStartupMessage = true;
+              output.includes(`port: ${port}`) ||
+              output.includes('mysqld: ready for connections')) {
             if (!isResolved) {
               isResolved = true;
               clearTimeout(this.startupTimeout);
               console.log('MySQL server started successfully');
-
-              // Import schema after MySQL is ready
+              
+              // Import schema after startup
               setTimeout(async () => {
                 try {
                   const dumpPath = process.env.ELECTRON_DEV === 'true' ?
                     path.join(process.cwd(), 'dump.sql') :
                     path.join(process.resourcesPath, 'dump.sql');
-
-                  console.log('Attempting to import schema from:', dumpPath);
+                  
                   await this.importSchema(dumpPath, port);
                   console.log('Database schema imported successfully');
                 } catch (schemaError) {
-                  console.warn('Schema import failed, but MySQL is running:', schemaError.message);
-                  // Continue anyway - schema might already exist or will be imported later
+                  console.warn('Schema import failed:', schemaError.message);
                 }
-              }, 2000); // Wait 2 seconds for MySQL to be fully ready
-
+              }, 2000);
+              
               resolve(true);
             }
           }
@@ -411,39 +488,23 @@ async ensureDataDirectory() {
           const error = data.toString();
           console.error('MySQL Error:', error);
 
-          // Check for success messages in stderr (MySQL 9.x writes status to stderr)
-          if (error.includes('ready for connections') &&
-            error.includes(`port: ${port}`) &&
-            !isResolved) {
-            hasStartupMessage = true;
-            isResolved = true;
-            clearTimeout(this.startupTimeout);
-            console.log('MySQL server started successfully (detected in stderr)');
-
-            // Import schema after MySQL is ready
-            setTimeout(async () => {
-              try {
-                const dumpPath = process.env.ELECTRON_DEV === 'true' ?
-                  path.join(process.cwd(), 'dump.sql') :
-                  path.join(process.resourcesPath, 'dump.sql');
-
-                console.log('Attempting to import schema from:', dumpPath);
-                await this.importSchema(dumpPath, port);
-                console.log('Database schema imported successfully');
-              } catch (schemaError) {
-                console.warn('Schema import failed, but MySQL is running:', schemaError.message);
-              }
-            }, 2000);
-
-            resolve(true);
+          // Check for success in stderr (MySQL 9.x behavior)
+          if (error.includes('ready for connections') && error.includes(`port: ${port}`)) {
+            if (!isResolved) {
+              isResolved = true;
+              clearTimeout(this.startupTimeout);
+              console.log('MySQL server started successfully (detected in stderr)');
+              resolve(true);
+            }
             return;
           }
 
-          // التحقق من الأخطاء القاتلة
-          if (error.includes('Aborting') ||
-            error.includes('must be writable') ||
-            error.includes('Cannot start') ||
-            error.includes('Fatal error')) {
+          // Check for critical errors - especially the writable file error
+          if (error.includes('must be writable') ||
+              error.includes('Aborting') ||
+              error.includes('Cannot start') ||
+              error.includes('Fatal error') ||
+              error.includes('Failed to initialize DD Storage Engine')) {
             if (!isResolved) {
               isResolved = true;
               clearTimeout(this.startupTimeout);
@@ -474,27 +535,6 @@ async ensureDataDirectory() {
             }
           }
         });
-
-        // إضافة فحص دوري لحالة MySQL
-        const healthCheck = setInterval(() => {
-          if (isResolved) {
-            clearInterval(healthCheck);
-            return;
-          }
-
-          if (this.mysqlProcess && this.mysqlProcess.exitCode === null && !this.mysqlProcess.killed) {
-            // MySQL ما زال يعمل، نتحقق إذا مر وقت كافي
-            setTimeout(() => {
-              if (!isResolved && hasStartupMessage) {
-                isResolved = true;
-                clearTimeout(this.startupTimeout);
-                clearInterval(healthCheck);
-                console.log('MySQL appears to be running (health check)');
-                resolve(true);
-              }
-            }, 5000);
-          }
-        }, 10000);
       });
 
     } catch (error) {
@@ -504,25 +544,31 @@ async ensureDataDirectory() {
   }
 
   async createTempConfig(port = 3306) {
-    const configContent = `[mysqld]
+  const configContent = `[mysqld]
 basedir=${this.mysqlPath.replace(/\\/g, '/')}
 datadir=${this.dataPath.replace(/\\/g, '/')}
 port=${port}
 bind-address=0.0.0.0
 
-# Enable TCP/IP explicitly for Windows
+# Enable TCP/IP
 skip-networking=0
-enable-named-pipe=1
+${process.platform === 'win32' ? 'enable-named-pipe=1' : ''}
 
-# Character set
+# Authentication
+skip-grant-tables=1
+skip-name-resolve=1
+
+# Character set - FIXED: Removed invalid default-character-set from [mysqld] section
 character-set-server=utf8mb4
 collation-server=utf8mb4_unicode_ci
 
-# Storage
+# InnoDB settings - Important for file permissions
 default-storage-engine=INNODB
 innodb_file_per_table=1
 innodb_buffer_pool_size=64M
 innodb_flush_log_at_trx_commit=2
+innodb_force_recovery=0
+innodb_flush_method=${process.platform === 'win32' ? 'normal' : 'fsync'}
 
 # Network
 max_connections=50
@@ -530,7 +576,6 @@ wait_timeout=28800
 interactive_timeout=28800
 
 # Security
-skip-name-resolve=1
 local-infile=0
 secure-file-priv=""
 
@@ -545,7 +590,7 @@ slow-query-log=0
 # MyISAM
 key_buffer_size=16M
 
-# Disable problematic features for embedded use
+# Disable features for embedded use
 skip-log-bin=1
 mysqlx=0
 
@@ -557,12 +602,12 @@ default-character-set=utf8mb4
 port=${port}
 `;
 
-    const configPath = path.join(this.dataPath, 'my.cnf');
-    await fs.writeFile(configPath, configContent, 'utf8');
-    console.log('MySQL config created at:', configPath);
-    return configPath;
-  }
-
+  const configPath = path.join(this.dataPath, 'my.cnf');
+  await fs.writeFile(configPath, configContent, 'utf8');
+  
+  console.log('MySQL config created at:', configPath);
+  return configPath;
+}
   async stopMySQL() {
     return new Promise((resolve) => {
       if (this.startupTimeout) {
@@ -594,7 +639,6 @@ port=${port}
         resolve(true);
       });
 
-      // محاولة الإنهاء السليم
       this.mysqlProcess.kill('SIGTERM');
     });
   }
@@ -602,7 +646,6 @@ port=${port}
   async importSchema(schemaPath, port = 3306) {
     return new Promise(async (resolve, reject) => {
       try {
-        // Check if schema file exists
         await fs.access(schemaPath);
 
         const mysqlPath = path.join(this.mysqlPath, 'bin',
@@ -611,67 +654,112 @@ port=${port}
         await fs.access(mysqlPath);
         console.log('Importing schema from:', schemaPath);
 
-        // Read the SQL file and execute it
-        const sqlContent = await fs.readFile(schemaPath, 'utf8');
-
-        const importProcess = spawn(mysqlPath, [
+        const setupProcess = spawn(mysqlPath, [
           '-h', '127.0.0.1',
           '-P', port.toString(),
           '-u', 'root',
-          '--execute', `CREATE DATABASE IF NOT EXISTS doctor; USE doctor; ${sqlContent}`
+          '--default-character-set=utf8mb4',
+          '--execute', `
+            CREATE DATABASE IF NOT EXISTS doctor;
+            CREATE USER IF NOT EXISTS 'root'@'127.0.0.1' IDENTIFIED BY '';
+            CREATE USER IF NOT EXISTS 'root'@'localhost' IDENTIFIED BY '';
+            GRANT ALL PRIVILEGES ON *.* TO 'root'@'127.0.0.1' WITH GRANT OPTION;
+            GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' WITH GRANT OPTION;
+            FLUSH PRIVILEGES;
+          `
         ], {
           stdio: ['pipe', 'pipe', 'pipe'],
           cwd: this.mysqlPath,
           env: {
             ...process.env,
-            PATH: `${path.join(this.mysqlPath, 'bin')};${process.env.PATH}`
+            PATH: `${path.join(this.mysqlPath, 'bin')};${process.env.PATH}`,
+            MYSQL_PWD: ''
           }
         });
 
-        let output = '';
-        let errorOutput = '';
-
-        importProcess.stdout.on('data', (data) => {
-          output += data.toString();
-          console.log('MySQL Import:', data.toString());
-        });
-
-        importProcess.stderr.on('data', (data) => {
-          errorOutput += data.toString();
-          console.log('MySQL Import Error:', data.toString());
-        });
-
-        importProcess.on('close', (code) => {
-          if (code === 0) {
-            console.log('Schema imported successfully');
-            resolve(true);
+        setupProcess.on('close', async (setupCode) => {
+          if (setupCode === 0) {
+            console.log('Database setup completed successfully');
           } else {
-            console.error('Schema import failed with code:', code);
-            reject(new Error(`Schema import failed: ${errorOutput}`));
+            console.log('Setup completed with warnings, continuing...');
           }
+
+          const importProcess = spawn(mysqlPath, [
+            '-h', '127.0.0.1',
+            '-P', port.toString(),
+            '-u', 'root',
+            '--default-character-set=utf8mb4',
+            'doctor'
+          ], {
+            stdio: ['pipe', 'pipe', 'pipe'],
+            cwd: this.mysqlPath,
+            env: {
+              ...process.env,
+              PATH: `${path.join(this.mysqlPath, 'bin')};${process.env.PATH}`,
+              MYSQL_PWD: ''
+            }
+          });
+
+          try {
+            const sqlContent = await fs.readFile(schemaPath, 'utf8');
+            importProcess.stdin.write(sqlContent);
+            importProcess.stdin.end();
+          } catch (error) {
+            importProcess.kill();
+            reject(new Error(`Failed to read schema file: ${error.message}`));
+            return;
+          }
+
+          let output = '';
+          let errorOutput = '';
+
+          importProcess.stdout.on('data', (data) => {
+            output += data.toString();
+            console.log('MySQL Import:', data.toString().trim());
+          });
+
+          importProcess.stderr.on('data', (data) => {
+            errorOutput += data.toString();
+            console.log('MySQL Import Error:', data.toString().trim());
+          });
+
+          importProcess.on('close', (code) => {
+            if (code === 0) {
+              console.log('Schema imported successfully');
+              resolve(true);
+            } else {
+              console.error('Schema import failed with code:', code);
+              reject(new Error(`Schema import failed: ${errorOutput}`));
+            }
+          });
+
+          importProcess.on('error', (error) => {
+            console.error('Failed to start schema import:', error);
+            reject(error);
+          });
         });
 
-        importProcess.on('error', (error) => {
-          console.error('Failed to start schema import:', error);
+        setupProcess.on('error', (error) => {
+          console.error('Failed to setup database:', error);
           reject(error);
         });
+
       } catch (error) {
         reject(new Error(`Schema file not found or MySQL client missing: ${error.message}`));
       }
     });
   }
 
-  // دالة مساعدة لتشخيص المشاكل
   async diagnoseIssues() {
     const diagnostics = {
       mysqlBinary: false,
       dataDirectory: false,
       permissions: false,
-      diskSpace: false
+      diskSpace: false,
+      writeTest: false
     };
 
     try {
-      // فحص وجود MySQL binary
       await this.checkMySQLBinary();
       diagnostics.mysqlBinary = true;
     } catch (error) {
@@ -679,7 +767,6 @@ port=${port}
     }
 
     try {
-      // فحص مجلد البيانات
       await fs.access(this.dataPath);
       diagnostics.dataDirectory = true;
     } catch (error) {
@@ -687,16 +774,13 @@ port=${port}
     }
 
     try {
-      // فحص الصلاحيات
-      const testFile = path.join(this.dataPath, 'test.txt');
-      await fs.writeFile(testFile, 'test');
-      await fs.unlink(testFile);
+      await this.verifyWritePermissions(this.dataPath);
+      diagnostics.writeTest = true;
       diagnostics.permissions = true;
     } catch (error) {
-      console.error('Permissions check failed:', error.message);
+      console.error('Write permissions test failed:', error.message);
     }
 
-    // فحص مساحة القرص
     try {
       const stats = await fs.stat(this.dataPath);
       diagnostics.diskSpace = true;
