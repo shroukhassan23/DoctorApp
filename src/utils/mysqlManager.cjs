@@ -451,10 +451,7 @@ class MySQLManager {
 
       this.mysqlProcess = spawn(mysqldPath, [
         `--defaults-file=${configPath}`,
-        '--console',
-        `--port=${port}`,
-        `--bind-address=0.0.0.0`,
-        '--skip-networking=0'
+        '--console'
       ], {
         stdio: ['ignore', 'pipe', 'pipe'],
         cwd: this.mysqlPath,
@@ -594,7 +591,7 @@ skip-networking=0
 ${process.platform === 'win32' ? 'enable-named-pipe=1' : ''}
 
 # Authentication
-skip-grant-tables=1
+# skip-grant-tables=1
 skip-name-resolve=1
 
 # Character set - FIXED: Removed invalid default-character-set from [mysqld] section
