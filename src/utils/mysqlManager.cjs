@@ -426,7 +426,7 @@ class MySQLManager {
       console.log(`Using MySQL port: ${port}`);
       this.currentPort = port; // ✅ Store port as instance variable
 
-  
+
       // Stop any existing MySQL process
       if (this.mysqlProcess) {
         console.log('Stopping existing MySQL process...');
@@ -493,7 +493,7 @@ class MySQLManager {
                   const dumpPath = process.env.ELECTRON_DEV === 'true' ?
                     path.join(process.cwd(), 'dump.sql') :
                     path.join(process.resourcesPath, 'dump.sql');
-                    console.log('About to import schema with port:', mysqlPort);
+                  console.log('About to import schema with port:', mysqlPort);
                   await this.importSchema(dumpPath, mysqlPort);
                   console.log('Database schema imported successfully');
                 } catch (schemaError) {
@@ -699,10 +699,16 @@ port=${port}
           '-u', 'root',
           '--default-character-set=utf8mb4',
           '--execute', `
-            CREATE DATABASE IF NOT EXISTS doctor;
-            CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY '';
-            GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;
-            FLUSH PRIVILEGES;
+          CREATE DATABASE IF NOT EXISTS doctor;
+          CREATE USER IF NOT EXISTS 'root'@'localhost' IDENTIFIED BY '';
+          CREATE USER IF NOT EXISTS 'root'@'127.0.0.1' IDENTIFIED BY '';
+          CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY '';
+          GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' WITH GRANT OPTION;
+          GRANT ALL PRIVILEGES ON *.* TO 'root'@'127.0.0.1' WITH GRANT OPTION;
+          GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;
+          FLUSH PRIVILEGES;
+          USE doctor;
+          SOURCE ${schemaPath.replace(/\\/g, '/')};
           `
         ], {
           stdio: ['pipe', 'pipe', 'pipe'],
