@@ -394,7 +394,7 @@ class MySQLManager {
 
   async findAvailablePort(startPort = 3306) {
     const net = require('net');
-    
+
     const isPortAvailable = (port) => {
       return new Promise((resolve) => {
         const server = net.createServer();
@@ -404,7 +404,7 @@ class MySQLManager {
         server.on('error', () => resolve(false));
       });
     };
-  
+
     // Check ports 3306, 3307, 3308, etc.
     for (let port = startPort; port < startPort + 10; port++) {
       console.log(`Checking if port ${port} is available...`);
@@ -415,15 +415,18 @@ class MySQLManager {
         console.log(`Port ${port} is in use`);
       }
     }
-    
+
     throw new Error('No available ports found in range 3306-3315');
   }
 
   async startMySQL(requestedPort = 3306) {
     try {
+      // Find an available port first
+      const port = await this.findAvailablePort(requestedPort);
+      console.log(`Using MySQL port: ${port}`);
+      this.currentPort = port; // ✅ Store port as instance variable
 
-    const port = await this.findAvailablePort(requestedPort);
-    console.log(`Using MySQL port: ${port}`);
+  
       // Stop any existing MySQL process
       if (this.mysqlProcess) {
         console.log('Stopping existing MySQL process...');
@@ -486,15 +489,15 @@ class MySQLManager {
               isResolved = true;
               clearTimeout(this.startupTimeout);
               console.log('MySQL server started successfully');
-
+              const mysqlPort = port;
               // Import schema after startup
               setTimeout(async () => {
                 try {
                   const dumpPath = process.env.ELECTRON_DEV === 'true' ?
                     path.join(process.cwd(), 'dump.sql') :
                     path.join(process.resourcesPath, 'dump.sql');
-
-                  await this.importSchema(dumpPath, port);
+                    console.log('About to import schema with port:', mysqlPort);
+                  await this.importSchema(dumpPath, mysqlPort);
                   console.log('Database schema imported successfully');
                 } catch (schemaError) {
                   console.warn('Schema import failed:', schemaError.message);
@@ -523,8 +526,7 @@ class MySQLManager {
                   const dumpPath = process.env.ELECTRON_DEV === 'true' ?
                     path.join(process.cwd(), 'dump.sql') :
                     path.join(process.resourcesPath, 'dump.sql');
-
-                  await this.importSchema(dumpPath, port);
+                  await this.importSchema(dumpPath, port);  // ✅ Use the original port variable
                   console.log('Database schema imported successfully');
                 } catch (schemaError) {
                   console.warn('Schema import failed:', schemaError.message);
@@ -684,6 +686,9 @@ port=${port}
     return new Promise(async (resolve, reject) => {
       try {
         await fs.access(schemaPath);
+
+        console.log('ImportSchema called with port:', port); // ✅ Add this log
+        console.log('Connecting to MySQL on 127.0.0.1:' + port); // ✅ Add this log
 
         const mysqlPath = path.join(this.mysqlPath, 'bin',
           process.platform === 'win32' ? 'mysql.exe' : 'mysql');
