@@ -700,10 +700,8 @@ port=${port}
           '--default-character-set=utf8mb4',
           '--execute', `
             CREATE DATABASE IF NOT EXISTS doctor;
-            CREATE USER IF NOT EXISTS 'root'@'127.0.0.1' IDENTIFIED BY '';
-            CREATE USER IF NOT EXISTS 'root'@'localhost' IDENTIFIED BY '';
-            GRANT ALL PRIVILEGES ON *.* TO 'root'@'127.0.0.1' WITH GRANT OPTION;
-            GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' WITH GRANT OPTION;
+            CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY '';
+            GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;
             FLUSH PRIVILEGES;
           `
         ], {
