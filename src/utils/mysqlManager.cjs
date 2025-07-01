@@ -694,22 +694,11 @@ port=${port}
         console.log('Importing schema from:', schemaPath);
 
         const setupProcess = spawn(mysqlPath, [
-          '-h', 'localhost',
+          '-h', '127.0.0.1',
           '-P', port.toString(),
           '-u', 'root',
-          '--default-character-set=utf8mb4',
-          '--execute', `
-          CREATE DATABASE IF NOT EXISTS doctor;
-          CREATE USER IF NOT EXISTS 'root'@'localhost' IDENTIFIED BY '';
-          CREATE USER IF NOT EXISTS 'root'@'127.0.0.1' IDENTIFIED BY '';
-          CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY '';
-          GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' WITH GRANT OPTION;
-          GRANT ALL PRIVILEGES ON *.* TO 'root'@'127.0.0.1' WITH GRANT OPTION;
-          GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;
-          FLUSH PRIVILEGES;
-          USE doctor;
-          SOURCE ${schemaPath.replace(/\\/g, '/')};
-          `
+          '--skip-password',
+          '--default-character-set=utf8mb4'
         ], {
           stdio: ['pipe', 'pipe', 'pipe'],
           cwd: this.mysqlPath,
@@ -719,6 +708,13 @@ port=${port}
             MYSQL_PWD: ''
           }
         });
+        setupProcess.stdin.write(`
+CREATE DATABASE IF NOT EXISTS doctor;
+CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY '';
+GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;
+FLUSH PRIVILEGES;
+`);
+        setupProcess.stdin.end();
 
         setupProcess.on('close', async (setupCode) => {
           if (setupCode === 0) {
@@ -728,9 +724,10 @@ port=${port}
           }
 
           const importProcess = spawn(mysqlPath, [
-            '-h', 'localhost',
+            '-h', '127.0.0.1',
             '-P', port.toString(),
             '-u', 'root',
+            '--skip-password',
             '--default-character-set=utf8mb4',
             'doctor'
           ], {
