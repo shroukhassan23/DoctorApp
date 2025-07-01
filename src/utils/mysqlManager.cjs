@@ -170,16 +170,10 @@ class MySQLManager {
       };
 
       const commands = [
-        // Take ownership first
-        `takeown /F "${dirPath}" /R /D Y`,
-        // Remove inheritance and copy existing permissions
-        `icacls "${dirPath}" /inheritance:d /T /Q`,
-        // Grant full control to current user
-        `icacls "${dirPath}" /grant "${username}:(OI)(CI)F" /T /Q`,
-        // Grant full control to SYSTEM
-        `icacls "${dirPath}" /grant "SYSTEM:(OI)(CI)F" /T /Q`,
-        // Grant full control to Administrators
-        `icacls "${dirPath}" /grant "Administrators:(OI)(CI)F" /T /Q`
+        `takeown /F "${filePath}"`,  // Removed /D Y flag for single files
+        `icacls "${filePath}" /grant "${username}:F" /Q`,
+        `icacls "${filePath}" /grant "SYSTEM:F" /Q`,
+        `icacls "${filePath}" /grant "Administrators:F" /Q`
       ];
 
       // Execute commands sequentially
@@ -315,19 +309,16 @@ class MySQLManager {
           if (code === 0) {
             console.log('MySQL database initialized successfully');
             
-            // Set permissions on all created files AGAIN after initialization
-            await this.setDirectoryPermissions(this.dataPath);
-            
-            // Verify critical files are writable
+            // Only verify critical files are writable - don't reset all permissions
             try {
               const ibdata1Path = path.join(this.dataPath, 'ibdata1');
               await fs.access(ibdata1Path, fs.constants.W_OK);
               console.log('ibdata1 file is writable');
             } catch (error) {
               console.warn('ibdata1 file may not be writable, attempting to fix...');
-              // Try to fix permissions specifically for ibdata1
+              // Try to fix permissions specifically for ibdata1 only
               if (process.platform === 'win32') {
-                await this.fixFilePermissions(path.join(this.dataPath, 'ibdata1'));
+                await this.fixFilePermissions(ibdata1Path);
               }
             }
             
@@ -418,10 +409,7 @@ class MySQLManager {
       // Create configuration file
       const configPath = await this.createTempConfig(port);
 
-      // CRITICAL: Set permissions on config file
-      if (process.platform === 'win32') {
-        await this.fixFilePermissions(configPath);
-      }
+      console.log('MySQL config created at:', configPath);
 
       console.log('Starting MySQL with config:', configPath);
       console.log('MySQL executable:', mysqldPath);

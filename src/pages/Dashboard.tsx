@@ -12,8 +12,11 @@ import { ReportsPage } from '@/components/reports/ReportsPage';
 import { DailyReportsPage } from '@/components/reports/DailyReports';
 import LicenseTest from '@/components/License/LicenseTest';
 
+interface DashboardProps {
+  licenseStatus?: any;
+}
 
-export const Dashboard = () => {
+export const Dashboard = ({ licenseStatus }: DashboardProps) => {
   return (
     <div className="flex h-screen bg-gray-50">
       <Sidebar />
