@@ -45,43 +45,43 @@ class MySQLManager {
 
   async cleanupOldData() {
     try {
-        // Stop any running MySQL processes first
-        if (this.mysqlProcess) {
-            await this.stopMySQL();
+      // Stop any running MySQL processes first
+      if (this.mysqlProcess) {
+        await this.stopMySQL();
+      }
+
+      // Check if directory exists
+      await fs.access(this.dataPath);
+      console.log('Removing old MySQL data directory...');
+
+      // Force remove with retries for Windows file locking issues
+      let retries = 5;
+      while (retries > 0) {
+        try {
+          // First try to remove read-only attributes on Windows
+          if (process.platform === 'win32') {
+            await this.removeReadOnlyAttributes(this.dataPath);
+          }
+
+          await fs.rm(this.dataPath, { recursive: true, force: true });
+          console.log('Old MySQL data removed successfully');
+          break;
+        } catch (error) {
+          retries--;
+          if (retries === 0) {
+            throw error;
+          }
+          console.log(`Retry removing data directory (${retries} attempts left)...`);
+          await new Promise(resolve => setTimeout(resolve, 3000));
         }
-        
-        // Check if directory exists
-        await fs.access(this.dataPath);
-        console.log('Removing old MySQL data directory...');
-        
-        // Force remove with retries for Windows file locking issues
-        let retries = 5;
-        while (retries > 0) {
-            try {
-                // First try to remove read-only attributes on Windows
-                if (process.platform === 'win32') {
-                    await this.removeReadOnlyAttributes(this.dataPath);
-                }
-                
-                await fs.rm(this.dataPath, { recursive: true, force: true });
-                console.log('Old MySQL data removed successfully');
-                break;
-            } catch (error) {
-                retries--;
-                if (retries === 0) {
-                    throw error;
-                }
-                console.log(`Retry removing data directory (${retries} attempts left)...`);
-                await new Promise(resolve => setTimeout(resolve, 3000));
-            }
-        }
-        
-        // Wait for filesystem to catch up
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
+      }
+
+      // Wait for filesystem to catch up
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
     } catch (error) {
-        // Directory doesn't exist - that's fine
-        console.log('No old MySQL data to remove');
+      // Directory doesn't exist - that's fine
+      console.log('No old MySQL data to remove');
     }
   }
 
@@ -101,45 +101,45 @@ class MySQLManager {
 
   async ensureDataDirectory() {
     try {
-        // Check if MySQL is already initialized
+      // Check if MySQL is already initialized
+      try {
+        const mysqlDir = path.join(this.dataPath, 'mysql');
+        await fs.access(mysqlDir);
+
+        // Check if ibdata1 exists and is writable
+        const ibdata1Path = path.join(this.dataPath, 'ibdata1');
         try {
-            const mysqlDir = path.join(this.dataPath, 'mysql');
-            await fs.access(mysqlDir);
-            
-            // Check if ibdata1 exists and is writable
-            const ibdata1Path = path.join(this.dataPath, 'ibdata1');
-            try {
-                await fs.access(ibdata1Path, fs.constants.W_OK);
-                console.log('MySQL already initialized and writable, skipping initialization...');
-                this.isInitialized = true;
-                return;
-            } catch (writeError) {
-                console.log('MySQL exists but not writable, reinitializing...');
-                await this.cleanupOldData();
-            }
-        } catch (error) {
-            // MySQL not initialized, proceed with setup
-            console.log('MySQL not initialized, proceeding with setup...');
+          await fs.access(ibdata1Path, fs.constants.W_OK);
+          console.log('MySQL already initialized and writable, skipping initialization...');
+          this.isInitialized = true;
+          return;
+        } catch (writeError) {
+          console.log('MySQL exists but not writable, reinitializing...');
+          await this.cleanupOldData();
         }
-        
-        // Clean up old data first
-        await this.cleanupOldData();
-        
-        // Create new data directory
-        await fs.mkdir(this.dataPath, { recursive: true });
-        console.log('Created new data directory:', this.dataPath);
-        
-        // CRITICAL: Set permissions BEFORE initializing database
-        await this.setDirectoryPermissions(this.dataPath);
-        
-        // Initialize database
-        if (!this.isInitialized) {
-          await this.initializeDatabase();
-        }
-        
+      } catch (error) {
+        // MySQL not initialized, proceed with setup
+        console.log('MySQL not initialized, proceeding with setup...');
+      }
+
+      // Clean up old data first
+      await this.cleanupOldData();
+
+      // Create new data directory
+      await fs.mkdir(this.dataPath, { recursive: true });
+      console.log('Created new data directory:', this.dataPath);
+
+      // CRITICAL: Set permissions BEFORE initializing database
+      await this.setDirectoryPermissions(this.dataPath);
+
+      // Initialize database
+      if (!this.isInitialized) {
+        await this.initializeDatabase();
+      }
+
     } catch (error) {
-        console.error('Error ensuring data directory:', error);
-        throw error;
+      console.error('Error ensuring data directory:', error);
+      throw error;
     }
   }
 
@@ -154,7 +154,7 @@ class MySQLManager {
   async setWindowsPermissions(dirPath) {
     return new Promise((resolve, reject) => {
       const username = os.userInfo().username;
-      
+
       // Execute commands sequentially to avoid conflicts
       const executeCommand = (command) => {
         return new Promise((cmdResolve) => {
@@ -184,7 +184,7 @@ class MySQLManager {
           // Small delay between commands
           await new Promise(resolve => setTimeout(resolve, 500));
         }
-        
+
         // Final verification - try to create a test file
         try {
           await this.verifyWritePermissions(dirPath);
@@ -306,10 +306,10 @@ class MySQLManager {
 
         initProcess.on('close', async (code) => {
           console.log('MySQL initialization completed with code:', code);
-          
+
           if (code === 0) {
             console.log('MySQL database initialized successfully');
-            
+
             // Only verify critical files are writable - don't reset all permissions
             try {
               const ibdata1Path = path.join(this.dataPath, 'ibdata1');
@@ -322,13 +322,13 @@ class MySQLManager {
                 await this.fixFilePermissions(ibdata1Path);
               }
             }
-            
+
             this.isInitialized = true;
             resolve();
           } else {
             console.error('MySQL initialization failed with code:', code);
             let errorMessage = 'MySQL initialization failed';
-            
+
             if (errorOutput.includes('Access is denied')) {
               errorMessage = 'MySQL initialization failed: Access denied. Check file permissions.';
             } else if (errorOutput.includes('cannot create')) {
@@ -336,7 +336,7 @@ class MySQLManager {
             } else if (errorOutput.includes('must be writable')) {
               errorMessage = 'MySQL initialization failed: Database files must be writable. Check permissions.';
             }
-            
+
             reject(new Error(`${errorMessage}\nDetails: ${errorOutput}`));
           }
         });
@@ -365,11 +365,11 @@ class MySQLManager {
   async fixFilePermissions(filePath) {
     if (process.platform !== 'win32') return;
 
-    
+
     return new Promise((resolve) => {
       const username = os.userInfo().username;
       const commands = [
-        `takeown /F "${filePath}"`, 
+        `takeown /F "${filePath}"`,
         `icacls "${filePath}" /grant "${username}:F" /Q`,
         `icacls "${filePath}" /grant "SYSTEM:F" /Q`,
         `icacls "${filePath}" /grant "Administrators:F" /Q`
@@ -448,27 +448,27 @@ class MySQLManager {
           console.log('MySQL Output:', output);
 
           if (output.includes('ready for connections') ||
-              output.includes(`port: ${port}`) ||
-              output.includes('mysqld: ready for connections')) {
+            output.includes(`port: ${port}`) ||
+            output.includes('mysqld: ready for connections')) {
             if (!isResolved) {
               isResolved = true;
               clearTimeout(this.startupTimeout);
               console.log('MySQL server started successfully');
-              
+
               // Import schema after startup
               setTimeout(async () => {
                 try {
                   const dumpPath = process.env.ELECTRON_DEV === 'true' ?
                     path.join(process.cwd(), 'dump.sql') :
                     path.join(process.resourcesPath, 'dump.sql');
-                  
+
                   await this.importSchema(dumpPath, port);
                   console.log('Database schema imported successfully');
                 } catch (schemaError) {
                   console.warn('Schema import failed:', schemaError.message);
                 }
               }, 2000);
-              
+
               resolve(true);
             }
           }
@@ -479,11 +479,26 @@ class MySQLManager {
           console.error('MySQL Error:', error);
 
           // Check for success in stderr (MySQL 9.x behavior)
-          if (error.includes('ready for connections') && error.includes(`port: ${port}`)) {
+          if (error.includes('ready for connections')) {
             if (!isResolved) {
               isResolved = true;
               clearTimeout(this.startupTimeout);
               console.log('MySQL server started successfully (detected in stderr)');
+
+              // Import schema after startup
+              setTimeout(async () => {
+                try {
+                  const dumpPath = process.env.ELECTRON_DEV === 'true' ?
+                    path.join(process.cwd(), 'dump.sql') :
+                    path.join(process.resourcesPath, 'dump.sql');
+
+                  await this.importSchema(dumpPath, port);
+                  console.log('Database schema imported successfully');
+                } catch (schemaError) {
+                  console.warn('Schema import failed:', schemaError.message);
+                }
+              }, 2000);
+
               resolve(true);
             }
             return;
@@ -491,10 +506,10 @@ class MySQLManager {
 
           // Check for critical errors - especially the writable file error
           if (error.includes('must be writable') ||
-              error.includes('Aborting') ||
-              error.includes('Cannot start') ||
-              error.includes('Fatal error') ||
-              error.includes('Failed to initialize DD Storage Engine')) {
+            error.includes('Aborting') ||
+            error.includes('Cannot start') ||
+            error.includes('Fatal error') ||
+            error.includes('Failed to initialize DD Storage Engine')) {
             if (!isResolved) {
               isResolved = true;
               clearTimeout(this.startupTimeout);
@@ -534,7 +549,7 @@ class MySQLManager {
   }
 
   async createTempConfig(port = 3306) {
-  const configContent = `[mysqld]
+    const configContent = `[mysqld]
 basedir=${this.mysqlPath.replace(/\\/g, '/')}
 datadir=${this.dataPath.replace(/\\/g, '/')}
 port=${port}
@@ -592,12 +607,12 @@ default-character-set=utf8mb4
 port=${port}
 `;
 
-  const configPath = path.join(this.dataPath, 'my.cnf');
-  await fs.writeFile(configPath, configContent, 'utf8');
-  
-  console.log('MySQL config created at:', configPath);
-  return configPath;
-}
+    const configPath = path.join(this.dataPath, 'my.cnf');
+    await fs.writeFile(configPath, configContent, 'utf8');
+
+    console.log('MySQL config created at:', configPath);
+    return configPath;
+  }
   async stopMySQL() {
     return new Promise((resolve) => {
       if (this.startupTimeout) {
