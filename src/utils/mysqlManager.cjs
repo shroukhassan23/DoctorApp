@@ -452,8 +452,7 @@ class MySQLManager {
       this.mysqlProcess = spawn(mysqldPath, [
         `--defaults-file=${configPath}`,
         '--console',
-        '--skip-grant-tables',
-        '--skip-networking=0'
+        '--skip-grant-tables'
       ], {
         stdio: ['ignore', 'pipe', 'pipe'],
         cwd: this.mysqlPath,

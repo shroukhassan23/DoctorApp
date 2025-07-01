@@ -80,7 +80,7 @@ CREATE TABLE `patients` (
   `address` text,
   `medical_history` text,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `deleted_at` TIMESTAMP NULL DEFAULT NULL، 
+  `deleted_at` TIMESTAMP NULL DEFAULT NULL, 
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=36 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
