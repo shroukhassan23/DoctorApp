@@ -697,7 +697,7 @@ port=${port}
           '-h', '127.0.0.1',
           '-P', port.toString(),
           '-u', 'root',
-          '--skip-password',
+          '-pdummypass123',
           '--default-character-set=utf8mb4'
         ], {
           stdio: ['pipe', 'pipe', 'pipe'],
@@ -710,7 +710,7 @@ port=${port}
         });
         setupProcess.stdin.write(`
 CREATE DATABASE IF NOT EXISTS doctor;
-CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY '';
+CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY 'dummypass123';
 GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;
 FLUSH PRIVILEGES;
 `);
@@ -727,7 +727,7 @@ FLUSH PRIVILEGES;
             '-h', '127.0.0.1',
             '-P', port.toString(),
             '-u', 'root',
-            '--skip-password',
+            '-pdummypass123',  // Add password here
             '--default-character-set=utf8mb4',
             'doctor'
           ], {
