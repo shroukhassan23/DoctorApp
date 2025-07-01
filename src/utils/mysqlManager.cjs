@@ -695,7 +695,7 @@ port=${port}
         console.log('Importing schema from:', schemaPath);
 
         const setupProcess = spawn(mysqlPath, [
-          '-h', '127.0.0.1',
+          '-h', 'localhost',
           '-P', port.toString(),
           '-u', 'root',
           '--default-character-set=utf8mb4',
@@ -725,7 +725,7 @@ port=${port}
           }
 
           const importProcess = spawn(mysqlPath, [
-            '-h', '127.0.0.1',
+            '-h', 'localhost',
             '-P', port.toString(),
             '-u', 'root',
             '--default-character-set=utf8mb4',
