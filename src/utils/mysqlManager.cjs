@@ -592,7 +592,6 @@ ${process.platform === 'win32' ? 'enable-named-pipe=1' : ''}
 
 # Authentication
 # skip-grant-tables=1
-skip-grant-tables=1
 skip-name-resolve=1
 
 # Character set - FIXED: Removed invalid default-character-set from [mysqld] section
