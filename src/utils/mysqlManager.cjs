@@ -373,6 +373,7 @@ class MySQLManager {
   async fixFilePermissions(filePath) {
     if (process.platform !== 'win32') return;
 
+    
     return new Promise((resolve) => {
       const username = os.userInfo().username;
       const commands = [
