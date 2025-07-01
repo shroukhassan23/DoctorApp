@@ -170,10 +170,11 @@ class MySQLManager {
       };
 
       const commands = [
-        `takeown /F "${filePath}"`,  // Removed /D Y flag for single files
-        `icacls "${filePath}" /grant "${username}:F" /Q`,
-        `icacls "${filePath}" /grant "SYSTEM:F" /Q`,
-        `icacls "${filePath}" /grant "Administrators:F" /Q`
+        `takeown /F "${dirPath}" /R /D Y`,  // <-- FIXED: changed filePath to dirPath, added /R /D Y for directories
+        `icacls "${dirPath}" /inheritance:d /T /Q`,
+        `icacls "${dirPath}" /grant "${username}:(OI)(CI)F" /T /Q`,
+        `icacls "${dirPath}" /grant "SYSTEM:(OI)(CI)F" /T /Q`,
+        `icacls "${dirPath}" /grant "Administrators:(OI)(CI)F" /T /Q`
       ];
 
       // Execute commands sequentially
@@ -368,7 +369,7 @@ class MySQLManager {
     return new Promise((resolve) => {
       const username = os.userInfo().username;
       const commands = [
-        `takeown /F "${filePath}" /D Y`,
+        `takeown /F "${filePath}"`, 
         `icacls "${filePath}" /grant "${username}:F" /Q`,
         `icacls "${filePath}" /grant "SYSTEM:F" /Q`,
         `icacls "${filePath}" /grant "Administrators:F" /Q`
