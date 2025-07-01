@@ -392,8 +392,38 @@ class MySQLManager {
     });
   }
 
-  async startMySQL(port = 3306) {
+  async findAvailablePort(startPort = 3306) {
+    const net = require('net');
+    
+    const isPortAvailable = (port) => {
+      return new Promise((resolve) => {
+        const server = net.createServer();
+        server.listen(port, '127.0.0.1', () => {
+          server.close(() => resolve(true));
+        });
+        server.on('error', () => resolve(false));
+      });
+    };
+  
+    // Check ports 3306, 3307, 3308, etc.
+    for (let port = startPort; port < startPort + 10; port++) {
+      console.log(`Checking if port ${port} is available...`);
+      if (await isPortAvailable(port)) {
+        console.log(`Port ${port} is available`);
+        return port;
+      } else {
+        console.log(`Port ${port} is in use`);
+      }
+    }
+    
+    throw new Error('No available ports found in range 3306-3315');
+  }
+
+  async startMySQL(requestedPort = 3306) {
     try {
+
+    const port = await this.findAvailablePort(requestedPort);
+    console.log(`Using MySQL port: ${port}`);
       // Stop any existing MySQL process
       if (this.mysqlProcess) {
         console.log('Stopping existing MySQL process...');
@@ -419,7 +449,9 @@ class MySQLManager {
       this.mysqlProcess = spawn(mysqldPath, [
         `--defaults-file=${configPath}`,
         '--console',
-        `--port=${port}`
+        `--port=${port}`,
+        `--bind-address=0.0.0.0`,
+        '--skip-networking=0'
       ], {
         stdio: ['ignore', 'pipe', 'pipe'],
         cwd: this.mysqlPath,
