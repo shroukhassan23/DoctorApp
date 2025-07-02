@@ -65,10 +65,6 @@ win:
       to: "reports.cjs"
     - from: "dump.sql"
       to: "dump.sql"
-    
-    # Keep schema file:
-    - from: "dump.sql"
-      to: "dump.sql"
 
 # macOS configuration  
 mac:
