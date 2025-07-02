@@ -46,20 +46,30 @@ class DoctorApp {
 
   async checkSetupStatus() {
     try {
-      this.isSetupComplete = await this.configManager.isSetupComplete();
-      console.log('Setup status check:', {
-        isSetupComplete: this.isSetupComplete,
-        configPath: this.configManager.configPath
-      });
-
-      // Debug: Log the config content if it exists
-      if (this.isSetupComplete) {
-        const config = await this.configManager.getConfig();
-        console.log('Existing config:', config);
-      }
+        this.isSetupComplete = await this.configManager.isSetupComplete();
+        
+        // Check if we need to migrate from MySQL to SQLite
+        if (this.isSetupComplete) {
+            const config = await this.configManager.getConfig();
+            console.log('Existing config:', config);
+            
+            // If config has MySQL settings, force re-setup for SQLite
+            if (config.database && config.database.host) {
+                console.log('Detected old MySQL config, forcing re-setup for SQLite...');
+                this.isSetupComplete = false;
+                // Optionally delete the old config
+                await this.configManager.clearConfig();
+            }
+        }
+        
+        console.log('Setup status check:', {
+            isSetupComplete: this.isSetupComplete,
+            configPath: this.configManager.configPath
+        });
+        
     } catch (error) {
-      console.log('Setup status check error:', error);
-      this.isSetupComplete = false;
+        console.log('Setup status check error:', error);
+        this.isSetupComplete = false;
     }
   }
 

@@ -24,26 +24,35 @@ class BackendManager {
         try {
             const isDev = process.env.ELECTRON_DEV === 'true';
             let servicePath;
-            
+
             // تحديد مسار الخدمة بشكل أفضل
             if (isDev) {
                 servicePath = path.join(this.appPath, service.file);
             } else {
+                console.log('Debug Info:');
+                console.log('  this.appPath:', this.appPath);
+                console.log('  __dirname:', __dirname);
+                console.log('  process.resourcesPath:', process.resourcesPath);
+                console.log('  process.execPath:', process.execPath);
                 // محاولة مسارات مختلفة للـ production
                 const possiblePaths = [
                     path.join(this.appPath, service.file),                    // Same directory as electron.cjs
-                    path.join(__dirname, service.file),                       // Current directory
-                    path.join(process.resourcesPath, service.file),           // Resources folder
-                    path.join(this.appPath, '..', service.file),             // Parent directory
+                    path.join(__dirname, service.file),                       // Current directory  
                     path.join(process.resourcesPath, 'app', service.file),    // Resources/app folder
-                    path.join(this.appPath, '..', 'Resources', 'app.asar.unpacked', service.file),
-                    path.join(this.appPath, 'resources', 'app.asar.unpacked', service.file),
-                    path.join(process.resourcesPath, 'app.asar.unpacked', service.file)
+                    path.join(path.dirname(process.execPath), 'resources', 'app', service.file), // Relative to exe
+                    path.join(this.appPath, '..', service.file),             // Parent directory
+                    path.join(process.resourcesPath, service.file),           // Resources folder
                 ];
-                
+
+                console.log(`Looking for ${service.file} in these paths:`);
+                possiblePaths.forEach(p => console.log(`  - ${p} (exists: ${fs.existsSync(p)})`));
+
+
                 for (const testPath of possiblePaths) {
                     if (fs.existsSync(testPath)) {
                         servicePath = testPath;
+                        console.log(`✅ Found ${service.file} at: ${testPath}`);
+
                         break;
                     }
                 }
@@ -78,7 +87,7 @@ class BackendManager {
                 } else {
                     nodeExecutable = path.join(process.resourcesPath, 'node') || 'node';
                 }
-                
+
                 // التحقق من وجود Node.js في المسار المحدد
                 if (!fs.existsSync(nodeExecutable)) {
                     nodeExecutable = 'node'; // استخدام Node.js من النظام
@@ -142,7 +151,7 @@ class BackendManager {
 
             // انتظار قصير للتأكد من عدم انهيار العملية فوراً
             await new Promise(resolve => setTimeout(resolve, 1000));
-            
+
             if (serviceProcess.killed || serviceProcess.exitCode !== null) {
                 throw new Error(`${service.name} process died immediately after start`);
             }
@@ -155,19 +164,19 @@ class BackendManager {
 
     async stopAllServices() {
         console.log('Stopping all services...');
-        
+
         for (const [name, process] of this.processes) {
             try {
                 if (!process.killed && process.exitCode === null) {
                     console.log(`Stopping ${name} service (PID: ${process.pid})`);
-                    
+
                     if (process.platform === 'win32') {
                         // Windows
                         spawn('taskkill', ['/pid', process.pid, '/f', '/t'], { stdio: 'inherit' });
                     } else {
                         // Unix-like systems
                         process.kill('SIGTERM');
-                        
+
                         // إعطاء وقت للإنهاء السليم ثم فرض الإنهاء إذا لزم الأمر
                         setTimeout(() => {
                             if (!process.killed && process.exitCode === null) {
@@ -180,7 +189,7 @@ class BackendManager {
                 console.error(`Error stopping ${name} service:`, error);
             }
         }
-        
+
         this.processes.clear();
         console.log('All services stopped');
     }
