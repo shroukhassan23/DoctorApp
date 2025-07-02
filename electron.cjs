@@ -1,7 +1,7 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs').promises;
-const SQLiteManager = require('./src/utils/sqliteManager.cjs');
+const SQLiteManager = require('./src/utils/mysqlManager.cjs');
 const LicenseManager = require('./src/utils/licenseManager.cjs');
 const ConfigManager = require('./src/utils/configManager.cjs');
 const BackendManager = require('./src/utils/backendManager.cjs');
