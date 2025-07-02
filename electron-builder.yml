@@ -54,12 +54,12 @@ win:
       arch: ["x64"]
   icon: "build/icon.ico"
   extraResources:
-    # - from: "patient.cjs"
-    #   to: "patient.cjs"
-    # - from: "visit.cjs"
-    #   to: "visit.cjs" 
-    # - from: "reports.cjs"
-    #   to: "reports.cjs"
+    - from: "mySql/patient.cjs"
+      to: "patient.cjs"
+    - from: "mySql/visit.cjs"
+      to: "visit.cjs"
+    - from: "mySql/reports.cjs"
+      to: "reports.cjs"
     - from: "dump.sql"
       to: "dump.sql"
 
