@@ -694,7 +694,7 @@ port=${port}
         console.log('Importing schema from:', schemaPath);
 
         const setupProcess = spawn(mysqlPath, [
-          '-h', '127.0.0.1',
+          '-h', 'localhost',
           '-P', port.toString(),
           '-u', 'root',
           '-pdummypass123',
@@ -710,6 +710,10 @@ port=${port}
         });
         setupProcess.stdin.write(`
 CREATE DATABASE IF NOT EXISTS doctor;
+CREATE USER IF NOT EXISTS 'root'@'localhost' IDENTIFIED BY 'dummypass123';
+GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' WITH GRANT OPTION;
+CREATE USER IF NOT EXISTS 'root'@'127.0.0.1' IDENTIFIED BY 'dummypass123';
+GRANT ALL PRIVILEGES ON *.* TO 'root'@'127.0.0.1' WITH GRANT OPTION;
 CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY 'dummypass123';
 GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;
 FLUSH PRIVILEGES;
@@ -724,7 +728,7 @@ FLUSH PRIVILEGES;
           }
 
           const importProcess = spawn(mysqlPath, [
-            '-h', '127.0.0.1',
+            '-h', 'localhost',
             '-P', port.toString(),
             '-u', 'root',
             '-pdummypass123',  // Add password here
