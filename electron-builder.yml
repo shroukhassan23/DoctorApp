@@ -17,6 +17,7 @@ files:
   - "mySql/reports.cjs"
   - "!package.json"
   - "initDb.cjs"
+  - "scripts/**/*" 
 
 extraFiles:
   - from: "mySql/patient.cjs"

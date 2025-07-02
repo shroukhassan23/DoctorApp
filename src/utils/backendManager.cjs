@@ -126,8 +126,28 @@ class BackendManager {
                 const error = data.toString().trim();
                 if (error) {
                     console.error(`${service.name} Error:`, error);
+                    // Log more details for debugging
+                    if (error.includes('Cannot find module')) {
+                        console.error(`${service.name} Module not found error - check NODE_PATH:`, env.NODE_PATH);
+                    }
                 }
             });
+
+            serviceProcess.on('exit', (code, signal) => {
+                console.log(`${service.name} process exited with code ${code}, signal: ${signal}`);
+                
+                // Log additional debug info on unexpected exit
+                if (code !== 0) {
+                    console.error(`${service.name} unexpected exit with code ${code}`);
+                    console.error(`Working directory was: ${path.dirname(servicePath)}`);
+                    console.error(`Service path was: ${servicePath}`);
+                    console.error(`Environment NODE_PATH: ${env.NODE_PATH}`);
+                }
+                
+                clearTimeout(startupTimeout);
+                this.processes.delete(service.name);
+            });
+            
 
             serviceProcess.on('error', (error) => {
                 console.error(`Failed to start ${service.name}:`, error);

@@ -21,7 +21,10 @@
     "clean": "rimraf app_dist dist-installers mysql-resources/mysql-* build node_modules/.cache",
     "rebuild": "npm run clean && npm run dist",
     "install-services": "node scripts/install-services.js",
-    "uninstall-services": "node scripts/uninstall-services.js"
+    "uninstall-services": "node scripts/uninstall-services.js",
+    "start-services": "net start \"DoctorApp Patient Service\" && net start \"DoctorApp Visit Service\" && net start \"DoctorApp Reports Service\"",
+    "stop-services": "net stop \"DoctorApp Patient Service\" && net stop \"DoctorApp Visit Service\" && net stop \"DoctorApp Reports Service\""
+
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
