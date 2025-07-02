@@ -1,4 +1,4 @@
-const sqlite3 = require('sqlite3').verbose();
+const initSqlJs = require('sql.js');
 const path = require('path');
 const fs = require('fs').promises;
 
@@ -7,6 +7,7 @@ class SQLiteManager {
     this.db = null;
     this.dbPath = null;
     this.isInitialized = false;
+    this.SQL = null;
   }
 
   initializePaths(appPath) {
@@ -21,36 +22,54 @@ class SQLiteManager {
       this.dataPath = userDataPath;
       this.dbPath = path.join(userDataPath, 'doctor-app.db');
     }
-
-
+    
     console.log('SQLite Database Path:', this.dbPath);
   }
 
   async initializeDatabase() {
     try {
       console.log('Initializing SQLite database...');
-
+      
+      // Initialize sql.js
+      this.SQL = await initSqlJs();
+      
       // Ensure directory exists
       const dbDir = path.dirname(this.dbPath);
       await fs.mkdir(dbDir, { recursive: true });
 
-      // Create/open database
-      this.db = new sqlite3.Database(this.dbPath);
-
-      // Enable foreign keys and WAL mode for better performance
-      this.db.serialize(() => {
-        this.db.run('PRAGMA journal_mode = WAL');
-        this.db.run('PRAGMA foreign_keys = ON');
-        this.db.run('PRAGMA synchronous = NORMAL');
-      });
-
+      // Try to load existing database
+      let filebuffer;
+      try {
+        filebuffer = await fs.readFile(this.dbPath);
+        this.db = new this.SQL.Database(filebuffer);
+        console.log('Loaded existing SQLite database');
+      } catch (error) {
+        // Create new database
+        this.db = new this.SQL.Database();
+        console.log('Created new SQLite database');
+      }
+      
+      // Enable foreign keys
+      this.db.run('PRAGMA foreign_keys = ON');
+      
       console.log('SQLite database initialized successfully');
       this.isInitialized = true;
-
+      
       return true;
     } catch (error) {
       console.error('Error initializing SQLite database:', error);
       throw error;
+    }
+  }
+
+  async saveDatabase() {
+    try {
+      if (this.db) {
+        const data = this.db.export();
+        await fs.writeFile(this.dbPath, Buffer.from(data));
+      }
+    } catch (error) {
+      console.error('Error saving database:', error);
     }
   }
 
@@ -60,33 +79,31 @@ class SQLiteManager {
       console.log('Importing schema from:', schemaPath);
 
       const sqlContent = await fs.readFile(schemaPath, 'utf8');
-
+      
       // Convert MySQL schema to SQLite
       const sqliteSchema = this.convertMySQLToSQLite(sqlContent);
+      
+      // Split by semicolon and execute each statement
+      const statements = sqliteSchema
+        .split(';')
+        .map(stmt => stmt.trim())
+        .filter(stmt => stmt.length > 0 && !stmt.startsWith('--'));
 
-      // Execute schema in transaction
-      const transaction = this.db.transaction(() => {
-        // Split by semicolon and execute each statement
-        const statements = sqliteSchema
-          .split(';')
-          .map(stmt => stmt.trim())
-          .filter(stmt => stmt.length > 0 && !stmt.startsWith('--'));
-
-        for (const statement of statements) {
-          if (statement.trim()) {
-            try {
-              this.db.exec(statement);
-            } catch (error) {
-              // Log but don't fail on non-critical errors
-              if (!error.message.includes('already exists')) {
-                console.warn('Schema statement warning:', error.message);
-              }
+      for (const statement of statements) {
+        if (statement.trim()) {
+          try {
+            this.db.run(statement);
+          } catch (error) {
+            // Log but don't fail on non-critical errors
+            if (!error.message.includes('already exists')) {
+              console.warn('Schema statement warning:', error.message);
             }
           }
         }
-      });
+      }
 
-      transaction();
+      // Save database after schema import
+      await this.saveDatabase();
       console.log('Schema imported successfully');
       return true;
 
@@ -110,7 +127,7 @@ class SQLiteManager {
 
     // Fix PRIMARY KEY issues - replace AUTO_INCREMENT with AUTOINCREMENT
     sqliteSchema = sqliteSchema.replace(/`id` int NOT NULL AUTO_INCREMENT,[\s\S]*?PRIMARY KEY \(`id`\)/gi, '`id` INTEGER PRIMARY KEY AUTOINCREMENT');
-
+    
     // Convert data types
     sqliteSchema = sqliteSchema.replace(/int\(\d+\)/gi, 'INTEGER');
     sqliteSchema = sqliteSchema.replace(/int NOT NULL AUTO_INCREMENT/gi, 'INTEGER PRIMARY KEY AUTOINCREMENT');
@@ -125,7 +142,7 @@ class SQLiteManager {
 
     // Convert enum to TEXT with CHECK constraint
     sqliteSchema = sqliteSchema.replace(/enum\('male','female','other'\)/gi, "TEXT CHECK(gender IN ('male','female','other'))");
-
+    
     // Handle DEFAULT CURRENT_TIMESTAMP
     sqliteSchema = sqliteSchema.replace(/DEFAULT CURRENT_TIMESTAMP/gi, "DEFAULT (datetime('now'))");
     sqliteSchema = sqliteSchema.replace(/ON UPDATE CURRENT_TIMESTAMP/gi, '');
@@ -160,12 +177,12 @@ class SQLiteManager {
         await this.initializeDatabase();
       }
 
-      // Import schema if tables don't exist
-      const tables = this.db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all();
-
-      if (tables.length === 0) {
+      // Check if tables exist
+      const tables = this.db.exec("SELECT name FROM sqlite_master WHERE type='table'");
+      
+      if (!tables.length || tables[0].values.length === 0) {
         console.log('No tables found, importing schema...');
-
+        
         let schemaPath;
         if (process.env.ELECTRON_DEV === 'true') {
           schemaPath = path.join(process.cwd(), 'dump.sql');
@@ -173,7 +190,7 @@ class SQLiteManager {
           // In production, dump.sql should be in the same directory as other service files
           schemaPath = path.join(path.dirname(__filename), 'dump.sql');
         }
-
+          
         await this.importSchema(schemaPath);
       }
 
@@ -189,6 +206,7 @@ class SQLiteManager {
   async stopDatabase() {
     try {
       if (this.db) {
+        await this.saveDatabase();
         this.db.close();
         this.db = null;
         console.log('SQLite database closed');
@@ -209,40 +227,49 @@ class SQLiteManager {
 
   // Helper method to create MySQL-compatible interface
   async query(sql, params = []) {
-    return new Promise((resolve, reject) => {
-      try {
-        const db = this.getDatabase();
+    try {
+      const db = this.getDatabase();
+      
+      // Handle SELECT queries
+      if (sql.trim().toUpperCase().startsWith('SELECT')) {
+        const stmt = db.prepare(sql);
+        const rows = [];
         
-        // Handle SELECT queries
-        if (sql.trim().toUpperCase().startsWith('SELECT')) {
-          db.all(sql, params, (err, rows) => {
-            if (err) {
-              console.error('Database query error:', err);
-              reject(err);
-            } else {
-              resolve([rows]); // Return in MySQL format [rows, fields]
-            }
-          });
-        } else {
-          // Handle INSERT/UPDATE/DELETE queries
-          db.run(sql, params, function(err) {
-            if (err) {
-              console.error('Database query error:', err);
-              reject(err);
-            } else {
-              resolve([{
-                affectedRows: this.changes,
-                insertId: this.lastID
-              }]);
-            }
-          });
+        stmt.bind(params);
+        while (stmt.step()) {
+          const row = stmt.getAsObject();
+          rows.push(row);
         }
+        stmt.free();
         
-      } catch (error) {
-        console.error('Database query error:', error);
-        reject(error);
+        // Auto-save after any query that might modify data
+        await this.saveDatabase();
+        
+        return [rows]; // Return in MySQL format [rows, fields]
       }
-    });
+      
+      // Handle INSERT/UPDATE/DELETE queries
+      const stmt = db.prepare(sql);
+      stmt.bind(params);
+      stmt.step();
+      
+      const changes = db.getRowsModified();
+      const lastInsertId = db.exec("SELECT last_insert_rowid() as id")[0]?.values[0]?.[0] || 0;
+      
+      stmt.free();
+      
+      // Auto-save after modifications
+      await this.saveDatabase();
+      
+      return [{
+        affectedRows: changes,
+        insertId: lastInsertId
+      }];
+      
+    } catch (error) {
+      console.error('Database query error:', error);
+      throw error;
+    }
   }
 
   async diagnoseIssues() {
@@ -264,7 +291,7 @@ class SQLiteManager {
     try {
       // Test database connection
       if (this.db) {
-        this.db.prepare('SELECT 1').get();
+        this.db.exec('SELECT 1');
         diagnostics.databaseConnection = true;
       }
     } catch (error) {
@@ -273,8 +300,7 @@ class SQLiteManager {
 
     try {
       // Test write permissions
-      const testTable = 'CREATE TEMPORARY TABLE test_write (id INTEGER)';
-      this.db.exec(testTable);
+      this.db.run('CREATE TEMPORARY TABLE test_write (id INTEGER)');
       diagnostics.writeTest = true;
     } catch (error) {
       console.error('Write test failed:', error);
@@ -282,8 +308,8 @@ class SQLiteManager {
 
     try {
       // Check if main tables exist
-      const tables = this.db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='patients'").get();
-      if (tables) {
+      const tables = this.db.exec("SELECT name FROM sqlite_master WHERE type='table' AND name='patients'");
+      if (tables.length > 0 && tables[0].values.length > 0) {
         diagnostics.schemaLoaded = true;
       }
     } catch (error) {
