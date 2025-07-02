@@ -31,11 +31,14 @@ class BackendManager {
             } else {
                 // محاولة مسارات مختلفة للـ production
                 const possiblePaths = [
+                    path.join(this.appPath, service.file),                    // Same directory as electron.cjs
+                    path.join(__dirname, service.file),                       // Current directory
+                    path.join(process.resourcesPath, service.file),           // Resources folder
+                    path.join(this.appPath, '..', service.file),             // Parent directory
+                    path.join(process.resourcesPath, 'app', service.file),    // Resources/app folder
                     path.join(this.appPath, '..', 'Resources', 'app.asar.unpacked', service.file),
                     path.join(this.appPath, 'resources', 'app.asar.unpacked', service.file),
-                    path.join(process.resourcesPath, 'app.asar.unpacked', service.file),
-                    path.join(this.appPath, service.file),
-                    path.join(__dirname, service.file)
+                    path.join(process.resourcesPath, 'app.asar.unpacked', service.file)
                 ];
                 
                 for (const testPath of possiblePaths) {
@@ -55,14 +58,13 @@ class BackendManager {
 
             const env = {
                 ...process.env,
-                DB_HOST: config.database?.host || '127.0.0.1',
-                DB_PORT: config.database?.port || '3306',
-                DB_USER: config.database?.user || 'root',
-                DB_PASSWORD: config.database?.password || '',
+                // SQLite doesn't need host/port/user/password
+                DB_TYPE: 'sqlite',
                 DB_NAME: 'doctor',
                 SHARED_FOLDER_PATH: config.sharedFolderPath || '',
                 NODE_ENV: isDev ? 'development' : 'production',
-                PORT: service.port.toString()
+                PORT: service.port.toString(),
+                ELECTRON_DEV: process.env.ELECTRON_DEV || 'false'
             };
 
             // تحديد مسار Node.js بشكل أفضل

@@ -98,6 +98,9 @@ class SQLiteManager {
     sqliteSchema = sqliteSchema.replace(/LOCK TABLES[^;]+;/gi, '');
     sqliteSchema = sqliteSchema.replace(/UNLOCK TABLES;/gi, '');
 
+    // Fix PRIMARY KEY issues - replace AUTO_INCREMENT with AUTOINCREMENT
+    sqliteSchema = sqliteSchema.replace(/`id` int NOT NULL AUTO_INCREMENT,[\s\S]*?PRIMARY KEY \(`id`\)/gi, '`id` INTEGER PRIMARY KEY AUTOINCREMENT');
+    
     // Convert data types
     sqliteSchema = sqliteSchema.replace(/int\(\d+\)/gi, 'INTEGER');
     sqliteSchema = sqliteSchema.replace(/int NOT NULL AUTO_INCREMENT/gi, 'INTEGER PRIMARY KEY AUTOINCREMENT');
@@ -111,9 +114,8 @@ class SQLiteManager {
     sqliteSchema = sqliteSchema.replace(/DECIMAL\(\d+,\d+\)/gi, 'REAL');
 
     // Convert enum to TEXT with CHECK constraint
-    sqliteSchema = sqliteSchema.replace(/enum\('([^']+)','([^']+)','([^']+)'\)/gi, "TEXT CHECK($column IN ('$1','$2','$3'))");
-    sqliteSchema = sqliteSchema.replace(/enum\('([^']+)','([^']+)'\)/gi, "TEXT CHECK($column IN ('$1','$2'))");
-
+    sqliteSchema = sqliteSchema.replace(/enum\('male','female','other'\)/gi, "TEXT CHECK(gender IN ('male','female','other'))");
+    
     // Handle DEFAULT CURRENT_TIMESTAMP
     sqliteSchema = sqliteSchema.replace(/DEFAULT CURRENT_TIMESTAMP/gi, "DEFAULT (datetime('now'))");
     sqliteSchema = sqliteSchema.replace(/ON UPDATE CURRENT_TIMESTAMP/gi, '');
@@ -124,18 +126,20 @@ class SQLiteManager {
     sqliteSchema = sqliteSchema.replace(/COLLATE=utf8mb4_unicode_ci/gi, '');
     sqliteSchema = sqliteSchema.replace(/CHARACTER SET utf8mb4/gi, '');
 
-    // Fix the enum gender field specifically
-    sqliteSchema = sqliteSchema.replace(
-      /`gender` TEXT CHECK\(\$column IN \('male','female','other'\)\) DEFAULT 'other'/gi,
-      "`gender` TEXT CHECK(gender IN ('male','female','other')) DEFAULT 'other'"
-    );
-
-    // Remove KEY constraints (SQLite handles them differently)
+    // Remove ALL KEY constraints (SQLite handles them as CREATE INDEX separately)
     sqliteSchema = sqliteSchema.replace(/,\s*KEY `[^`]+` \([^)]+\)/gi, '');
     sqliteSchema = sqliteSchema.replace(/,\s*UNIQUE KEY `[^`]+` \([^)]+\)/gi, '');
+    sqliteSchema = sqliteSchema.replace(/,\s*CONSTRAINT `[^`]+` FOREIGN KEY[^,)]+/gi, '');
+
+    // Remove FOREIGN KEY constraints from table definitions (add them separately later)
+    sqliteSchema = sqliteSchema.replace(/,\s*FOREIGN KEY[^,)]+/gi, '');
 
     // Convert INSERT statements to use proper datetime
     sqliteSchema = sqliteSchema.replace(/NOW\(\)/gi, "datetime('now')");
+
+    // Clean up extra commas and spaces
+    sqliteSchema = sqliteSchema.replace(/,(\s*\))/gi, '$1');
+    sqliteSchema = sqliteSchema.replace(/,\s*,/gi, ',');
 
     return sqliteSchema;
   }
