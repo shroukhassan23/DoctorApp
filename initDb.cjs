@@ -5,9 +5,9 @@ let sqliteManager = null;
 
 async function initDatabase(config = {}) {
   try {
-    // For SQLite, we ignore the MySQL config and use SQLiteManager
+    // For SQLite, we ignore the MySQL config and use SQLiteManager 
     if (!sqliteManager) {
-      const SQLiteManager = require('./src/utils/sqliteManager.cjs');
+      const SQLiteManager = require('./src/utils/mysqlManager.cjs');
       sqliteManager = new SQLiteManager();
       
       // Get app path - works both in dev and production

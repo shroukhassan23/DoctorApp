@@ -12,10 +12,11 @@ files:
   - "preload.js"
   - "src/utils/**/*"
   - "initDb.cjs"
-  - "mySql/patient.cjs"    # Update path if they're in mySql folder
-  - "mySql/visit.cjs"      # Update path if they're in mySql folder
-  - "mySql/reports.cjs"    # Update path if they're in mySql folder
+  - "mySql/patient.cjs"
+  - "mySql/visit.cjs"  
+  - "mySql/reports.cjs"
   - "!package.json"
+  - "initDb.cjs"
 
 extraFiles:
   - from: "mySql/patient.cjs"
@@ -58,6 +59,8 @@ win:
       to: "patient.cjs"
     - from: "mySql/visit.cjs"
       to: "visit.cjs"
+    - from: "initDb.cjs"          
+      to: "initDb.cjs"            
     - from: "mySql/reports.cjs"
       to: "reports.cjs"
     - from: "dump.sql"

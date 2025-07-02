@@ -36,12 +36,12 @@ class BackendManager {
                 console.log('  process.execPath:', process.execPath);
                 // محاولة مسارات مختلفة للـ production
                 const possiblePaths = [
-                    path.join(process.resourcesPath, 'app', service.file),        // ✅ This should work now
-                    path.join(__dirname, service.file),                       // Current directory  
-                    path.join(process.resourcesPath, 'app', service.file),    // Resources/app folder
+                    path.join(process.resourcesPath, 'app', service.file),    // From extraFiles
+                    path.join(process.resourcesPath, service.file),           // From extraResources
+                    path.join(this.appPath, service.file),                   // Same directory as electron.cjs
+                    path.join(__dirname, service.file),                      // Current directory
                     path.join(path.dirname(process.execPath), 'resources', 'app', service.file), // Relative to exe
-                    path.join(this.appPath, '..', service.file),             // Parent directory
-                    path.join(process.resourcesPath, service.file),           // Resources folder
+                    path.join(this.appPath, '..', service.file),            // Parent directory
                 ];
 
                 console.log(`Looking for ${service.file} in these paths:`);
