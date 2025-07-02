@@ -727,11 +727,13 @@ FLUSH PRIVILEGES;
             console.log('Setup completed with warnings, continuing...');
           }
 
+          await new Promise(resolve => setTimeout(resolve, 2000));
+
+
           const importProcess = spawn(mysqlPath, [
             '-h', 'localhost',
             '-P', port.toString(),
             '-u', 'root',
-            '-pdummypass123',  // Add password here
             '--default-character-set=utf8mb4',
             'doctor'
           ], {
@@ -740,7 +742,7 @@ FLUSH PRIVILEGES;
             env: {
               ...process.env,
               PATH: `${path.join(this.mysqlPath, 'bin')};${process.env.PATH}`,
-              MYSQL_PWD: ''
+              MYSQL_PWD: 'dummypass123'
             }
           });
 
