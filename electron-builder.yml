@@ -12,9 +12,9 @@ files:
   - "preload.js"
   - "src/utils/**/*"
   - "initDb.cjs"
-  - "patient.cjs"
-  - "visit.cjs" 
-  - "reports.cjs"
+  - "backend/patient.cjs"    # Update path if they're in backend folder
+  - "backend/visit.cjs"      # Update path if they're in backend folder
+  - "backend/reports.cjs"    # Update path if they're in backend folder
   - "!package.json"
 
 extraFiles:
@@ -57,12 +57,12 @@ win:
       arch: ["x64"]
   icon: "build/icon.ico"
   extraResources:
-    - from: "patient.cjs"
-      to: "patient.cjs"
-    - from: "visit.cjs"
-      to: "visit.cjs" 
-    - from: "reports.cjs"
-      to: "reports.cjs"
+    # - from: "patient.cjs"
+    #   to: "patient.cjs"
+    # - from: "visit.cjs"
+    #   to: "visit.cjs" 
+    # - from: "reports.cjs"
+    #   to: "reports.cjs"
     - from: "dump.sql"
       to: "dump.sql"
 
