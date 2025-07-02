@@ -1,5 +1,4 @@
 const express = require('express');
-const mysql = require('mysql2/promise');
 const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
@@ -361,7 +360,7 @@ app.post('/patients/:patientId/files', upload.single('file'), async (req, res) =
     const [result] = await db.query(
       `INSERT INTO patient_files 
        (patient_id, visit_id, file_name, file_type, file_size, file_path, description, uploaded_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, datetime("now"))`,
       [
         patientId, 
         visitId || null, 
@@ -404,7 +403,7 @@ app.post('/patients/:patientId/files', async (req, res) => {
     const [result] = await db.query(
       `INSERT INTO patient_files 
        (patient_id, visit_id, file_name, file_type, file_size, file_path, description, uploaded_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, datetime("now"))`,
       [patientId, visitId || null, fileName, fileType, fileSize, filePath, description || '']
     );
     
@@ -538,7 +537,7 @@ app.post('/doctor-profile', async (req, res) => {
         `UPDATE doctor_profile SET 
          name = ?, title = ?, qualification = ?, specialization = ?,
          clinic_name = ?, clinic_address = ?, phone = ?, email = ?,
-         updated_at = NOW()
+         updated_at = datetime("now")
          WHERE id = ?`,
         [name, title, qualification, specialization, clinic_name, clinic_address, phone, email, existing[0].id]
       );
@@ -549,7 +548,7 @@ app.post('/doctor-profile', async (req, res) => {
       const [result] = await db.query(
         `INSERT INTO doctor_profile 
          (name, title, qualification, specialization, clinic_name, clinic_address, phone, email, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime("now"), datetime("now"))`,
         [name, title, qualification, specialization, clinic_name, clinic_address, phone, email]
       );
       
@@ -582,7 +581,7 @@ app.put('/doctor-profile/:id', async (req, res) => {
       `UPDATE doctor_profile SET 
        name = ?, title = ?, qualification = ?, specialization = ?,
        clinic_name = ?, clinic_address = ?, phone = ?, email = ?,
-       updated_at = NOW()
+       updated_at = datetime("now")
        WHERE id = ?`,
       [name, title, qualification, specialization, clinic_name, clinic_address, phone, email, id]
     );
@@ -767,7 +766,7 @@ app.post('/management/labtests', async (req, res) => {
   
   try {
     const [result] = await db.query(
-      'INSERT INTO lab_tests (name, description, created_at) VALUES (?, ?, NOW())',
+      'INSERT INTO lab_tests (name, description, created_at) VALUES (?, ?, datetime("now"))',
       [name, description || null]
     );
     
@@ -831,7 +830,7 @@ app.post('/management/imagingstudies', async (req, res) => {
   
   try {
     const [result] = await db.query(
-      'INSERT INTO imaging_studies (name, description, created_at) VALUES (?, ?, NOW())',
+      'INSERT INTO imaging_studies (name, description, created_at) VALUES (?, ?, datetime("now"))',
       [name, description || null]
     );
     
@@ -1302,10 +1301,10 @@ async function updateHistory(table, text) {
   try {
     await db.query(`
       INSERT INTO ${table} (text, usage_count, last_used, created_at)
-      VALUES (?, 1, NOW(), NOW())
+      VALUES (?, 1, datetime("now"), datetime("now"))
       ON DUPLICATE KEY UPDATE
       usage_count = usage_count + 1,
-      last_used = NOW()
+      last_used = datetime("now")
     `, [trimmedText]);
   } catch (error) {
     console.error(`Error updating ${table}:`, error);

@@ -19,7 +19,9 @@
     "dist:mac": "npm run prepare:build && electron-builder --mac --config electron-builder.yml",
     "pack": "npm run prepare:build && electron-builder --dir --config electron-builder.yml",
     "clean": "rimraf app_dist dist-installers mysql-resources/mysql-* build node_modules/.cache",
-    "rebuild": "npm run clean && npm run dist"
+    "rebuild": "npm run clean && npm run dist",
+    "install-services": "node scripts/install-services.js",
+    "uninstall-services": "node scripts/uninstall-services.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

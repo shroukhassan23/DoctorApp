@@ -23,7 +23,7 @@ let db;
       }
 
       try {
-        const [rows] = await db.execute(
+        const [rows] = await db.query(
           `SELECT v.id AS visit_id, p.*, p.id AS patient_id, v.*
        FROM visits v
        JOIN patients p ON v.patient_id = p.id
@@ -40,7 +40,7 @@ let db;
     });
     app.get('/reports/visits/all', async (req, res) => {
       try {
-        const [rows] = await db.execute(
+        const [rows] = await db.query(
           `SELECT v.id AS visit_id, p.*, p.id AS patient_id, v.*
        FROM visits v
        JOIN patients p ON v.patient_id = p.id

@@ -103,7 +103,7 @@ app.post('/Patients', async (req, res) => {
       try {
         const { id } = req.params;
         const [result] = await db.query(
-          'UPDATE patients SET deleted_at = NOW() WHERE id = ? AND deleted_at IS NULL',
+          'UPDATE patients SET deleted_at = datetime("now") WHERE id = ? AND deleted_at IS NULL',
           [id]
         );
         if (result.affectedRows === 0) return res.status(404).json({ error: 'Patient not found' });
