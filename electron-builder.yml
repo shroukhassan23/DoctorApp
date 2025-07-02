@@ -12,21 +12,18 @@ files:
   - "preload.js"
   - "src/utils/**/*"
   - "initDb.cjs"
-  - "backend/patient.cjs"    # Update path if they're in backend folder
-  - "backend/visit.cjs"      # Update path if they're in backend folder
-  - "backend/reports.cjs"    # Update path if they're in backend folder
+  - "mySql/patient.cjs"    # Update path if they're in mySql folder
+  - "mySql/visit.cjs"      # Update path if they're in mySql folder
+  - "mySql/reports.cjs"    # Update path if they're in mySql folder
   - "!package.json"
 
 extraFiles:
-  - from: "patient.cjs"
+  - from: "mySql/patient.cjs"
     to: "app/patient.cjs"
-  - from: "visit.cjs" 
+  - from: "mySql/visit.cjs" 
     to: "app/visit.cjs"
-  - from: "reports.cjs"
+  - from: "mySql/reports.cjs"
     to: "app/reports.cjs"
-  - from: "node_modules/better-sqlite3"
-    to: "app/node_modules/better-sqlite3"
-    filter: ["**/*"]
   - from: "node_modules/better-sqlite3"
     to: "app/node_modules/better-sqlite3"
     filter: ["**/*"]
