@@ -1,7 +1,7 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs').promises;
-const MySQLManager = require('./src/utils/mysqlManager.cjs');
+const SQLiteManager = require('./src/utils/sqliteManager.cjs');
 const LicenseManager = require('./src/utils/licenseManager.cjs');
 const ConfigManager = require('./src/utils/configManager.cjs');
 const BackendManager = require('./src/utils/backendManager.cjs');
@@ -11,7 +11,7 @@ const isDev = process.env.ELECTRON_DEV === 'true';
 class DoctorApp {
   constructor() {
     this.mainWindow = null;
-    this.mysqlManager = new MySQLManager();
+    this.sqliteManager = new SQLiteManager();
     this.licenseManager = new LicenseManager();
     this.configManager = null;
     this.backendManager = null;
@@ -31,7 +31,7 @@ class DoctorApp {
     const appPath = isDev ?
       process.cwd() :
       process.resourcesPath;  // Point to Resources folder
-    this.mysqlManager.initializePaths(appPath);
+    this.sqliteManager.initializePaths(appPath);
 
     // Initialize other managers
     this.configManager = new ConfigManager(this.appDataPath);
@@ -46,22 +46,22 @@ class DoctorApp {
 
   async checkSetupStatus() {
     try {
-        this.isSetupComplete = await this.configManager.isSetupComplete();
-        console.log('Setup status check:', {
-            isSetupComplete: this.isSetupComplete,
-            configPath: this.configManager.configPath
-        });
-        
-        // Debug: Log the config content if it exists
-        if (this.isSetupComplete) {
-            const config = await this.configManager.getConfig();
-            console.log('Existing config:', config);
-        }
+      this.isSetupComplete = await this.configManager.isSetupComplete();
+      console.log('Setup status check:', {
+        isSetupComplete: this.isSetupComplete,
+        configPath: this.configManager.configPath
+      });
+
+      // Debug: Log the config content if it exists
+      if (this.isSetupComplete) {
+        const config = await this.configManager.getConfig();
+        console.log('Existing config:', config);
+      }
     } catch (error) {
-        console.log('Setup status check error:', error);
-        this.isSetupComplete = false;
+      console.log('Setup status check error:', error);
+      this.isSetupComplete = false;
     }
-}
+  }
 
   async saveSetupConfig(installationType, config) {
     if (installationType === 'master') {
@@ -133,16 +133,9 @@ class DoctorApp {
       try {
         console.log('Setting up master installation...');
 
-        // Start MySQL
-        await this.mysqlManager.startMySQL(config.mysqlPort);
-        console.log('MySQL started successfully');
-
-        // Import database schema
-        const schemaPath = isDev ?
-          path.join(process.cwd(), 'dump.sql') :
-          path.join(process.resourcesPath, 'dump.sql');
-        await this.mysqlManager.importSchema(schemaPath, config.mysqlPort);
-        console.log('Database schema imported');
+        // Start SQLite database
+        await this.sqliteManager.startDatabase();
+        console.log('SQLite database started successfully');
 
         // Create shared folder
         await fs.mkdir(config.sharedFolderPath, { recursive: true });
@@ -233,34 +226,24 @@ class DoctorApp {
       app.exit();
     });
 
-    // MySQL Management (for master installations)
-    ipcMain.handle('start-mysql', async (event, port) => {
-      return await this.mysqlManager.startMySQL(port);
+    // SQLite Management (for master installations)
+    ipcMain.handle('start-database', async () => {
+      return await this.sqliteManager.startDatabase();
     });
 
-    ipcMain.handle('stop-mysql', async () => {
-      return await this.mysqlManager.stopMySQL();
+    ipcMain.handle('stop-database', async () => {
+      return await this.sqliteManager.stopDatabase();
     });
 
-    ipcMain.handle('get-mysql-status', () => {
-      return this.mysqlManager.mysqlProcess !== null;
+    ipcMain.handle('get-database-status', () => {
+      return this.sqliteManager.isInitialized;
     });
   }
 
   async testDatabaseConnection(config) {
     try {
-      const mysql = require('mysql2/promise');
-      const connection = await mysql.createConnection({
-        host: config.host,
-        port: config.port,
-        user: config.user,
-        password: config.password,
-        connectTimeout: 5000
-      });
-
-      await connection.execute('SELECT 1');
-      await connection.end();
-
+      // For SQLite, just test if we can create/access the database
+      await this.sqliteManager.startDatabase();
       return { success: true };
     } catch (error) {
       return { success: false, error: error.message };
@@ -286,8 +269,8 @@ class DoctorApp {
         const config = await this.configManager.getConfig();
 
         if (config.installationType === 'master') {
-          console.log('Starting MySQL for master installation...');
-          await this.mysqlManager.startMySQL(config.database.port || 3306);
+          console.log('Starting SQLite database for master installation...');
+          await this.sqliteManager.startDatabase();
         }
 
         // Start backend services
@@ -313,9 +296,9 @@ class DoctorApp {
     }
 
     // Stop MySQL if running
-    if (this.mysqlManager && this.mysqlManager.mysqlProcess) {
-      console.log('Stopping MySQL...');
-      await this.mysqlManager.stopMySQL();
+    if (this.sqliteManager && this.sqliteManager.isInitialized) {
+      console.log('Stopping SQLite database...');
+      await this.sqliteManager.stopDatabase();
     }
   }
 }
