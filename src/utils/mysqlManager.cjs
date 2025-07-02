@@ -1,4 +1,4 @@
-const Database = require('better-sqlite3');
+const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs').promises;
 
@@ -35,12 +35,14 @@ class SQLiteManager {
       await fs.mkdir(dbDir, { recursive: true });
 
       // Create/open database
-      this.db = new Database(this.dbPath);
+      this.db = new sqlite3.Database(this.dbPath);
 
       // Enable foreign keys and WAL mode for better performance
-      this.db.pragma('journal_mode = WAL');
-      this.db.pragma('foreign_keys = ON');
-      this.db.pragma('synchronous = NORMAL');
+      this.db.serialize(() => {
+        this.db.run('PRAGMA journal_mode = WAL');
+        this.db.run('PRAGMA foreign_keys = ON');
+        this.db.run('PRAGMA synchronous = NORMAL');
+      });
 
       console.log('SQLite database initialized successfully');
       this.isInitialized = true;
@@ -207,29 +209,40 @@ class SQLiteManager {
 
   // Helper method to create MySQL-compatible interface
   async query(sql, params = []) {
-    try {
-      const db = this.getDatabase();
-
-      // Handle SELECT queries
-      if (sql.trim().toUpperCase().startsWith('SELECT')) {
-        const stmt = db.prepare(sql);
-        const rows = stmt.all(params);
-        return [rows]; // Return in MySQL format [rows, fields]
+    return new Promise((resolve, reject) => {
+      try {
+        const db = this.getDatabase();
+        
+        // Handle SELECT queries
+        if (sql.trim().toUpperCase().startsWith('SELECT')) {
+          db.all(sql, params, (err, rows) => {
+            if (err) {
+              console.error('Database query error:', err);
+              reject(err);
+            } else {
+              resolve([rows]); // Return in MySQL format [rows, fields]
+            }
+          });
+        } else {
+          // Handle INSERT/UPDATE/DELETE queries
+          db.run(sql, params, function(err) {
+            if (err) {
+              console.error('Database query error:', err);
+              reject(err);
+            } else {
+              resolve([{
+                affectedRows: this.changes,
+                insertId: this.lastID
+              }]);
+            }
+          });
+        }
+        
+      } catch (error) {
+        console.error('Database query error:', error);
+        reject(error);
       }
-
-      // Handle INSERT/UPDATE/DELETE queries
-      const stmt = db.prepare(sql);
-      const result = stmt.run(params);
-
-      return [{
-        affectedRows: result.changes,
-        insertId: result.lastInsertRowid
-      }];
-
-    } catch (error) {
-      console.error('Database query error:', error);
-      throw error;
-    }
+    });
   }
 
   async diagnoseIssues() {

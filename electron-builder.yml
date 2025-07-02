@@ -25,8 +25,8 @@ extraFiles:
     to: "app/visit.cjs"
   - from: "mySql/reports.cjs"
     to: "app/reports.cjs"
-  - from: "node_modules/better-sqlite3"
-    to: "app/node_modules/better-sqlite3"
+  - from: "node_modules/sqlite3"
+    to: "app/node_modules/sqlite3"
     filter: ["**/*"]
   - from: "node_modules/express"
     to: "app/node_modules/express"
