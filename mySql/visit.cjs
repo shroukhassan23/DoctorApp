@@ -21,22 +21,10 @@ app.use(cors({
 // Add this entire section after the CORS setup and before the multer configuration
 (async () => {
   try {
-    const dbConfig = {
-      host: process.env.DB_HOST || 'localhost',
-      port: parseInt(process.env.DB_PORT || '3306'),
-      user: process.env.DB_USER || 'root',
-      password: process.env.DB_PASSWORD || '',
-      database: process.env.DB_NAME || 'doctor'
-    };
+    
+    console.log('Visit service starting with SQLite...');
 
-    console.log('Visit service starting with DB config:', { 
-      host: dbConfig.host, 
-      port: dbConfig.port, 
-      user: dbConfig.user,
-      database: dbConfig.database
-    });
-
-    db = await initDatabase(dbConfig); 
+    db = await initDatabase(); 
     console.log("✅ Visit service database initialized.");
 
     // All your existing routes go here...

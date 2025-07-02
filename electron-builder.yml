@@ -18,8 +18,8 @@ files:
   - "!package.json"
 
 extraFiles:
-  - from: "node_modules/mysql2"
-    to: "app/node_modules/mysql2"
+  - from: "node_modules/better-sqlite3"
+    to: "app/node_modules/better-sqlite3"
     filter: ["**/*"]
   - from: "node_modules/express"
     to: "app/node_modules/express"
@@ -48,9 +48,12 @@ win:
       arch: ["x64"]
   icon: "build/icon.ico"
   extraResources:
-    - from: "mysql-resources/mysql-windows"
-      to: "mysql-windows"
-      filter: ["**/*"]
+    # Remove MySQL:
+    # - from: "mysql-resources/mysql-windows"
+    #   to: "mysql-windows"
+    #   filter: ["**/*"]
+    
+    # Keep schema file:
     - from: "dump.sql"
       to: "dump.sql"
 
@@ -64,9 +67,12 @@ mac:
   hardenedRuntime: false
   gatekeeperAssess: false
   extraResources:
-    - from: "mysql-resources/mysql-macos"
-      to: "mysql-macos"
-      filter: ["**/*"]
+    # Remove MySQL:
+    # - from: "mysql-resources/mysql-macos"
+    #   to: "mysql-macos"
+    #   filter: ["**/*"]
+    
+    # Keep schema file:
     - from: "dump.sql"
       to: "dump.sql"
 

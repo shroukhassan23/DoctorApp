@@ -1,40 +1,46 @@
-const mysql = require('mysql2/promise');
+// initDb.cjs - SQLite version
+const path = require('path');
+
+let sqliteManager = null;
 
 async function initDatabase(config = {}) {
-  const dbConfig = {
-    host: config.host || 'localhost',
-    port: parseInt(config.port) || 3306,
-    user: config.user || 'root',
-    password: config.password || '',
-    database: config.database || 'doctor',
-    charset: 'utf8mb4',
-    connectTimeout: 10000,
-    acquireTimeout: 10000,
-    timeout: 10000,
-    reconnect: true
-  };
-
   try {
-    console.log(`Attempting to connect to MySQL at ${dbConfig.host}:${dbConfig.port}`);
-    const connection = await mysql.createConnection(dbConfig);
-    
-    // Test the connection
-    await connection.execute('SELECT 1');
-    
-    console.log(`✅ Connected to MySQL database at ${dbConfig.host}:${dbConfig.port}`);
-    return connection;
-  } catch (error) {
-    console.error('❌ Database connection failed:', error.message);
-    
-    // Provide more helpful error messages
-    if (error.code === 'ECONNREFUSED') {
-      throw new Error(`Cannot connect to MySQL server at ${dbConfig.host}:${dbConfig.port}. Make sure MySQL is running.`);
-    } else if (error.code === 'ER_ACCESS_DENIED_ERROR') {
-      throw new Error(`Access denied for user '${dbConfig.user}'. Check username and password.`);
-    } else if (error.code === 'ER_BAD_DB_ERROR') {
-      throw new Error(`Database '${dbConfig.database}' does not exist.`);
+    // For SQLite, we ignore the MySQL config and use SQLiteManager
+    if (!sqliteManager) {
+      const SQLiteManager = require('./src/utils/sqliteManager.cjs');
+      sqliteManager = new SQLiteManager();
+      
+      // Get app path - works both in dev and production
+      let appPath;
+      if (process.env.ELECTRON_DEV === 'true') {
+        appPath = process.cwd();
+      } else {
+        appPath = process.resourcesPath || path.dirname(process.execPath);
+      }
+      
+      sqliteManager.initializePaths(appPath);
+      await sqliteManager.startDatabase();
     }
-    
+
+    // Return a MySQL-compatible interface
+    return {
+      query: async (sql, params) => {
+        return await sqliteManager.query(sql, params);
+      },
+      
+      // Add any other methods your services use
+      end: async () => {
+        await sqliteManager.stopDatabase();
+      },
+      
+      // For backward compatibility
+      execute: async (sql, params) => {
+        return await sqliteManager.query(sql, params);
+      }
+    };
+
+  } catch (error) {
+    console.error('Database initialization failed:', error);
     throw error;
   }
 }

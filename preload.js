@@ -14,8 +14,8 @@ contextBridge.exposeInMainWorld('electron', {
   setupMasterInstallation: (config) => ipcRenderer.invoke('setup-master-installation', config),
   setupClientConfiguration: (config) => ipcRenderer.invoke('setup-client-configuration', config),
 
-  // Connection Testing
-  testDatabaseConnection: (config) => ipcRenderer.invoke('test-database-connection', config),
+  // Connection Testing - SQLite doesn't need network testing
+  // testDatabaseConnection: (config) => ipcRenderer.invoke('test-database-connection', config),
   testSharedFolder: (folderPath) => ipcRenderer.invoke('test-shared-folder', folderPath),
 
   // Configuration Access
@@ -26,10 +26,10 @@ contextBridge.exposeInMainWorld('electron', {
   selectFolder: () => ipcRenderer.invoke('select-folder'),
   restartApp: () => ipcRenderer.invoke('restart-app'),
 
-  // MySQL Management (for master installations)
-  startMySQL: (port) => ipcRenderer.invoke('start-mysql', port),
-  stopMySQL: () => ipcRenderer.invoke('stop-mysql'),
-  getMySQLStatus: () => ipcRenderer.invoke('get-mysql-status'),
+  // SQLite is file-based, no server management needed
+  // startMySQL: (port) => ipcRenderer.invoke('start-mysql', port),
+  // stopMySQL: () => ipcRenderer.invoke('stop-mysql'),
+  // getMySQLStatus: () => ipcRenderer.invoke('get-mysql-status'),
 
   // App Information
   platform: process.platform,
