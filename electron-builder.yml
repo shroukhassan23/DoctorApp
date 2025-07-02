@@ -65,6 +65,9 @@ win:
       to: "reports.cjs"
     - from: "dump.sql"
       to: "dump.sql"
+    - from: "src/utils/mysqlManager.cjs"
+      to: "mysqlManager.cjs"
+
 
 # macOS configuration  
 mac:
