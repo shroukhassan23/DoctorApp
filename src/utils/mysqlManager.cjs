@@ -11,32 +11,40 @@ class SQLiteManager {
 
   initializePaths(appPath) {
     // Use safe directory for database
-    const { app } = require('electron');
-    const userDataPath = app.getPath('userData');
-    this.dbPath = path.join(userDataPath, 'doctor-app.db');
-    
+    if (process.env.DB_PATH) {
+      this.dataPath = path.dirname(process.env.DB_PATH);
+      this.dbPath = process.env.DB_PATH;
+    } else {
+      // Fallback for development
+      const os = require('os');
+      const userDataPath = path.join(os.homedir(), 'AppData', 'Roaming', 'doctor-app-desktop');
+      this.dataPath = userDataPath;
+      this.dbPath = path.join(userDataPath, 'doctor-app.db');
+    }
+
+
     console.log('SQLite Database Path:', this.dbPath);
   }
 
   async initializeDatabase() {
     try {
       console.log('Initializing SQLite database...');
-      
+
       // Ensure directory exists
       const dbDir = path.dirname(this.dbPath);
       await fs.mkdir(dbDir, { recursive: true });
 
       // Create/open database
       this.db = new Database(this.dbPath);
-      
+
       // Enable foreign keys and WAL mode for better performance
       this.db.pragma('journal_mode = WAL');
       this.db.pragma('foreign_keys = ON');
       this.db.pragma('synchronous = NORMAL');
-      
+
       console.log('SQLite database initialized successfully');
       this.isInitialized = true;
-      
+
       return true;
     } catch (error) {
       console.error('Error initializing SQLite database:', error);
@@ -50,10 +58,10 @@ class SQLiteManager {
       console.log('Importing schema from:', schemaPath);
 
       const sqlContent = await fs.readFile(schemaPath, 'utf8');
-      
+
       // Convert MySQL schema to SQLite
       const sqliteSchema = this.convertMySQLToSQLite(sqlContent);
-      
+
       // Execute schema in transaction
       const transaction = this.db.transaction(() => {
         // Split by semicolon and execute each statement
@@ -100,7 +108,7 @@ class SQLiteManager {
 
     // Fix PRIMARY KEY issues - replace AUTO_INCREMENT with AUTOINCREMENT
     sqliteSchema = sqliteSchema.replace(/`id` int NOT NULL AUTO_INCREMENT,[\s\S]*?PRIMARY KEY \(`id`\)/gi, '`id` INTEGER PRIMARY KEY AUTOINCREMENT');
-    
+
     // Convert data types
     sqliteSchema = sqliteSchema.replace(/int\(\d+\)/gi, 'INTEGER');
     sqliteSchema = sqliteSchema.replace(/int NOT NULL AUTO_INCREMENT/gi, 'INTEGER PRIMARY KEY AUTOINCREMENT');
@@ -115,7 +123,7 @@ class SQLiteManager {
 
     // Convert enum to TEXT with CHECK constraint
     sqliteSchema = sqliteSchema.replace(/enum\('male','female','other'\)/gi, "TEXT CHECK(gender IN ('male','female','other'))");
-    
+
     // Handle DEFAULT CURRENT_TIMESTAMP
     sqliteSchema = sqliteSchema.replace(/DEFAULT CURRENT_TIMESTAMP/gi, "DEFAULT (datetime('now'))");
     sqliteSchema = sqliteSchema.replace(/ON UPDATE CURRENT_TIMESTAMP/gi, '');
@@ -152,14 +160,18 @@ class SQLiteManager {
 
       // Import schema if tables don't exist
       const tables = this.db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all();
-      
+
       if (tables.length === 0) {
         console.log('No tables found, importing schema...');
-        
-        const schemaPath = process.env.ELECTRON_DEV === 'true' ?
-          path.join(process.cwd(), 'dump.sql') :
-          path.join(process.resourcesPath, 'dump.sql');
-          
+
+        let schemaPath;
+        if (process.env.ELECTRON_DEV === 'true') {
+          schemaPath = path.join(process.cwd(), 'dump.sql');
+        } else {
+          // In production, dump.sql should be in the same directory as other service files
+          schemaPath = path.join(path.dirname(__filename), 'dump.sql');
+        }
+
         await this.importSchema(schemaPath);
       }
 
@@ -197,23 +209,23 @@ class SQLiteManager {
   async query(sql, params = []) {
     try {
       const db = this.getDatabase();
-      
+
       // Handle SELECT queries
       if (sql.trim().toUpperCase().startsWith('SELECT')) {
         const stmt = db.prepare(sql);
         const rows = stmt.all(params);
         return [rows]; // Return in MySQL format [rows, fields]
       }
-      
+
       // Handle INSERT/UPDATE/DELETE queries
       const stmt = db.prepare(sql);
       const result = stmt.run(params);
-      
+
       return [{
         affectedRows: result.changes,
         insertId: result.lastInsertRowid
       }];
-      
+
     } catch (error) {
       console.error('Database query error:', error);
       throw error;

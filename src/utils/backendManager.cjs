@@ -67,9 +67,9 @@ class BackendManager {
 
             const env = {
                 ...process.env,
-                // SQLite doesn't need host/port/user/password
                 DB_TYPE: 'sqlite',
                 DB_NAME: 'doctor',
+                DB_PATH: path.join(require('os').homedir(), 'AppData', 'Roaming', 'doctor-app-desktop', 'doctor-app.db'),
                 SHARED_FOLDER_PATH: config.sharedFolderPath || '',
                 NODE_ENV: isDev ? 'development' : 'production',
                 PORT: service.port.toString(),
