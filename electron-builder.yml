@@ -18,6 +18,15 @@ files:
   - "!package.json"
 
 extraFiles:
+  - from: "patient.cjs"
+    to: "app/patient.cjs"
+  - from: "visit.cjs" 
+    to: "app/visit.cjs"
+  - from: "reports.cjs"
+    to: "app/reports.cjs"
+  - from: "node_modules/better-sqlite3"
+    to: "app/node_modules/better-sqlite3"
+    filter: ["**/*"]
   - from: "node_modules/better-sqlite3"
     to: "app/node_modules/better-sqlite3"
     filter: ["**/*"]
@@ -48,10 +57,14 @@ win:
       arch: ["x64"]
   icon: "build/icon.ico"
   extraResources:
-    # Remove MySQL:
-    # - from: "mysql-resources/mysql-windows"
-    #   to: "mysql-windows"
-    #   filter: ["**/*"]
+    - from: "patient.cjs"
+      to: "patient.cjs"
+    - from: "visit.cjs"
+      to: "visit.cjs" 
+    - from: "reports.cjs"
+      to: "reports.cjs"
+    - from: "dump.sql"
+      to: "dump.sql"
     
     # Keep schema file:
     - from: "dump.sql"

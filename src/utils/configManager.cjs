@@ -6,6 +6,15 @@ class ConfigManager {
         this.configPath = path.join(appDataPath, 'config.json');
     }
 
+    async clearConfig() {
+        try {
+            await fs.promises.unlink(this.configPath);
+            console.log('Config file cleared successfully');
+        } catch (error) {
+            console.log('No config file to clear or error clearing:', error.message);
+        }
+    }
+
     async isSetupComplete() {
         try {
             await fs.promises.access(this.configPath);
@@ -34,10 +43,7 @@ class ConfigManager {
             installationType: 'master',
             setupComplete: true,
             database: {
-                host: 'localhost',
-                port: config.mysqlPort,
-                user: 'root',
-                password: '',
+                type: 'sqlite',
                 database: 'doctor'
             },
             sharedFolderPath: config.sharedFolderPath,
@@ -51,10 +57,7 @@ class ConfigManager {
             installationType: 'client',
             setupComplete: true,
             database: {
-                host: config.host,
-                port: config.port,
-                user: config.user,
-                password: config.password,
+                type: 'sqlite',
                 database: 'doctor'
             },
             sharedFolderPath: config.sharedFolderPath,

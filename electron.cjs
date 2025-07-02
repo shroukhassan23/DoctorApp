@@ -53,12 +53,11 @@ class DoctorApp {
             const config = await this.configManager.getConfig();
             console.log('Existing config:', config);
             
-            // If config has MySQL settings, force re-setup for SQLite
+            // If config has old MySQL settings, force re-setup for SQLite
             if (config.database && config.database.host) {
                 console.log('Detected old MySQL config, forcing re-setup for SQLite...');
-                this.isSetupComplete = false;
-                // Optionally delete the old config
                 await this.configManager.clearConfig();
+                this.isSetupComplete = false;
             }
         }
         
