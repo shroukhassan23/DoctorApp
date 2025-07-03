@@ -75,38 +75,58 @@ class SQLiteManager {
 
   async importSchema(schemaPath) {
     try {
-      await fs.access(schemaPath);
-      console.log('Importing schema from:', schemaPath);
-
+      // Use SQLite schema instead of converting MySQL
+      let sqliteSchemaPath;
+      if (process.env.ELECTRON_DEV === 'true') {
+        sqliteSchemaPath = path.join(process.cwd(), 'dump-sqlite.sql');
+      } else {
+        sqliteSchemaPath = path.join(path.dirname(__filename), 'dump-sqlite.sql');
+      }
+      
+      // Check if SQLite schema exists, fallback to MySQL conversion if not
+      try {
+        await fs.access(sqliteSchemaPath);
+        schemaPath = sqliteSchemaPath;
+        console.log('Using native SQLite schema:', sqliteSchemaPath);
+      } catch (error) {
+        console.log('SQLite schema not found, using MySQL conversion');
+      }
+  
       const sqlContent = await fs.readFile(schemaPath, 'utf8');
       
-      // Convert MySQL schema to SQLite
-      const sqliteSchema = this.convertMySQLToSQLite(sqlContent);
+      let sqliteSchema;
+      // if (schemaPath.includes('sqlite')) {
+      //   // Use SQLite schema as-is
+      //   sqliteSchema = sqlContent;
+      // } else {
+      //   // Convert MySQL schema (fallback)
+      //   sqliteSchema = this.convertMySQLToSQLite(sqlContent);
+      // }
+
+      sqliteSchema = sqlContent;
       
       // Split by semicolon and execute each statement
       const statements = sqliteSchema
         .split(';')
         .map(stmt => stmt.trim())
         .filter(stmt => stmt.length > 0 && !stmt.startsWith('--'));
-
+  
       for (const statement of statements) {
         if (statement.trim()) {
           try {
             this.db.run(statement);
           } catch (error) {
-            // Log but don't fail on non-critical errors
             if (!error.message.includes('already exists')) {
               console.warn('Schema statement warning:', error.message);
             }
           }
         }
       }
-
-      // Save database after schema import
+  
       await this.saveDatabase();
       console.log('Schema imported successfully');
       return true;
-
+  
     } catch (error) {
       console.error('Schema import failed:', error);
       throw new Error(`Schema import failed: ${error.message}`);
