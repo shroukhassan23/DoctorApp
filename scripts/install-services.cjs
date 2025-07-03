@@ -195,20 +195,21 @@ async function installServices() {
       debug(`Cleaned up script file: ${scriptPath}`);
 
       // Verify service was installed
-      const { spawn: spawnSync } = require('child_process');
-      const queryResult = spawnSync('sc', ['query', `DoctorApp ${service.name} Service`], {
-        shell: true,
-        encoding: 'utf8'
-      });
+      const { execSync } = require('child_process');
+      try {
+        const queryResult = execSync(`sc query "DoctorApp ${service.name} Service"`, {
+          encoding: 'utf8'
+        });
 
-      if (queryResult.stdout && queryResult.stdout.includes('RUNNING')) {
-        debug(`✅ ${service.name} service verified as RUNNING`);
-      } else if (queryResult.stdout && queryResult.stdout.includes('STOPPED')) {
-        debug(`⚠️ ${service.name} service installed but STOPPED`);
-      } else {
-        debug(`❌ ${service.name} service verification failed`);
-        debug(`Query output: ${queryResult.stdout}`);
-        debug(`Query error: ${queryResult.stderr}`);
+        if (queryResult && queryResult.includes('RUNNING')) {
+          debug(`✅ ${service.name} service verified as RUNNING`);
+        } else if (queryResult && queryResult.includes('STOPPED')) {
+          debug(`⚠️ ${service.name} service installed but STOPPED`);
+        } else {
+          debug(`ℹ️ ${service.name} service status: ${queryResult.split('\n')[0]}`);
+        }
+      } catch (error) {
+        debug(`❌ ${service.name} service verification failed: ${error.message}`);
       }
     }
 
@@ -218,14 +219,17 @@ async function installServices() {
     // Final verification
     debug('Final service status check...');
     services.forEach(service => {
-      const queryResult = spawnSync('sc', ['query', `DoctorApp ${service.name} Service`], {
-        shell: true,
-        encoding: 'utf8'
-      });
-      const status = queryResult.stdout ?
-        (queryResult.stdout.includes('RUNNING') ? 'RUNNING' :
-          queryResult.stdout.includes('STOPPED') ? 'STOPPED' : 'NOT_FOUND') : 'ERROR';
-      console.log(`${service.name} Service: ${status}`);
+      try {
+        const queryResult = execSync(`sc query "DoctorApp ${service.name} Service"`, {
+          encoding: 'utf8'
+        });
+        const status = queryResult ?
+          (queryResult.includes('RUNNING') ? 'RUNNING' :
+            queryResult.includes('STOPPED') ? 'STOPPED' : 'UNKNOWN') : 'ERROR';
+        console.log(`${service.name} Service: ${status}`);
+      } catch (error) {
+        console.log(`${service.name} Service: NOT_FOUND`);
+      }
     });
 
   } catch (error) {
