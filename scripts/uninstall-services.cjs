@@ -25,7 +25,7 @@ svc.on('error', function(err) {
 svc.uninstall();
 `;
 
-  const scriptPath = path.join(__dirname, `uninstall-${serviceName}-service.js`);
+const scriptPath = path.join(__dirname, `uninstall-${serviceName}-service.cjs`);
   fs.writeFileSync(scriptPath, uninstallScript, 'utf8');
   return scriptPath;
 }

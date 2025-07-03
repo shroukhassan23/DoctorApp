@@ -20,47 +20,47 @@ function installNodeWindows() {
 }
 
 async function createServiceScript(serviceName, serviceFile, port) {
-  const serviceScript = `
-const Service = require('node-windows').Service;
-
-// Create a new service object
-const svc = new Service({
-  name: 'DoctorApp ${serviceName} Service',
-  description: 'Doctor App ${serviceName} backend service',
-  script: '${path.resolve(serviceFile)}',
-  nodeOptions: [
-    '--max_old_space_size=4096'
-  ],
-  env: {
-    name: 'NODE_ENV',
-    value: 'production'
-  },
-  workingDirectory: '${path.dirname(path.resolve(serviceFile))}',
-  allowServiceLogon: true
-});
-
-// Listen for the "install" event, which indicates the process is available as a service.
-svc.on('install', function() {
-  console.log('${serviceName} service installed successfully');
-  svc.start();
-});
-
-svc.on('start', function() {
-  console.log('${serviceName} service started successfully');
-});
-
-svc.on('error', function(err) {
-  console.error('${serviceName} service error:', err);
-});
-
-// Install the service
-svc.install();
-`;
-
-  const scriptPath = path.join(__dirname, `install-${serviceName}-service.js`);
-  fs.writeFileSync(scriptPath, serviceScript, 'utf8');
-  return scriptPath;
-}
+    const serviceScript = `
+  const Service = require('node-windows').Service;
+  
+  // Create a new service object
+  const svc = new Service({
+    name: 'DoctorApp ${serviceName} Service',
+    description: 'Doctor App ${serviceName} backend service',
+    script: '${path.resolve(serviceFile)}',
+    nodeOptions: [
+      '--max_old_space_size=4096'
+    ],
+    env: {
+      name: 'NODE_ENV',
+      value: 'production'
+    },
+    workingDirectory: '${path.dirname(path.resolve(serviceFile))}',
+    allowServiceLogon: true
+  });
+  
+  // Listen for the "install" event, which indicates the process is available as a service.
+  svc.on('install', function() {
+    console.log('${serviceName} service installed successfully');
+    svc.start();
+  });
+  
+  svc.on('start', function() {
+    console.log('${serviceName} service started successfully');
+  });
+  
+  svc.on('error', function(err) {
+    console.error('${serviceName} service error:', err);
+  });
+  
+  // Install the service
+  svc.install();
+  `;
+  
+    const scriptPath = path.join(__dirname, `install-${serviceName}-service.cjs`); // ✅ .cjs extension
+    fs.writeFileSync(scriptPath, serviceScript, 'utf8');
+    return scriptPath;
+  }
 
 async function installServices() {
   try {
