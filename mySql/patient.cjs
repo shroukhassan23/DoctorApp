@@ -74,7 +74,6 @@ const safeConsole = {
     app.get('/Patients', async (req, res) => {
       try {
         await logger.info('Fetching all patients');
-        await logger.info('📝 Incoming patient create request', { body: req.body });
         const [rows] = await db.query('SELECT * FROM patients WHERE deleted_at IS NULL');
         
         await logger.logDatabaseQuery(
@@ -128,7 +127,9 @@ const safeConsole = {
     app.post('/Patients', async (req, res) => {
       try {
         const { patient } = req.body;
+        await logger.info('📝 Incoming patient create request', { body: req.body }); // ← This should be here
         await logger.info('Creating new patient', { patientData: patient });
+
 
         // Validate required fields
         if (!patient || !patient.name || !patient.age || !patient.gender || !patient.date_of_birth) {
@@ -290,23 +291,16 @@ const safeConsole = {
       safeConsole.log('================================');
     });
 
-    // Keep alive with safer implementation
     keepAlive = setInterval(() => {
       if (!isShuttingDown) {
         try {
-          // Use logger instead of console.log to avoid EPIPE
+          // Only use logger, avoid console output that can cause EPIPE
           if (logger) {
             logger.debug('Keep alive heartbeat');
           }
-          // Only log to console if stdout is available
-          if (process.stdout && !process.stdout.destroyed) {
-            safeConsole.log('Keep alive heartbeat...');
-          }
+          // Remove console.log completely to avoid EPIPE
         } catch (error) {
-          // If logging fails, just continue silently
-          if (error.code !== 'EPIPE') {
-            safeConsole.error('Keep alive error:', error.message);
-          }
+          // Silently ignore all errors in keep-alive
         }
       }
     }, 30000); // Every 30 seconds

@@ -30,7 +30,7 @@ class DoctorApp {
       // Initialize logger first
       this.logger = new Logger(this.appDataPath);
       await this.logger.initialize();
-      
+
       await this.logger.logSystemEvent('App initialization started');
 
       // Initialize license manager
@@ -68,12 +68,12 @@ class DoctorApp {
   async checkSetupStatus() {
     try {
       this.isSetupComplete = await this.configManager.isSetupComplete();
-      
+
       // Check if we need to migrate from MySQL to SQLite
       if (this.isSetupComplete) {
         const config = await this.configManager.getConfig();
         await this.logger.debug('Existing config loaded', { config });
-        
+
         // If config has old MySQL settings, force re-setup for SQLite
         if (config.database && config.database.host) {
           await this.logger.warn('Detected old MySQL config, forcing re-setup for SQLite');
@@ -81,12 +81,12 @@ class DoctorApp {
           this.isSetupComplete = false;
         }
       }
-      
+
       await this.logger.logSystemEvent('Setup status checked', {
         isSetupComplete: this.isSetupComplete,
         configPath: this.configManager.configPath
       });
-      
+
     } catch (error) {
       await this.logger.error('Setup status check failed', error);
       this.isSetupComplete = false;
@@ -173,11 +173,11 @@ class DoctorApp {
         throw error;
       }
     });
-ipcMain.handle('write-log', async (event, { level, message, context }) => {
-  if (this.logger) {
-    await this.logger.writeLog(level || 'INFO', message, null, context || {});
-  }
-});
+    ipcMain.handle('write-log', async (event, { level, message, context }) => {
+      if (this.logger) {
+        await this.logger.writeLog(level || 'INFO', message, null, context || {});
+      }
+    });
 
     ipcMain.handle('activate-license', async (event, licenseKey) => {
       try {
@@ -513,8 +513,19 @@ app.on('window-all-closed', async () => {
   }
 });
 
-app.on('before-quit', async () => {
-  await doctorApp.shutdown();
+app.on('before-quit', async (event) => {
+  if (backendManager) {
+    event.preventDefault(); // Prevent immediate quit
+
+    try {
+      await backendManager.gracefulShutdown();
+    } catch (error) {
+      console.error('Error during graceful shutdown:', error);
+    }
+
+    // Now allow the app to quit
+    app.quit();
+  }
 });
 
 // Handle certificate errors in development

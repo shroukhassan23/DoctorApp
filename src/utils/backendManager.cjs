@@ -98,10 +98,11 @@ class BackendManager {
 
             const serviceProcess = spawn(nodeExecutable, [servicePath], {
                 env,
-                stdio: ['pipe', 'pipe', 'pipe'],
+                stdio: ['ignore', 'pipe', 'pipe'], // Ignore stdin to prevent EPIPE
                 cwd: path.dirname(servicePath),
                 detached: false,
-                shell: process.platform === 'win32' // استخدام shell في Windows
+                shell: process.platform === 'win32',
+                windowsHide: true // Hide console window on Windows
             });
 
             // إضافة timeout للتأكد من بدء الخدمة
@@ -135,19 +136,28 @@ class BackendManager {
 
             serviceProcess.on('exit', (code, signal) => {
                 console.log(`${service.name} process exited with code ${code}, signal: ${signal}`);
-                
-                // Log additional debug info on unexpected exit
-                if (code !== 0) {
+
+                // Don't treat exit code 0 as error if it's a clean shutdown
+                if (code !== 0 && !isShuttingDown) {
                     console.error(`${service.name} unexpected exit with code ${code}`);
                     console.error(`Working directory was: ${path.dirname(servicePath)}`);
                     console.error(`Service path was: ${servicePath}`);
-                    console.error(`Environment NODE_PATH: ${env.NODE_PATH}`);
+
+                    // Attempt to restart the service once
+                    setTimeout(() => {
+                        if (!this.processes.has(service.name)) {
+                            console.log(`Attempting to restart ${service.name}...`);
+                            this.startService(service, config).catch(err => {
+                                console.error(`Failed to restart ${service.name}:`, err);
+                            });
+                        }
+                    }, 2000);
                 }
-                
+
                 clearTimeout(startupTimeout);
                 this.processes.delete(service.name);
             });
-            
+
 
             serviceProcess.on('error', (error) => {
                 console.error(`Failed to start ${service.name}:`, error);
@@ -180,6 +190,45 @@ class BackendManager {
             console.error(`Error starting ${service.name} service:`, error);
             throw error;
         }
+    }
+
+    // Add this new method to BackendManager class
+    async gracefulShutdown() {
+        console.log('Initiating graceful shutdown of all services...');
+
+        for (const [name, process] of this.processes) {
+            try {
+                if (!process.killed && process.exitCode === null) {
+                    console.log(`Sending shutdown signal to ${name} (PID: ${process.pid})`);
+
+                    // Send graceful shutdown signal
+                    process.kill('SIGTERM');
+
+                    // Wait for graceful shutdown
+                    await new Promise(resolve => {
+                        const timeout = setTimeout(() => {
+                            console.log(`Force killing ${name} after timeout`);
+                            try {
+                                process.kill('SIGKILL');
+                            } catch (e) {
+                                console.log(`${name} already dead:`, e.message);
+                            }
+                            resolve();
+                        }, 3000);
+
+                        process.on('exit', () => {
+                            clearTimeout(timeout);
+                            resolve();
+                        });
+                    });
+                }
+            } catch (error) {
+                console.error(`Error during graceful shutdown of ${name}:`, error);
+            }
+        }
+
+        this.processes.clear();
+        console.log('All services shutdown complete');
     }
 
     async stopAllServices() {
