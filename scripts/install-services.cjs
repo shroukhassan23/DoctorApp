@@ -8,10 +8,12 @@ const debug = (message) => {
 };
 
 
+
 debug('Starting service installation script');
 debug(`Running as: ${process.env.USERNAME || 'Unknown user'}`);
 debug(`Node version: ${process.version}`);
 debug(`Working directory: ${process.cwd()}`);
+debug(`__dirname is: ${__dirname}`);
 
 // Install node-windows for service management
 function installNodeWindows() {
@@ -103,6 +105,16 @@ svc.install();
   return scriptPath;
 }
 
+function findProjectRoot(startPath) {
+  let currentPath = startPath;
+  while (!fs.existsSync(path.join(currentPath, 'package.json'))) {
+    const parent = path.dirname(currentPath);
+    if (parent === currentPath) break; // Reached root
+    currentPath = parent;
+  }
+  return currentPath;
+}
+
 async function installServices() {
   try {
     debug('Checking node-windows installation...');
@@ -121,21 +133,12 @@ async function installServices() {
       debug(`\n=== Installing ${service.name} Service ===`);
 
 
+      const projectRoot = findProjectRoot(__dirname);
 
-
-      // Try multiple possible paths for service files
       const possiblePaths = [
-        // If running from built app directory
-        path.resolve(__dirname, '..', 'resources', service.file),
-
-        // If running from project root
-        path.resolve(__dirname, '..', 'dist-installers', 'win-unpacked', 'resources', service.file),
-
-        // Alternative project root paths
-        path.resolve(process.cwd(), 'dist-installers', 'win-unpacked', 'resources', service.file),
-        path.resolve(process.cwd(), 'resources', service.file),
+        path.resolve(projectRoot, 'resources', service.file),
+        path.resolve(projectRoot, 'dist-installers', 'win-unpacked', 'resources', service.file),
       ];
-
       let fullServicePath = null;
       for (const testPath of possiblePaths) {
         debug(`Checking path: ${testPath}`);
