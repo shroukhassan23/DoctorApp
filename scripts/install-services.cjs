@@ -18,7 +18,7 @@ function installNodeWindows() {
   return new Promise((resolve, reject) => {
     console.log('Installing node-windows...');
     const install = spawn('npm', ['install', 'node-windows'], { shell: true });
-    
+
     install.on('close', (code) => {
       if (code === 0) {
         console.log('node-windows installed successfully');
@@ -34,7 +34,7 @@ async function createServiceScript(serviceName, serviceFile, port) {
   debug(`Creating service script for ${serviceName}`);
   debug(`Service file path: ${serviceFile}`);
   debug(`Checking if service file exists: ${require('fs').existsSync(serviceFile)}`);
-  
+
   if (!require('fs').existsSync(serviceFile)) {
     throw new Error(`Service file not found: ${serviceFile}`);
   }
@@ -119,43 +119,66 @@ async function installServices() {
 
     for (const service of services) {
       debug(`\n=== Installing ${service.name} Service ===`);
-      
-      // Build full path to service file
-      const fullServicePath = path.join(__dirname, '..', 'resources', service.file);
-      debug(`Full service path: ${fullServicePath}`);
-      debug(`Service file exists: ${fs.existsSync(fullServicePath)}`);
-      
-      if (!fs.existsSync(fullServicePath)) {
-        throw new Error(`Service file not found: ${fullServicePath}`);
+
+
+
+
+      // Try multiple possible paths for service files
+      const possiblePaths = [
+        // If running from built app directory
+        path.resolve(__dirname, '..', 'resources', service.file),
+
+        // If running from project root
+        path.resolve(__dirname, '..', 'dist-installers', 'win-unpacked', 'resources', service.file),
+
+        // Alternative project root paths
+        path.resolve(process.cwd(), 'dist-installers', 'win-unpacked', 'resources', service.file),
+        path.resolve(process.cwd(), 'resources', service.file),
+      ];
+
+      let fullServicePath = null;
+      for (const testPath of possiblePaths) {
+        debug(`Checking path: ${testPath}`);
+        if (fs.existsSync(testPath)) {
+          fullServicePath = testPath;
+          debug(`✅ Found service file at: ${fullServicePath}`);
+          break;
+        } else {
+          debug(`❌ Not found at: ${testPath}`);
+        }
       }
-      
+
+      if (!fullServicePath) {
+        throw new Error(`Service file not found. Searched paths:\n${possiblePaths.join('\n')}`);
+      }
+
       // Create service installation script
       const scriptPath = await createServiceScript(service.name, fullServicePath, service.port);
-      
+
       // Run the service installation with more detailed output
       debug(`Running service installation script: ${scriptPath}`);
-      const install = spawn('node', [scriptPath], { 
+      const install = spawn('node', [scriptPath], {
         shell: true,
         stdio: ['pipe', 'pipe', 'pipe']
       });
-      
+
       // Capture and log all output
       install.stdout.on('data', (data) => {
         const output = data.toString().trim();
         if (output) console.log(`${service.name} Output:`, output);
       });
-      
+
       install.stderr.on('data', (data) => {
         const error = data.toString().trim();
         if (error) console.error(`${service.name} Error:`, error);
       });
-      
+
       await new Promise((resolve, reject) => {
         const timeout = setTimeout(() => {
           install.kill();
           reject(new Error(`${service.name} installation timeout`));
         }, 120000); // 2 minutes timeout
-        
+
         install.on('close', (code) => {
           clearTimeout(timeout);
           debug(`${service.name} installation finished with code: ${code}`);
@@ -166,18 +189,18 @@ async function installServices() {
           }
         });
       });
-      
+
       // Clean up script file
       fs.unlinkSync(scriptPath);
       debug(`Cleaned up script file: ${scriptPath}`);
-      
+
       // Verify service was installed
       const { spawn: spawnSync } = require('child_process');
-      const queryResult = spawnSync('sc', ['query', `DoctorApp ${service.name} Service`], { 
-        shell: true, 
-        encoding: 'utf8' 
+      const queryResult = spawnSync('sc', ['query', `DoctorApp ${service.name} Service`], {
+        shell: true,
+        encoding: 'utf8'
       });
-      
+
       if (queryResult.stdout && queryResult.stdout.includes('RUNNING')) {
         debug(`✅ ${service.name} service verified as RUNNING`);
       } else if (queryResult.stdout && queryResult.stdout.includes('STOPPED')) {
@@ -191,20 +214,20 @@ async function installServices() {
 
     console.log('\n=== Installation Summary ===');
     console.log('All services processed!');
-    
+
     // Final verification
     debug('Final service status check...');
     services.forEach(service => {
-      const queryResult = spawnSync('sc', ['query', `DoctorApp ${service.name} Service`], { 
-        shell: true, 
-        encoding: 'utf8' 
+      const queryResult = spawnSync('sc', ['query', `DoctorApp ${service.name} Service`], {
+        shell: true,
+        encoding: 'utf8'
       });
-      const status = queryResult.stdout ? 
-        (queryResult.stdout.includes('RUNNING') ? 'RUNNING' : 
-         queryResult.stdout.includes('STOPPED') ? 'STOPPED' : 'NOT_FOUND') : 'ERROR';
+      const status = queryResult.stdout ?
+        (queryResult.stdout.includes('RUNNING') ? 'RUNNING' :
+          queryResult.stdout.includes('STOPPED') ? 'STOPPED' : 'NOT_FOUND') : 'ERROR';
       console.log(`${service.name} Service: ${status}`);
     });
-    
+
   } catch (error) {
     debug(`Installation failed: ${error.message}`);
     console.error('Error installing services:', error);
