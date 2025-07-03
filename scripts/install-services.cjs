@@ -2,6 +2,17 @@ const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 
+
+const debug = (message) => {
+  console.log(`[DEBUG] ${new Date().toISOString()} - ${message}`);
+};
+
+
+debug('Starting service installation script');
+debug(`Running as: ${process.env.USERNAME || 'Unknown user'}`);
+debug(`Node version: ${process.version}`);
+debug(`Working directory: ${process.cwd()}`);
+
 // Install node-windows for service management
 function installNodeWindows() {
   return new Promise((resolve, reject) => {
@@ -20,50 +31,81 @@ function installNodeWindows() {
 }
 
 async function createServiceScript(serviceName, serviceFile, port) {
-    const serviceScript = `
-  const Service = require('node-windows').Service;
+  debug(`Creating service script for ${serviceName}`);
+  debug(`Service file path: ${serviceFile}`);
+  debug(`Checking if service file exists: ${require('fs').existsSync(serviceFile)}`);
   
-  // Create a new service object
-  const svc = new Service({
-    name: 'DoctorApp ${serviceName} Service',
-    description: 'Doctor App ${serviceName} backend service',
-    script: '${path.resolve(serviceFile)}',
-    nodeOptions: [
-      '--max_old_space_size=4096'
-    ],
-    env: {
-      name: 'NODE_ENV',
-      value: 'production'
-    },
-    workingDirectory: '${path.dirname(path.resolve(serviceFile))}',
-    allowServiceLogon: true
-  });
-  
-  // Listen for the "install" event, which indicates the process is available as a service.
-  svc.on('install', function() {
-    console.log('${serviceName} service installed successfully');
-    svc.start();
-  });
-  
-  svc.on('start', function() {
-    console.log('${serviceName} service started successfully');
-  });
-  
-  svc.on('error', function(err) {
-    console.error('${serviceName} service error:', err);
-  });
-  
-  // Install the service
-  svc.install();
-  `;
-  
-    const scriptPath = path.join(__dirname, `install-${serviceName}-service.cjs`); // ✅ .cjs extension
-    fs.writeFileSync(scriptPath, serviceScript, 'utf8');
-    return scriptPath;
+  if (!require('fs').existsSync(serviceFile)) {
+    throw new Error(`Service file not found: ${serviceFile}`);
   }
+
+  const serviceScript = `
+const Service = require('node-windows').Service;
+
+console.log('${serviceName} service installer starting...');
+console.log('Service script path: ${path.resolve(serviceFile)}');
+console.log('Working directory: ${path.dirname(path.resolve(serviceFile))}');
+
+// Create a new service object
+const svc = new Service({
+  name: 'DoctorApp ${serviceName} Service',
+  description: 'Doctor App ${serviceName} backend service',
+  script: '${path.resolve(serviceFile)}',
+  nodeOptions: [
+    '--max_old_space_size=4096'
+  ],
+  env: {
+    name: 'NODE_ENV',
+    value: 'production'
+  },
+  workingDirectory: '${path.dirname(path.resolve(serviceFile))}',
+  allowServiceLogon: true
+});
+
+// Add timeout for installation
+const timeout = setTimeout(() => {
+  console.error('${serviceName} service installation timeout (60 seconds)');
+  process.exit(1);
+}, 60000);
+
+// Listen for events
+svc.on('install', function() {
+  clearTimeout(timeout);
+  console.log('${serviceName} service installed successfully');
+  svc.start();
+});
+
+svc.on('start', function() {
+  console.log('${serviceName} service started successfully');
+  process.exit(0);
+});
+
+svc.on('alreadyinstalled', function() {
+  clearTimeout(timeout);
+  console.log('${serviceName} service already installed');
+  process.exit(0);
+});
+
+svc.on('error', function(err) {
+  clearTimeout(timeout);
+  console.error('${serviceName} service error:', err);
+  process.exit(1);
+});
+
+// Install the service
+console.log('Installing ${serviceName} service...');
+svc.install();
+`;
+
+  const scriptPath = path.join(__dirname, `install-${serviceName}-service.cjs`);
+  fs.writeFileSync(scriptPath, serviceScript, 'utf8');
+  debug(`Service script created: ${scriptPath}`);
+  return scriptPath;
+}
 
 async function installServices() {
   try {
+    debug('Checking node-windows installation...');
     // Install node-windows first
     await installNodeWindows();
 
@@ -73,38 +115,98 @@ async function installServices() {
       { name: 'Reports', file: 'reports.cjs', port: 3003 }
     ];
 
+    debug(`Found ${services.length} services to install`);
+
     for (const service of services) {
-      console.log(`Installing ${service.name} service...`);
+      debug(`\n=== Installing ${service.name} Service ===`);
+      
+      // Build full path to service file
+      const fullServicePath = path.join(process.cwd(), 'resources', service.file);
+      debug(`Full service path: ${fullServicePath}`);
+      debug(`Service file exists: ${fs.existsSync(fullServicePath)}`);
+      
+      if (!fs.existsSync(fullServicePath)) {
+        throw new Error(`Service file not found: ${fullServicePath}`);
+      }
       
       // Create service installation script
-      const scriptPath = await createServiceScript(service.name, service.file, service.port);
+      const scriptPath = await createServiceScript(service.name, fullServicePath, service.port);
       
-      // Run the service installation
-      const install = spawn('node', [scriptPath], { shell: true });
+      // Run the service installation with more detailed output
+      debug(`Running service installation script: ${scriptPath}`);
+      const install = spawn('node', [scriptPath], { 
+        shell: true,
+        stdio: ['pipe', 'pipe', 'pipe']
+      });
       
+      // Capture and log all output
       install.stdout.on('data', (data) => {
-        console.log(`${service.name}:`, data.toString());
+        const output = data.toString().trim();
+        if (output) console.log(`${service.name} Output:`, output);
       });
       
       install.stderr.on('data', (data) => {
-        console.error(`${service.name} Error:`, data.toString());
+        const error = data.toString().trim();
+        if (error) console.error(`${service.name} Error:`, error);
       });
       
-      await new Promise((resolve) => {
-        install.on('close', resolve);
+      await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          install.kill();
+          reject(new Error(`${service.name} installation timeout`));
+        }, 120000); // 2 minutes timeout
+        
+        install.on('close', (code) => {
+          clearTimeout(timeout);
+          debug(`${service.name} installation finished with code: ${code}`);
+          if (code === 0) {
+            resolve();
+          } else {
+            reject(new Error(`${service.name} installation failed with code ${code}`));
+          }
+        });
       });
       
       // Clean up script file
       fs.unlinkSync(scriptPath);
+      debug(`Cleaned up script file: ${scriptPath}`);
+      
+      // Verify service was installed
+      const { spawn: spawnSync } = require('child_process');
+      const queryResult = spawnSync('sc', ['query', `DoctorApp ${service.name} Service`], { 
+        shell: true, 
+        encoding: 'utf8' 
+      });
+      
+      if (queryResult.stdout && queryResult.stdout.includes('RUNNING')) {
+        debug(`✅ ${service.name} service verified as RUNNING`);
+      } else if (queryResult.stdout && queryResult.stdout.includes('STOPPED')) {
+        debug(`⚠️ ${service.name} service installed but STOPPED`);
+      } else {
+        debug(`❌ ${service.name} service verification failed`);
+        debug(`Query output: ${queryResult.stdout}`);
+        debug(`Query error: ${queryResult.stderr}`);
+      }
     }
 
-    console.log('All services installed successfully!');
-    console.log('Services will now run automatically:');
-    console.log('- On system startup');
-    console.log('- When user logs out');
-    console.log('- When main app closes');
+    console.log('\n=== Installation Summary ===');
+    console.log('All services processed!');
+    
+    // Final verification
+    debug('Final service status check...');
+    services.forEach(service => {
+      const queryResult = spawnSync('sc', ['query', `DoctorApp ${service.name} Service`], { 
+        shell: true, 
+        encoding: 'utf8' 
+      });
+      const status = queryResult.stdout ? 
+        (queryResult.stdout.includes('RUNNING') ? 'RUNNING' : 
+         queryResult.stdout.includes('STOPPED') ? 'STOPPED' : 'NOT_FOUND') : 'ERROR';
+      console.log(`${service.name} Service: ${status}`);
+    });
     
   } catch (error) {
+    debug(`Installation failed: ${error.message}`);
     console.error('Error installing services:', error);
   }
 }
