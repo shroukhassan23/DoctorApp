@@ -46,10 +46,23 @@ class ConfigManager {
                 type: 'sqlite',
                 database: 'doctor'
             },
+            services: {
+                patientPort: 3001,
+                visitPort: 3002,
+                reportsPort: 3003
+            },
             sharedFolderPath: config.sharedFolderPath,
             createdAt: new Date().toISOString()
         };
         await this.saveConfig(fullConfig);
+    }
+
+    getServicePorts() {
+        return {
+            patientPort: 3001,
+            visitPort: 3002,
+            reportsPort: 3003
+        };
     }
 
     async saveClientConfig(config) {
@@ -59,6 +72,11 @@ class ConfigManager {
             database: {
                 type: 'sqlite',
                 database: 'doctor'
+            },
+            services: {
+                patientPort: 3001,
+                visitPort: 3002,
+                reportsPort: 3003
             },
             sharedFolderPath: config.sharedFolderPath,
             createdAt: new Date().toISOString()

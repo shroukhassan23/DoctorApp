@@ -9,11 +9,17 @@ class BackendManager {
     }
 
     async startServices(installationType, config) {
+        const patientPort = config.services?.patientPort || 3001;
+        const visitPort = config.services?.visitPort || 3002;
+        const reportsPort = config.services?.reportsPort || 3003;
+
+        
         const services = [
-            { name: 'patient', file: 'patient.cjs', port: 3001 },
-            { name: 'visit', file: 'visit.cjs', port: 3002 },
-            { name: 'reports', file: 'reports.cjs', port: 3003 }
+            { name: 'patient', file: 'patient.cjs', port: patientPort },
+            { name: 'visit', file: 'visit.cjs', port: visitPort },
+            { name: 'reports', file: 'reports.cjs', port: reportsPort }
         ];
+    
 
         for (const service of services) {
             await this.startService(service, config);

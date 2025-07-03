@@ -6,13 +6,17 @@ const getBaseUrls = () => {
         const config = window.electron.getConfig();
         const host = config.database?.host || 'localhost';
         const mysqlPort = parseInt(config.database?.port || '3306');
+
+        const patientPort = config.services?.patientPort || 3001;
+        const visitPort = config.services?.visitPort || 3002;
+        const reportsPort = config.services?.reportsPort || 3003;
         
         // Backend services run on MySQL port + 1, +2, +3
         return {
-          patient: `http://${host}:${mysqlPort + 1}`,    // Default: 3001
-          visit: `http://${host}:${mysqlPort + 2}`,      // Default: 3002  
-          reports: `http://${host}:${mysqlPort + 3}`     // Default: 3003
-        };
+            patient: `http://${host}:${patientPort}`,
+            visit: `http://${host}:${visitPort}`,
+            reports: `http://${host}:${reportsPort}`
+          };
       } catch (error) {
         console.warn('Failed to get config, using default URLs:', error);
       }
