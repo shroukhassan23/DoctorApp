@@ -52,7 +52,7 @@ console.log('Working directory: ${path.dirname(path.resolve(serviceFile))}');
 const svc = new Service({
   name: 'DoctorApp ${serviceName} Service',
   description: 'Doctor App ${serviceName} backend service',
-  script: '${path.resolve(serviceFile)}',
+  script: '${path.resolve(serviceFile).replace(/\\/g, '\\\\')}',
   nodeOptions: [
     '--max_old_space_size=4096'
   ],
@@ -60,7 +60,7 @@ const svc = new Service({
     name: 'NODE_ENV',
     value: 'production'
   },
-  workingDirectory: '${path.dirname(path.resolve(serviceFile))}',
+  workingDirectory: '${path.dirname(path.resolve(serviceFile)).replace(/\\/g, '\\\\')}',
   allowServiceLogon: true
 });
 
