@@ -11,12 +11,13 @@ files:
   - "electron.cjs"
   - "preload.js"
   - "src/utils/**/*"
-  - "initDb.cjs"
+  - "dump.sql"
   - "mySql/patient.cjs"
   - "mySql/visit.cjs"  
   - "mySql/reports.cjs"
   - "!package.json"
   - "initDb.cjs"
+  - "backendLogger.cjs"
 
 extraFiles:
   - from: "mySql/patient.cjs"
@@ -25,6 +26,8 @@ extraFiles:
     to: "app/visit.cjs"
   - from: "mySql/reports.cjs"
     to: "app/reports.cjs"
+  - from: "src/utils/backendLogger.cjs"  
+    to: "app/backendLogger.cjs"
   - from: "node_modules/sqlite3"
     to: "app/node_modules/sqlite3"
     filter: ["**/*"]

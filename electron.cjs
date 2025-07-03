@@ -5,6 +5,7 @@ const SQLiteManager = require('./src/utils/mysqlManager.cjs');
 const LicenseManager = require('./src/utils/licenseManager.cjs');
 const ConfigManager = require('./src/utils/configManager.cjs');
 const BackendManager = require('./src/utils/backendManager.cjs');
+const Logger = require('./src/utils/logger.cjs'); // Add logger import
 
 const isDev = process.env.ELECTRON_DEV === 'true';
 
@@ -15,171 +16,245 @@ class DoctorApp {
     this.licenseManager = new LicenseManager();
     this.configManager = null;
     this.backendManager = null;
+    this.logger = null; // Add logger instance
     this.appDataPath = null;
     this.isSetupComplete = false;
   }
 
   async initialize() {
-    // Set up app data directory
-    this.appDataPath = path.join(app.getPath('userData'));
-    await fs.mkdir(this.appDataPath, { recursive: true });
+    try {
+      // Set up app data directory
+      this.appDataPath = path.join(app.getPath('userData'));
+      await fs.mkdir(this.appDataPath, { recursive: true });
 
-    // Initialize license manager
-    await this.licenseManager.initialize(this.appDataPath);
+      // Initialize logger first
+      this.logger = new Logger(this.appDataPath);
+      await this.logger.initialize();
+      
+      await this.logger.logSystemEvent('App initialization started');
 
-    // Initialize MySQL paths
-    const appPath = isDev ?
-      process.cwd() :
-      process.resourcesPath;  // Point to Resources folder
-    this.sqliteManager.initializePaths(appPath);
+      // Initialize license manager
+      await this.licenseManager.initialize(this.appDataPath);
+      await this.logger.logSystemEvent('License manager initialized');
 
-    // Initialize other managers
-    this.configManager = new ConfigManager(this.appDataPath);
-    this.backendManager = new BackendManager(__dirname);
+      // Initialize MySQL paths
+      const appPath = isDev ?
+        process.cwd() :
+        process.resourcesPath;
+      this.sqliteManager.initializePaths(appPath);
+      await this.logger.logSystemEvent('SQLite paths initialized', { appPath });
 
-    // Check if setup is complete
-    await this.checkSetupStatus();
+      // Initialize other managers
+      this.configManager = new ConfigManager(this.appDataPath);
+      this.backendManager = new BackendManager(__dirname);
+      await this.logger.logSystemEvent('Managers initialized');
 
-    // Set up IPC handlers
-    this.setupIPCHandlers();
+      // Check if setup is complete
+      await this.checkSetupStatus();
+
+      // Set up IPC handlers
+      this.setupIPCHandlers();
+
+      await this.logger.logSystemEvent('App initialization completed');
+    } catch (error) {
+      if (this.logger) {
+        await this.logger.error('Failed to initialize app', error);
+      }
+      console.error('App initialization failed:', error);
+      throw error;
+    }
   }
 
   async checkSetupStatus() {
     try {
-        this.isSetupComplete = await this.configManager.isSetupComplete();
+      this.isSetupComplete = await this.configManager.isSetupComplete();
+      
+      // Check if we need to migrate from MySQL to SQLite
+      if (this.isSetupComplete) {
+        const config = await this.configManager.getConfig();
+        await this.logger.debug('Existing config loaded', { config });
         
-        // Check if we need to migrate from MySQL to SQLite
-        if (this.isSetupComplete) {
-            const config = await this.configManager.getConfig();
-            console.log('Existing config:', config);
-            
-            // If config has old MySQL settings, force re-setup for SQLite
-            if (config.database && config.database.host) {
-                console.log('Detected old MySQL config, forcing re-setup for SQLite...');
-                await this.configManager.clearConfig();
-                this.isSetupComplete = false;
-            }
+        // If config has old MySQL settings, force re-setup for SQLite
+        if (config.database && config.database.host) {
+          await this.logger.warn('Detected old MySQL config, forcing re-setup for SQLite');
+          await this.configManager.clearConfig();
+          this.isSetupComplete = false;
         }
-        
-        console.log('Setup status check:', {
-            isSetupComplete: this.isSetupComplete,
-            configPath: this.configManager.configPath
-        });
-        
+      }
+      
+      await this.logger.logSystemEvent('Setup status checked', {
+        isSetupComplete: this.isSetupComplete,
+        configPath: this.configManager.configPath
+      });
+      
     } catch (error) {
-        console.log('Setup status check error:', error);
-        this.isSetupComplete = false;
+      await this.logger.error('Setup status check failed', error);
+      this.isSetupComplete = false;
     }
   }
 
   async saveSetupConfig(installationType, config) {
-    if (installationType === 'master') {
-      await this.configManager.saveMasterConfig(config);
-    } else {
-      await this.configManager.saveClientConfig(config);
+    try {
+      if (installationType === 'master') {
+        await this.configManager.saveMasterConfig(config);
+        await this.logger.logSystemEvent('Master config saved', { config });
+      } else {
+        await this.configManager.saveClientConfig(config);
+        await this.logger.logSystemEvent('Client config saved', { config });
+      }
+      this.isSetupComplete = true;
+    } catch (error) {
+      await this.logger.error('Failed to save setup config', error, { installationType, config });
+      throw error;
     }
-    this.isSetupComplete = true;
   }
 
   createWindow() {
-    this.mainWindow = new BrowserWindow({
-      width: 1200,
-      height: 800,
-      webPreferences: {
-        nodeIntegration: false,
-        contextIsolation: true,
-        webSecurity: !isDev,
-        preload: path.join(__dirname, 'preload.js')
-      },
-      show: false,
-    });
+    try {
+      this.mainWindow = new BrowserWindow({
+        width: 1200,
+        height: 800,
+        webPreferences: {
+          nodeIntegration: false,
+          contextIsolation: true,
+          webSecurity: !isDev,
+          preload: path.join(__dirname, 'preload.js')
+        },
+        show: false,
+      });
 
-    // Load the app
-    if (isDev) {
-      this.mainWindow.loadURL('http://localhost:8081');
-      this.mainWindow.webContents.openDevTools();
-    } else {
-      const indexPath = path.join(__dirname, 'app_dist', 'index.html');
-      this.mainWindow.loadFile(indexPath).catch(console.error);
+      // Load the app
+      if (isDev) {
+        this.mainWindow.loadURL('http://localhost:8081');
+        this.mainWindow.webContents.openDevTools();
+        this.logger.logSystemEvent('Development window loaded');
+      } else {
+        const indexPath = path.join(__dirname, 'app_dist', 'index.html');
+        this.mainWindow.loadFile(indexPath).catch(async (error) => {
+          await this.logger.error('Failed to load app file', error, { indexPath });
+          console.error(error);
+        });
+        this.logger.logSystemEvent('Production window loaded');
+      }
+
+      // Show window when ready
+      this.mainWindow.once('ready-to-show', async () => {
+        this.mainWindow.show();
+        await this.logger.logSystemEvent('Main window shown');
+      });
+
+      // Start license usage tracking when window becomes focused
+      this.mainWindow.on('focus', async () => {
+        this.licenseManager.startUsageTracking();
+        await this.logger.logLicenseEvent('Usage tracking started');
+      });
+
+      // Stop license usage tracking when window loses focus
+      this.mainWindow.on('blur', async () => {
+        this.licenseManager.stopUsageTracking();
+        await this.logger.logLicenseEvent('Usage tracking stopped');
+      });
+
+    } catch (error) {
+      this.logger.error('Failed to create window', error);
+      throw error;
     }
-
-    // Show window when ready
-    this.mainWindow.once('ready-to-show', () => {
-      this.mainWindow.show();
-    });
-
-    // Start license usage tracking when window becomes focused
-    this.mainWindow.on('focus', () => {
-      this.licenseManager.startUsageTracking();
-    });
-
-    // Stop license usage tracking when window loses focus
-    this.mainWindow.on('blur', () => {
-      this.licenseManager.stopUsageTracking();
-    });
   }
 
   setupIPCHandlers() {
     // License Management
     ipcMain.handle('get-license-info', async () => {
-      return await this.licenseManager.getLicenseInfo();
+      try {
+        const result = await this.licenseManager.getLicenseInfo();
+        await this.logger.logLicenseEvent('License info retrieved');
+        return result;
+      } catch (error) {
+        await this.logger.error('Failed to get license info', error);
+        throw error;
+      }
     });
+ipcMain.handle('write-log', async (event, { level, message, context }) => {
+  if (this.logger) {
+    await this.logger.writeLog(level || 'INFO', message, null, context || {});
+  }
+});
 
     ipcMain.handle('activate-license', async (event, licenseKey) => {
-      return await this.licenseManager.activateLicense(licenseKey);
+      try {
+        await this.logger.logUserAction('License activation attempted', { licenseKey: '***' });
+        const result = await this.licenseManager.activateLicense(licenseKey);
+        await this.logger.logLicenseEvent('License activation result', { success: result.success });
+        return result;
+      } catch (error) {
+        await this.logger.error('License activation failed', error);
+        throw error;
+      }
     });
 
     ipcMain.handle('check-license', async () => {
-      return await this.licenseManager.checkLicense();
+      try {
+        const result = await this.licenseManager.checkLicense();
+        await this.logger.logLicenseEvent('License check completed', { isValid: result.isValid });
+        return result;
+      } catch (error) {
+        await this.logger.error('License check failed', error);
+        throw error;
+      }
     });
 
     // Setup Management
-    ipcMain.handle('is-setup-complete', () => {
+    ipcMain.handle('is-setup-complete', async () => {
+      await this.logger.logUserAction('Setup status requested');
       return this.isSetupComplete;
     });
 
     ipcMain.handle('setup-master-installation', async (event, config) => {
       try {
-        console.log('Setting up master installation...');
+        await this.logger.logUserAction('Master installation setup started', { config });
 
         // Start SQLite database
         await this.sqliteManager.startDatabase();
-        console.log('SQLite database started successfully');
+        await this.logger.logDatabaseOperation('SQLite database started');
 
         // Create shared folder
         await fs.mkdir(config.sharedFolderPath, { recursive: true });
-        console.log('Created shared folder:', config.sharedFolderPath);
+        await this.logger.logSystemEvent('Shared folder created', { path: config.sharedFolderPath });
 
         // Save configuration
         await this.saveSetupConfig('master', config);
-        console.log('Configuration saved');
 
         // Start backend services
         const fullConfig = await this.configManager.getConfig();
         await this.backendManager.startServices('master', fullConfig);
-        console.log('Backend services started');
+        await this.logger.logSystemEvent('Backend services started for master');
 
+        await this.logger.logUserAction('Master installation completed successfully');
         return { success: true };
       } catch (error) {
-        console.error('Master installation failed:', error);
+        await this.logger.error('Master installation failed', error, { config });
         throw error;
       }
     });
 
     ipcMain.handle('get-config', async () => {
       try {
-        return await this.configManager.getConfig();
+        const config = await this.configManager.getConfig();
+        await this.logger.logUserAction('Config retrieved');
+        return config;
       } catch (error) {
-        console.error('Failed to get config:', error);
+        await this.logger.error('Failed to get config', error);
         return {};
       }
     });
 
     ipcMain.handle('setup-client-configuration', async (event, config) => {
       try {
+        await this.logger.logUserAction('Client configuration setup started', { config });
+
         // Test connection first
         const testResult = await this.testDatabaseConnection(config);
         if (!testResult.success) {
+          await this.logger.error('Database connection test failed during client setup', null, { testResult });
           throw new Error(`Database connection failed: ${testResult.error}`);
         }
 
@@ -189,125 +264,209 @@ class DoctorApp {
         // Start backend services
         const fullConfig = await this.configManager.getConfig();
         await this.backendManager.startServices('client', fullConfig);
-        console.log('Backend services started');
+        await this.logger.logSystemEvent('Backend services started for client');
 
+        await this.logger.logUserAction('Client configuration completed successfully');
         return { success: true };
       } catch (error) {
-        console.error('Client configuration failed:', error);
+        await this.logger.error('Client configuration failed', error, { config });
         throw error;
       }
     });
 
     // Connection Testing
     ipcMain.handle('test-database-connection', async (event, config) => {
-      return await this.testDatabaseConnection(config);
+      try {
+        await this.logger.logUserAction('Database connection test started');
+        const result = await this.testDatabaseConnection(config);
+        await this.logger.logSystemEvent('Database connection test completed', { success: result.success });
+        return result;
+      } catch (error) {
+        await this.logger.error('Database connection test failed', error);
+        return { success: false, error: error.message };
+      }
     });
 
     ipcMain.handle('test-shared-folder', async (event, folderPath) => {
       try {
+        await this.logger.logUserAction('Shared folder test started', { folderPath });
         await fs.access(folderPath);
+        await this.logger.logSystemEvent('Shared folder test successful', { folderPath });
         return { success: true };
       } catch (error) {
+        await this.logger.error('Shared folder test failed', error, { folderPath });
         return { success: false, error: error.message };
       }
     });
 
     // Utility functions
-    ipcMain.handle('get-default-documents-path', () => {
-      return app.getPath('documents');
+    ipcMain.handle('get-default-documents-path', async () => {
+      const path = app.getPath('documents');
+      await this.logger.logUserAction('Default documents path requested', { path });
+      return path;
     });
 
     ipcMain.handle('select-folder', async () => {
-      const result = await dialog.showOpenDialog(this.mainWindow, {
-        properties: ['openDirectory'],
-        title: 'Select Shared Folder Location'
-      });
+      try {
+        await this.logger.logUserAction('Folder selection dialog opened');
+        const result = await dialog.showOpenDialog(this.mainWindow, {
+          properties: ['openDirectory'],
+          title: 'Select Shared Folder Location'
+        });
 
-      if (!result.canceled && result.filePaths.length > 0) {
-        return result.filePaths[0];
+        if (!result.canceled && result.filePaths.length > 0) {
+          await this.logger.logUserAction('Folder selected', { path: result.filePaths[0] });
+          return result.filePaths[0];
+        }
+        await this.logger.logUserAction('Folder selection cancelled');
+        return null;
+      } catch (error) {
+        await this.logger.error('Folder selection failed', error);
+        return null;
       }
-      return null;
     });
 
     // Application lifecycle
-    ipcMain.handle('restart-app', () => {
+    ipcMain.handle('restart-app', async () => {
+      await this.logger.logUserAction('App restart requested');
       app.relaunch();
       app.exit();
     });
 
     // SQLite Management (for master installations)
     ipcMain.handle('start-database', async () => {
-      return await this.sqliteManager.startDatabase();
+      try {
+        await this.logger.logUserAction('Database start requested');
+        const result = await this.sqliteManager.startDatabase();
+        await this.logger.logDatabaseOperation('Database started manually');
+        return result;
+      } catch (error) {
+        await this.logger.error('Failed to start database', error);
+        throw error;
+      }
     });
 
     ipcMain.handle('stop-database', async () => {
-      return await this.sqliteManager.stopDatabase();
+      try {
+        await this.logger.logUserAction('Database stop requested');
+        const result = await this.sqliteManager.stopDatabase();
+        await this.logger.logDatabaseOperation('Database stopped manually');
+        return result;
+      } catch (error) {
+        await this.logger.error('Failed to stop database', error);
+        throw error;
+      }
     });
 
-    ipcMain.handle('get-database-status', () => {
+    ipcMain.handle('get-database-status', async () => {
+      await this.logger.logUserAction('Database status requested');
       return this.sqliteManager.isInitialized;
+    });
+
+    // Logging-related handlers
+    ipcMain.handle('get-recent-logs', async (event, lines = 100) => {
+      try {
+        await this.logger.logUserAction('Recent logs requested', { lines });
+        return await this.logger.getRecentLogs(lines);
+      } catch (error) {
+        await this.logger.error('Failed to get recent logs', error);
+        return [];
+      }
+    });
+
+    ipcMain.handle('export-logs', async () => {
+      try {
+        await this.logger.logUserAction('Log export requested');
+        const exportPath = await this.logger.exportLogs();
+        await this.logger.logSystemEvent('Logs exported', { exportPath });
+        return exportPath;
+      } catch (error) {
+        await this.logger.error('Failed to export logs', error);
+        throw error;
+      }
     });
   }
 
   async testDatabaseConnection(config) {
     try {
+      await this.logger.logDatabaseOperation('Testing database connection');
       // For SQLite, just test if we can create/access the database
       await this.sqliteManager.startDatabase();
+      await this.logger.logDatabaseOperation('Database connection test successful');
       return { success: true };
     } catch (error) {
+      await this.logger.error('Database connection test failed', error);
       return { success: false, error: error.message };
     }
   }
 
   async startup() {
-    await this.initialize();
+    try {
+      await this.initialize();
 
-    // Check license before creating window
-    const licenseStatus = await this.licenseManager.checkLicense();
+      // Check license before creating window
+      const licenseStatus = await this.licenseManager.checkLicense();
 
-    if (!licenseStatus.isValid) {
-      // License expired - still create window but it will show activation screen
-      console.log('License expired or invalid');
-    }
-
-    this.createWindow();
-
-    // If this is a setup complete, start services
-    if (this.isSetupComplete) {
-      try {
-        const config = await this.configManager.getConfig();
-
-        if (config.installationType === 'master') {
-          console.log('Starting SQLite database for master installation...');
-          await this.sqliteManager.startDatabase();
-        }
-
-        // Start backend services
-        await this.backendManager.startServices(config.installationType, config);
-        console.log('Backend services started');
-
-      } catch (error) {
-        console.error('Error starting services:', error);
+      if (!licenseStatus.isValid) {
+        await this.logger.warn('License expired or invalid at startup');
       }
+
+      this.createWindow();
+
+      // If this is a setup complete, start services
+      if (this.isSetupComplete) {
+        try {
+          const config = await this.configManager.getConfig();
+
+          if (config.installationType === 'master') {
+            await this.logger.logSystemEvent('Starting SQLite database for master installation');
+            await this.sqliteManager.startDatabase();
+          }
+
+          // Start backend services
+          await this.backendManager.startServices(config.installationType, config);
+          await this.logger.logSystemEvent('Backend services started at startup');
+
+        } catch (error) {
+          await this.logger.error('Error starting services at startup', error);
+        }
+      }
+    } catch (error) {
+      if (this.logger) {
+        await this.logger.error('Startup failed', error);
+      }
+      console.error('Startup failed:', error);
     }
   }
 
   async shutdown() {
-    // Stop license tracking
-    if (this.licenseManager) {
-      this.licenseManager.stopUsageTracking();
-    }
+    try {
+      await this.logger.logSystemEvent('App shutdown started');
 
-    // Stop backend services
-    if (this.backendManager) {
-      console.log('Stopping backend services...');
-      await this.backendManager.stopAllServices();
-    }
+      // Stop license tracking
+      if (this.licenseManager) {
+        this.licenseManager.stopUsageTracking();
+        await this.logger.logLicenseEvent('Usage tracking stopped during shutdown');
+      }
 
-    // Stop MySQL if running
-    if (this.sqliteManager && this.sqliteManager.isInitialized) {
-      console.log('Stopping SQLite database...');
-      await this.sqliteManager.stopDatabase();
+      // Stop backend services
+      if (this.backendManager) {
+        await this.logger.logSystemEvent('Stopping backend services');
+        await this.backendManager.stopAllServices();
+      }
+
+      // Stop SQLite if running
+      if (this.sqliteManager && this.sqliteManager.isInitialized) {
+        await this.logger.logSystemEvent('Stopping SQLite database');
+        await this.sqliteManager.stopDatabase();
+      }
+
+      await this.logger.logSystemEvent('App shutdown completed');
+    } catch (error) {
+      if (this.logger) {
+        await this.logger.error('Error during shutdown', error);
+      }
+      console.error('Shutdown error:', error);
     }
   }
 }
@@ -315,32 +474,56 @@ class DoctorApp {
 // Create app instance
 const doctorApp = new DoctorApp();
 
+// Global error handlers
+process.on('uncaughtException', async (error) => {
+  console.error('Uncaught Exception:', error);
+  if (doctorApp.logger) {
+    await doctorApp.logger.error('Uncaught Exception', error);
+  }
+  // Don't exit in production, just log
+  if (!isDev) {
+    return;
+  }
+  process.exit(1);
+});
+
+process.on('unhandledRejection', async (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  if (doctorApp.logger) {
+    await doctorApp.logger.error('Unhandled Rejection', reason instanceof Error ? reason : new Error(reason));
+  }
+});
+
 // App event handlers
 app.whenReady().then(() => {
   doctorApp.startup();
 
-  app.on('activate', () => {
+  app.on('activate', async () => {
     if (BrowserWindow.getAllWindows().length === 0) {
+      await doctorApp.logger.logSystemEvent('App reactivated, creating new window');
       doctorApp.createWindow();
     }
   });
 });
 
-app.on('window-all-closed', () => {
-  doctorApp.shutdown();
+app.on('window-all-closed', async () => {
+  await doctorApp.shutdown();
   if (process.platform !== 'darwin') {
     app.quit();
   }
 });
 
-app.on('before-quit', () => {
-  doctorApp.shutdown();
+app.on('before-quit', async () => {
+  await doctorApp.shutdown();
 });
 
 // Handle certificate errors in development
 if (isDev) {
-  app.on('certificate-error', (event, webContents, url, error, certificate, callback) => {
+  app.on('certificate-error', async (event, webContents, url, error, certificate, callback) => {
     event.preventDefault();
     callback(true);
+    if (doctorApp.logger) {
+      await doctorApp.logger.warn('Certificate error ignored in development', { url, error });
+    }
   });
 }

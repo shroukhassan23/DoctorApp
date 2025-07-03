@@ -1,125 +1,415 @@
 const express = require('express');
 const cors = require('cors');
 const initDatabase = require('./initDb.cjs'); 
+const BackendLogger = require('./backendLogger.cjs');
+
 const app = express();
 app.use(cors());
 app.use(express.json());
+
 let db; 
+let logger;
+let keepAlive;
+let isShuttingDown = false;
+
+// Safe console wrapper to handle EPIPE errors
+const safeConsole = {
+  log: (...args) => {
+    try {
+      if (!isShuttingDown && process.stdout && !process.stdout.destroyed) {
+        console.log(...args);
+      }
+    } catch (error) {
+      // Silently ignore EPIPE errors during console.log
+      if (error.code !== 'EPIPE') {
+        // Only re-throw non-EPIPE errors
+        throw error;
+      }
+    }
+  },
+  error: (...args) => {
+    try {
+      if (!isShuttingDown && process.stderr && !process.stderr.destroyed) {
+        console.error(...args);
+      }
+    } catch (error) {
+      if (error.code !== 'EPIPE') {
+        throw error;
+      }
+    }
+  },
+  warn: (...args) => {
+    try {
+      if (!isShuttingDown && process.stderr && !process.stderr.destroyed) {
+        console.warn(...args);
+      }
+    } catch (error) {
+      if (error.code !== 'EPIPE') {
+        throw error;
+      }
+    }
+  }
+};
 
 (async () => {
   try {
-    console.log('Patient service starting with SQLite...');
+    // Initialize Logger first
+    logger = new BackendLogger('patients-service');
+    await logger.initialize();
+    
+    safeConsole.log('Patient service starting with SQLite...');
+    await logger.info('Patient service starting with SQLite');
 
+    // Initialize database
     db = await initDatabase(); 
-    console.log("✅ Patient service database initialized.");
+    safeConsole.log("✅ Patient service database initialized.");
+    await logger.info("Patient service database initialized successfully");
+
+    // Add middleware for logging
+    app.use(async (req, res, next) => {
+      await logger.logRequest(req, res, next);
+    });
+
     // GET all Patients
     app.get('/Patients', async (req, res) => {
       try {
+        await logger.info('Fetching all patients');
+        await logger.info('📝 Incoming patient create request', { body: req.body });
         const [rows] = await db.query('SELECT * FROM patients WHERE deleted_at IS NULL');
+        
+        await logger.logDatabaseQuery(
+          'SELECT * FROM patients WHERE deleted_at IS NULL',
+          [],
+          rows
+        );
+        
+        await logger.info('Patients fetched successfully', { count: rows.length });
         res.send(rows);
       } catch (err) {
-        res.status(500).send(err);
+        await logger.error('Failed to fetch patients', err);
+        res.status(500).send({ error: 'Failed to fetch patients', details: err.message });
       }
     });
 
+    // Search Patients
     app.get('/Patients/search', async (req, res) => {
       try {
         const { q } = req.query;
-        if (!q || q.trim().length === 0) return res.json([]);
+        await logger.info('Patient search initiated', { searchTerm: q });
+        
+        if (!q || q.trim().length === 0) {
+          await logger.warn('Empty search query provided');
+          return res.json([]);
+        }
+        
         const searchTerm = `%${q.trim()}%`;
-        const [rows] = await db.query(
-          `SELECT * FROM patients 
-           WHERE deleted_at IS NULL 
-           AND (name LIKE ? OR phone LIKE ? OR address LIKE ?)
-           ORDER BY name ASC
-           LIMIT 20`,
-          [searchTerm, searchTerm, searchTerm]
-        );
+        const query = `SELECT * FROM patients 
+                       WHERE deleted_at IS NULL 
+                       AND (name LIKE ? OR phone LIKE ? OR address LIKE ?)
+                       ORDER BY name ASC
+                       LIMIT 20`;
+        
+        const [rows] = await db.query(query, [searchTerm, searchTerm, searchTerm]);
+        
+        await logger.logDatabaseQuery(query, [searchTerm, searchTerm, searchTerm], rows);
+        await logger.info('Patient search completed', { 
+          searchTerm: q, 
+          resultsCount: rows.length 
+        });
+        
         res.json(rows);
       } catch (err) {
-        console.error('Error searching patients:', err);
-        res.status(500).json({ error: err.message });
+        await logger.error('Patient search failed', err, { searchTerm: req.query.q });
+        res.status(500).json({ error: 'Search failed', details: err.message });
       }
     });
 
-app.post('/Patients', async (req, res) => {
-  try {
-    const { patient } = req.body;
+    // Create Patient
+    app.post('/Patients', async (req, res) => {
+      try {
+        const { patient } = req.body;
+        await logger.info('Creating new patient', { patientData: patient });
 
-    if (!patient || !patient.name || !patient.age || !patient.gender || !patient.date_of_birth) {
-      return res.status(400).json({ error: "Missing required patient fields" });
-    }
+        // Validate required fields
+        if (!patient || !patient.name || !patient.age || !patient.gender || !patient.date_of_birth) {
+          await logger.warn('Missing required patient fields', { providedData: patient });
+          return res.status(400).json({ error: "Missing required patient fields" });
+        }
 
-    const [results] = await db.query(
-      'INSERT INTO patients (name, age, date_of_birth, gender, phone, address, medical_history, deleted_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [
-        patient.name,
-        patient.age,
-        patient.date_of_birth,
-        patient.gender,
-        patient.phone || null,
-        patient.address || null,
-        patient.medical_history || null,
-        null 
-      ]
-    );
+        const query = 'INSERT INTO patients (name, age, date_of_birth, gender, phone, address, medical_history, deleted_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
+        const params = [
+          patient.name,
+          patient.age,
+          patient.date_of_birth,
+          patient.gender,
+          patient.phone || null,
+          patient.address || null,
+          patient.medical_history || null,
+          null 
+        ];
 
-    res.status(201).json({ success: true, id: results.insertId });
-  } catch (err) {
-    console.error('Database error:', err);
-    res.status(500).json({ error: "Internal server error", details: err.message });
-  }
-});
+        const [results] = await db.query(query, params);
 
+        await logger.logDatabaseQuery(query, params, results);
+        await logger.logUserAction('Patient Created', null, { 
+          patientId: results.insertId, 
+          patientName: patient.name 
+        });
 
+        await logger.info('Patient created successfully', { 
+          patientId: results.insertId, 
+          patientName: patient.name 
+        });
+
+        res.status(201).json({ success: true, id: results.insertId });
+      } catch (err) {
+        await logger.error('Failed to create patient', err, { patientData: req.body });
+        res.status(500).json({ error: "Failed to create patient", details: err.message });
+      }
+    });
+
+    // Update Patient
     app.put('/Patients/:id', async (req, res) => {
       try {
         const { id } = req.params;
         const patient = req.body;
-        const [result] = await db.query(
-          `UPDATE patients SET 
-           name=?, age=?, date_of_birth=?, gender=?, phone=?, address=?, medical_history=?
-           WHERE id=?`,
-          [
-            patient.name,
-            patient.age,
-            patient.date_of_birth,
-            patient.gender,
-            patient.phone || null,
-            patient.address || null,
-            patient.medical_history || null,
-            id
-          ]
-        );
-        if (result.affectedRows === 0) return res.status(404).json({ error: "Patient not found" });
+        
+        await logger.info('Updating patient', { patientId: id, updateData: patient });
+
+        const query = `UPDATE patients SET 
+                       name=?, age=?, date_of_birth=?, gender=?, phone=?, address=?, medical_history=?
+                       WHERE id=?`;
+        const params = [
+          patient.name,
+          patient.age,
+          patient.date_of_birth,
+          patient.gender,
+          patient.phone || null,
+          patient.address || null,
+          patient.medical_history || null,
+          id
+        ];
+
+        const [result] = await db.query(query, params);
+
+        await logger.logDatabaseQuery(query, params, result);
+
+        if (result.affectedRows === 0) {
+          await logger.warn('Patient not found for update', { patientId: id });
+          return res.status(404).json({ error: "Patient not found" });
+        }
+
+        await logger.logUserAction('Patient Updated', null, { 
+          patientId: id, 
+          patientName: patient.name 
+        });
+
+        await logger.info('Patient updated successfully', { 
+          patientId: id, 
+          patientName: patient.name 
+        });
+
         res.json({ success: true });
       } catch (err) {
-        console.error('Database error:', err);
-        res.status(500).json({ error: err.sqlMessage || err.message });
+        await logger.error('Failed to update patient', err, { 
+          patientId: req.params.id, 
+          updateData: req.body 
+        });
+        res.status(500).json({ error: 'Failed to update patient', details: err.message });
       }
     });
 
+    // Delete Patient (Soft Delete)
     app.delete('/Patients/:id', async (req, res) => {
       try {
         const { id } = req.params;
-        const [result] = await db.query(
-          'UPDATE patients SET deleted_at = datetime("now") WHERE id = ? AND deleted_at IS NULL',
-          [id]
-        );
-        if (result.affectedRows === 0) return res.status(404).json({ error: 'Patient not found' });
+        await logger.info('Deleting patient', { patientId: id });
+
+        const query = 'UPDATE patients SET deleted_at = datetime("now") WHERE id = ? AND deleted_at IS NULL';
+        const [result] = await db.query(query, [id]);
+
+        await logger.logDatabaseQuery(query, [id], result);
+
+        if (result.affectedRows === 0) {
+          await logger.warn('Patient not found for deletion', { patientId: id });
+          return res.status(404).json({ error: 'Patient not found' });
+        }
+
+        await logger.logUserAction('Patient Deleted', null, { patientId: id });
+        await logger.info('Patient deleted successfully', { patientId: id });
+
         res.json({ success: true, message: 'Patient marked as deleted' });
       } catch (err) {
-        res.status(500).json({ error: err.message });
+        await logger.error('Failed to delete patient', err, { patientId: req.params.id });
+        res.status(500).json({ error: 'Failed to delete patient', details: err.message });
       }
     });
 
-    // ✅ بعد ما كل شيء تمام، شغل السيرفر
-    const PORT = 3001;
-    app.listen(PORT, () => {
-      console.log(`🚀 Server running at http://localhost:${PORT}`);
+    // Error handling middleware
+    app.use(async (err, req, res, next) => {
+      await logger.error('Unhandled error in request', err, {
+        method: req.method,
+        url: req.url,
+        body: req.body,
+        params: req.params,
+        query: req.query
+      });
+      
+      res.status(500).json({ 
+        error: 'Internal server error',
+        message: err.message 
+      });
     });
 
+    // 404 Handler
+    app.use(async (req, res) => {
+      await logger.warn('404 - Route not found', {
+        method: req.method,
+        url: req.url
+      });
+      
+      res.status(404).json({ 
+        error: 'Route not found',
+        method: req.method,
+        url: req.url
+      });
+    });
+
+    // Start server
+    const PORT = process.env.PORT || 3001;
+    const server = app.listen(PORT, async () => {
+      const message = `🚀 Server running at http://localhost:${PORT}`;
+      safeConsole.log(message);
+      await logger.info('Server started successfully', { port: PORT });
+      
+      // Add debug info
+      safeConsole.log('=== SERVER STARTUP COMPLETE ===');
+      safeConsole.log('Process PID:', process.pid);
+      safeConsole.log('Node version:', process.version);
+      safeConsole.log('Platform:', process.platform);
+      safeConsole.log('================================');
+    });
+
+    // Keep alive with safer implementation
+    keepAlive = setInterval(() => {
+      if (!isShuttingDown) {
+        try {
+          // Use logger instead of console.log to avoid EPIPE
+          if (logger) {
+            logger.debug('Keep alive heartbeat');
+          }
+          // Only log to console if stdout is available
+          if (process.stdout && !process.stdout.destroyed) {
+            safeConsole.log('Keep alive heartbeat...');
+          }
+        } catch (error) {
+          // If logging fails, just continue silently
+          if (error.code !== 'EPIPE') {
+            safeConsole.error('Keep alive error:', error.message);
+          }
+        }
+      }
+    }, 30000); // Every 30 seconds
+
+    // Handle graceful shutdown
+    const gracefulShutdown = async (signal) => {
+      isShuttingDown = true;
+      safeConsole.log(`${signal} received, shutting down gracefully`);
+      
+      if (logger) {
+        try {
+          await logger.info(`${signal} received, shutting down gracefully`);
+        } catch (error) {
+          // Ignore logging errors during shutdown
+        }
+      }
+      
+      // Clear the keep alive interval
+      if (keepAlive) {
+        clearInterval(keepAlive);
+      }
+      
+      // Close the server
+      if (server) {
+        server.close(() => {
+          safeConsole.log('Server closed successfully');
+          process.exit(0);
+        });
+      } else {
+        process.exit(0);
+      }
+    };
+
+    process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+    process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
   } catch (error) {
-    console.error("❌ Failed to initialize database:", error.message);
+    const errorMessage = "❌ Failed to initialize database:";
+    safeConsole.error(errorMessage, error.message);
+    if (logger) {
+      try {
+        await logger.error('Service initialization failed', error);
+      } catch (logError) {
+        // Ignore logging errors during initialization failure
+      }
+    }
+    process.exit(1);
   }
 })();
+
+// Handle uncaught exceptions with EPIPE protection
+process.on('uncaughtException', async (error) => {
+  // Ignore EPIPE errors as they're expected during shutdown
+  if (error.code === 'EPIPE') {
+    return;
+  }
+  
+  safeConsole.error('Uncaught Exception:', error);
+  if (logger) {
+    try {
+      await logger.error('Uncaught Exception', error);
+    } catch (logError) {
+      // Ignore logging errors
+    }
+  }
+  
+  // Only exit if it's a critical error
+  if (error.code === 'EADDRINUSE' || error.code === 'EACCES') {
+    safeConsole.error('Critical error, shutting down...');
+    process.exit(1);
+  } else {
+    safeConsole.log('Non-critical error, continuing...');
+  }
+});
+
+// Handle unhandled promise rejections
+process.on('unhandledRejection', async (reason, promise) => {
+  safeConsole.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  if (logger) {
+    try {
+      await logger.error('Unhandled Rejection', reason instanceof Error ? reason : new Error(reason));
+    } catch (logError) {
+      // Ignore logging errors
+    }
+  }
+  
+  safeConsole.log('Unhandled rejection logged, continuing...');
+});
+
+// Add a process warning handler
+process.on('warning', (warning) => {
+  safeConsole.warn('Process Warning:', warning.name, warning.message);
+  if (logger) {
+    try {
+      logger.warn('Process Warning', { name: warning.name, message: warning.message });
+    } catch (error) {
+      // Ignore logging errors
+    }
+  }
+});
+
+// Handle SIGPIPE specifically
+process.on('SIGPIPE', () => {
+  // Ignore SIGPIPE - this is expected when parent process closes pipe
+  isShuttingDown = true;
+});
