@@ -20,8 +20,8 @@
     "pack": "npm run prepare:build && electron-builder --dir --config electron-builder.yml",
     "clean": "rimraf app_dist dist-installers mysql-resources/mysql-* build node_modules/.cache",
     "rebuild": "npm run clean && npm run dist",
-    "install-services": "node scripts/install-services.js",
-    "uninstall-services": "node scripts/uninstall-services.js",
+    "install-services": "node scripts/install-services.cjs",
+    "uninstall-services": "node scripts/uninstall-services.cjs",
     "start-services": "net start \"DoctorApp Patient Service\" && net start \"DoctorApp Visit Service\" && net start \"DoctorApp Reports Service\"",
     "stop-services": "net stop \"DoctorApp Patient Service\" && net stop \"DoctorApp Visit Service\" && net stop \"DoctorApp Reports Service\""
 
