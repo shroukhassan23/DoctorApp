@@ -121,7 +121,7 @@ async function installServices() {
       debug(`\n=== Installing ${service.name} Service ===`);
       
       // Build full path to service file
-      const fullServicePath = path.join(process.cwd(), 'resources', service.file);
+      const fullServicePath = path.join(__dirname, '..', 'resources', service.file);
       debug(`Full service path: ${fullServicePath}`);
       debug(`Service file exists: ${fs.existsSync(fullServicePath)}`);
       
