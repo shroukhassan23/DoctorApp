@@ -200,7 +200,8 @@ async function installServices() {
       // Verify service was installed
       const { execSync } = require('child_process');
       try {
-        const queryResult = execSync(`sc query "DoctorApp ${service.name} Service"`, {
+        const serviceId = `doctorapp${service.name.toLowerCase()}service`;
+        const queryResult = execSync(`sc.exe query ${serviceId}`, {
           encoding: 'utf8'
         });
 
@@ -223,7 +224,8 @@ async function installServices() {
     debug('Final service status check...');
     services.forEach(service => {
       try {
-        const queryResult = execSync(`sc query "DoctorApp ${service.name} Service"`, {
+        const serviceId = `doctorapp${service.name.toLowerCase()}service`;
+        const queryResult = execSync(`sc.exe query ${serviceId}`, {
           encoding: 'utf8'
         });
         const status = queryResult ?
