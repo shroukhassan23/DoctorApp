@@ -1,13 +1,13 @@
 const express = require('express');
 const cors = require('cors');
-const initDatabase = require('./initDb.cjs'); 
+const initDatabase = require('./initDb.cjs');
 const BackendLogger = require('./backendLogger.cjs');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-let db; 
+let db;
 let logger;
 let keepAlive;
 let isShuttingDown = false;
@@ -56,12 +56,12 @@ const safeConsole = {
     // Initialize Logger first
     logger = new BackendLogger('patients-service');
     await logger.initialize();
-    
+
     safeConsole.log('Patient service starting with SQLite...');
     await logger.info('Patient service starting with SQLite');
 
     // Initialize database
-    db = await initDatabase(); 
+    db = await initDatabase();
     safeConsole.log("✅ Patient service database initialized.");
     await logger.info("Patient service database initialized successfully");
 
@@ -75,13 +75,13 @@ const safeConsole = {
       try {
         await logger.info('Fetching all patients');
         const [rows] = await db.query('SELECT * FROM patients WHERE deleted_at IS NULL');
-        
+
         await logger.logDatabaseQuery(
           'SELECT * FROM patients WHERE deleted_at IS NULL',
           [],
           rows
         );
-        
+
         await logger.info('Patients fetched successfully', { count: rows.length });
         res.send(rows);
       } catch (err) {
@@ -95,27 +95,27 @@ const safeConsole = {
       try {
         const { q } = req.query;
         await logger.info('Patient search initiated', { searchTerm: q });
-        
+
         if (!q || q.trim().length === 0) {
           await logger.warn('Empty search query provided');
           return res.json([]);
         }
-        
+
         const searchTerm = `%${q.trim()}%`;
         const query = `SELECT * FROM patients 
                        WHERE deleted_at IS NULL 
                        AND (name LIKE ? OR phone LIKE ? OR address LIKE ?)
                        ORDER BY name ASC
                        LIMIT 20`;
-        
+
         const [rows] = await db.query(query, [searchTerm, searchTerm, searchTerm]);
-        
+
         await logger.logDatabaseQuery(query, [searchTerm, searchTerm, searchTerm], rows);
-        await logger.info('Patient search completed', { 
-          searchTerm: q, 
-          resultsCount: rows.length 
+        await logger.info('Patient search completed', {
+          searchTerm: q,
+          resultsCount: rows.length
         });
-        
+
         res.json(rows);
       } catch (err) {
         await logger.error('Patient search failed', err, { searchTerm: req.query.q });
@@ -127,9 +127,8 @@ const safeConsole = {
     app.post('/Patients', async (req, res) => {
       try {
         const { patient } = req.body;
-        await logger.info('📝 Incoming patient create request', { body: req.body }); // ← This should be here
+        await logger.info('📝 Incoming patient create request', { body: req.body });
         await logger.info('Creating new patient', { patientData: patient });
-
 
         // Validate required fields
         if (!patient || !patient.name || !patient.age || !patient.gender || !patient.date_of_birth) {
@@ -146,26 +145,26 @@ const safeConsole = {
           patient.phone || null,
           patient.address || null,
           patient.medical_history || null,
-          null 
+          null
         ];
 
         const [results] = await db.query(query, params);
 
         await logger.logDatabaseQuery(query, params, results);
-        await logger.logUserAction('Patient Created', null, { 
-          patientId: results.insertId, 
-          patientName: patient.name 
+        await logger.logUserAction('Patient Created', null, {
+          patientId: results.insertId,
+          patientName: patient.name
         });
 
-        await logger.info('Patient created successfully', { 
-          patientId: results.insertId, 
-          patientName: patient.name 
+        await logger.info('Patient created successfully', {
+          patientId: results.insertId,
+          patientName: patient.name
         });
 
-        res.status(201).json({ success: true, id: results.insertId });
+        return res.status(201).json({ success: true, id: results.insertId });
       } catch (err) {
         await logger.error('Failed to create patient', err, { patientData: req.body });
-        res.status(500).json({ error: "Failed to create patient", details: err.message });
+        return res.status(500).json({ error: "Failed to create patient", details: err.message });
       }
     });
 
@@ -174,7 +173,7 @@ const safeConsole = {
       try {
         const { id } = req.params;
         const patient = req.body;
-        
+
         await logger.info('Updating patient', { patientId: id, updateData: patient });
 
         const query = `UPDATE patients SET 
@@ -200,21 +199,21 @@ const safeConsole = {
           return res.status(404).json({ error: "Patient not found" });
         }
 
-        await logger.logUserAction('Patient Updated', null, { 
-          patientId: id, 
-          patientName: patient.name 
+        await logger.logUserAction('Patient Updated', null, {
+          patientId: id,
+          patientName: patient.name
         });
 
-        await logger.info('Patient updated successfully', { 
-          patientId: id, 
-          patientName: patient.name 
+        await logger.info('Patient updated successfully', {
+          patientId: id,
+          patientName: patient.name
         });
 
         res.json({ success: true });
       } catch (err) {
-        await logger.error('Failed to update patient', err, { 
-          patientId: req.params.id, 
-          updateData: req.body 
+        await logger.error('Failed to update patient', err, {
+          patientId: req.params.id,
+          updateData: req.body
         });
         res.status(500).json({ error: 'Failed to update patient', details: err.message });
       }
@@ -255,10 +254,10 @@ const safeConsole = {
         params: req.params,
         query: req.query
       });
-      
-      res.status(500).json({ 
+
+      res.status(500).json({
         error: 'Internal server error',
-        message: err.message 
+        message: err.message
       });
     });
 
@@ -268,8 +267,8 @@ const safeConsole = {
         method: req.method,
         url: req.url
       });
-      
-      res.status(404).json({ 
+
+      res.status(404).json({
         error: 'Route not found',
         method: req.method,
         url: req.url
@@ -282,7 +281,7 @@ const safeConsole = {
       const message = `🚀 Server running at http://localhost:${PORT}`;
       safeConsole.log(message);
       await logger.info('Server started successfully', { port: PORT });
-      
+
       // Add debug info
       safeConsole.log('=== SERVER STARTUP COMPLETE ===');
       safeConsole.log('Process PID:', process.pid);
@@ -309,7 +308,7 @@ const safeConsole = {
     const gracefulShutdown = async (signal) => {
       isShuttingDown = true;
       safeConsole.log(`${signal} received, shutting down gracefully`);
-      
+
       if (logger) {
         try {
           await logger.info(`${signal} received, shutting down gracefully`);
@@ -317,12 +316,12 @@ const safeConsole = {
           // Ignore logging errors during shutdown
         }
       }
-      
+
       // Clear the keep alive interval
       if (keepAlive) {
         clearInterval(keepAlive);
       }
-      
+
       // Close the server
       if (server) {
         server.close(() => {
@@ -357,7 +356,7 @@ process.on('uncaughtException', async (error) => {
   if (error.code === 'EPIPE') {
     return;
   }
-  
+
   safeConsole.error('Uncaught Exception:', error);
   if (logger) {
     try {
@@ -366,7 +365,7 @@ process.on('uncaughtException', async (error) => {
       // Ignore logging errors
     }
   }
-  
+
   // Only exit if it's a critical error
   if (error.code === 'EADDRINUSE' || error.code === 'EACCES') {
     safeConsole.error('Critical error, shutting down...');
@@ -386,7 +385,7 @@ process.on('unhandledRejection', async (reason, promise) => {
       // Ignore logging errors
     }
   }
-  
+
   safeConsole.log('Unhandled rejection logged, continuing...');
 });
 

@@ -48,17 +48,17 @@ class BackendLogger {
       };
 
       const logLine = JSON.stringify(logEntry) + '\n';
-      
+
       // كتابة في الـ log file العادي
       await this.checkLogRotation(this.logFilePath);
       await fs.appendFile(this.logFilePath, logLine);
-      
+
       // كتابة الأخطاء في ملف منفصل
       if (level === 'ERROR') {
         await this.checkLogRotation(this.errorLogPath);
         await fs.appendFile(this.errorLogPath, logLine);
       }
-      
+
       // عرض في الـ console
       console.log(`[${level}] [${this.serviceName}] ${message}`, context, error);
     } catch (writeError) {
@@ -69,12 +69,12 @@ class BackendLogger {
   async checkLogRotation(filePath) {
     try {
       const stats = await fs.stat(filePath);
-      
+
       if (stats.size > this.maxLogSize) {
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
         const backupPath = `${filePath}.${timestamp}`;
         await fs.rename(filePath, backupPath);
-        
+
         // تنظيف الملفات القديمة
         await this.cleanupOldLogs(path.dirname(filePath));
       }
@@ -122,7 +122,7 @@ class BackendLogger {
   // طرق مخصصة للـ API
   async logRequest(req, res, next) {
     const startTime = Date.now();
-    
+
     await this.info('API Request', {
       method: req.method,
       url: req.url,
@@ -132,17 +132,27 @@ class BackendLogger {
     });
 
     // Override res.json to log response
+    // Override res.json to log response
     const originalJson = res.json;
-    res.json = (data)=> {
+    const self = this; // Store reference to BackendLogger instance
+    res.json = function (data) {
       const duration = Date.now() - startTime;
-      this.info('API Response', {
-        method: req.method,
-        url: req.url,
-        statusCode: res.statusCode,
-        duration: `${duration}ms`,
-        responseSize: JSON.stringify(data).length
-      });
-      return originalJson.call(this, data);
+
+      // Log the response (use try-catch to be safe)
+      try {
+        self.info('API Response', {
+          method: req.method,
+          url: req.url,
+          statusCode: res.statusCode,
+          duration: `${duration}ms`,
+          responseSize: JSON.stringify(data).length
+        });
+      } catch (logError) {
+        console.error('Failed to log API response:', logError);
+      }
+
+      // Call original json method with correct context
+      return originalJson.call(res, data);
     };
 
     next();
