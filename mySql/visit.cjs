@@ -224,6 +224,7 @@ app.post('/prescription/add', async (req, res) => {
 });
 
 
+// Fixed: Add prescription medicines for SQLite
 app.post('/prescription/medicines/add', async (req, res) => {
   const { medicines } = req.body; // Array of medicine objects
   
@@ -232,32 +233,37 @@ app.post('/prescription/medicines/add', async (req, res) => {
       return res.status(400).json({ error: 'No medicines provided' });
     }
 
-    const values = medicines.map(med => [
-      med.prescription_id,
-      med.medicine_id,
-      med.dosage || '',
-      med.frequency || '',
-      med.duration || '',
-      med.instructions || ''
-    ]);
-
-    const [result] = await db.query(
-      `INSERT INTO prescription_items 
-       (prescription_id, medicine_id, dosage, frequency, duration, instructions)
-       VALUES ?`,
-      [values]
-    );
+    // Insert medicines one by one for SQLite compatibility
+    let insertedCount = 0;
+    
+    for (const med of medicines) {
+      await db.query(
+        `INSERT INTO prescription_items 
+         (prescription_id, medicine_id, dosage, frequency, duration, instructions)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [
+          med.prescription_id,
+          med.medicine_id,
+          med.dosage || '',
+          med.frequency || '',
+          med.duration || '',
+          med.instructions || ''
+        ]
+      );
+      insertedCount++;
+    }
 
     res.status(201).json({ 
       message: 'Prescription medicines added successfully', 
-      insertedCount: result.affectedRows 
+      insertedCount: insertedCount 
     });
   } catch (err) {
+    console.error('Error adding prescription medicines:', err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// Add prescription lab tests
+// Fixed: Add prescription lab tests for SQLite
 app.post('/prescription/labtests/add', async (req, res) => {
   const { labTests } = req.body; // Array of lab test objects
   
@@ -266,28 +272,30 @@ app.post('/prescription/labtests/add', async (req, res) => {
       return res.status(400).json({ error: 'No lab tests provided' });
     }
 
-    const values = labTests.map(test => [
-      test.prescription_id,
-      test.lab_test_id
-    ]);
-
-    const [result] = await db.query(
-      `INSERT INTO prescription_lab_tests 
-       (prescription_id, lab_test_id)
-       VALUES ?`,
-      [values]
-    );
+    // Insert lab tests one by one for SQLite compatibility
+    let insertedCount = 0;
+    
+    for (const test of labTests) {
+      await db.query(
+        `INSERT INTO prescription_lab_tests 
+         (prescription_id, lab_test_id)
+         VALUES (?, ?)`,
+        [test.prescription_id, test.lab_test_id]
+      );
+      insertedCount++;
+    }
 
     res.status(201).json({ 
       message: 'Prescription lab tests added successfully', 
-      insertedCount: result.affectedRows 
+      insertedCount: insertedCount 
     });
   } catch (err) {
+    console.error('Error adding prescription lab tests:', err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// Add prescription imaging studies
+// Fixed: Add prescription imaging studies for SQLite
 app.post('/prescription/imagingstudies/add', async (req, res) => {
   const { imagingStudies } = req.body; // Array of imaging study objects
   
@@ -298,32 +306,34 @@ app.post('/prescription/imagingstudies/add', async (req, res) => {
 
     console.log('Received imaging studies data:', imagingStudies);
 
-    const values = imagingStudies.map(study => [
-      study.prescription_id,
-      study.imaging_studies_id, // Now matches the database column name
-      study.comments || null // Changed from 'notes' to 'comments'
-    ]);
+    // Insert imaging studies one by one for SQLite compatibility
+    let insertedCount = 0;
+    
+    for (const study of imagingStudies) {
+      await db.query(
+        `INSERT INTO prescription_imaging_studies 
+         (prescription_id, imaging_studies_id, comments)
+         VALUES (?, ?, ?)`,
+        [
+          study.prescription_id,
+          study.imaging_studies_id,
+          study.comments || null
+        ]
+      );
+      insertedCount++;
+    }
 
-    console.log('Mapped values for database:', values);
-
-    // Use the correct column names from your database schema
-    const [result] = await db.query(
-      `INSERT INTO prescription_imaging_studies 
-       (prescription_id, imaging_studies_id, comments)
-       VALUES ?`,
-      [values]
-    );
+    console.log('Successfully inserted imaging studies:', insertedCount);
 
     res.status(201).json({ 
       message: 'Prescription imaging studies added successfully', 
-      insertedCount: result.affectedRows 
+      insertedCount: insertedCount 
     });
   } catch (err) {
     console.error('Error adding imaging studies:', err);
     res.status(500).json({ error: err.message });
   }
 });
-
 // Get patient visits
 app.get('/patients/:patientId/visits', async (req, res) => {
   const { patientId } = req.params;
@@ -390,28 +400,6 @@ app.post('/patients/:patientId/files', upload.single('file'), async (req, res) =
         if (unlinkErr) console.error('Error deleting file:', unlinkErr);
       });
     }
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Upload patient file
-app.post('/patients/:patientId/files', async (req, res) => {
-  const { patientId } = req.params;
-  const { fileName, fileType, fileSize, filePath, description, visitId } = req.body;
-  
-  try {
-    const [result] = await db.query(
-      `INSERT INTO patient_files 
-       (patient_id, visit_id, file_name, file_type, file_size, file_path, description, uploaded_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, datetime("now"))`,
-      [patientId, visitId || null, fileName, fileType, fileSize, filePath, description || '']
-    );
-    
-    res.status(201).json({ 
-      message: 'File record created successfully', 
-      fileId: result.insertId 
-    });
-  } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
@@ -944,19 +932,15 @@ app.delete('/management/medicines/:id', async (req, res) => {
 });
 
 // Visit Management
+// Visit Management - Delete visit (Fixed for SQLite)
 app.delete('/visits/:id', async (req, res) => {
   const { id } = req.params;
   
-  // Start a transaction to ensure all deletes succeed or fail together
-  const connection = await db.getConnection();
-  
   try {
-    await connection.beginTransaction();
-    
     console.log(`Starting deletion process for visit ID: ${id}`);
     
     // First, get all prescriptions for this visit
-    const [prescriptions] = await connection.query(
+    const [prescriptions] = await db.query(
       'SELECT id FROM prescription WHERE visit_id = ?',
       [id]
     );
@@ -967,19 +951,19 @@ app.delete('/visits/:id', async (req, res) => {
       console.log(`Deleting prescription data for prescription ID: ${prescriptionId}`);
       
       // Delete prescription items (medicines)
-      await connection.query(
+      await db.query(
         'DELETE FROM prescription_items WHERE prescription_id = ?',
         [prescriptionId]
       );
       
       // Delete prescription lab tests
-      await connection.query(
+      await db.query(
         'DELETE FROM prescription_lab_tests WHERE prescription_id = ?',
         [prescriptionId]
       );
       
       // Delete prescription imaging studies
-      await connection.query(
+      await db.query(
         'DELETE FROM prescription_imaging_studies WHERE prescription_id = ?',
         [prescriptionId]
       );
@@ -989,7 +973,7 @@ app.delete('/visits/:id', async (req, res) => {
     
     // Delete all prescriptions for this visit
     if (prescriptions.length > 0) {
-      await connection.query(
+      await db.query(
         'DELETE FROM prescription WHERE visit_id = ?',
         [id]
       );
@@ -997,24 +981,21 @@ app.delete('/visits/:id', async (req, res) => {
     }
     
     // Delete any files related to this visit
-    await connection.query(
+    await db.query(
       'DELETE FROM patient_files WHERE visit_id = ?',
       [id]
     );
     
     // Finally, delete the visit itself
-    const [result] = await connection.query(
+    const [result] = await db.query(
       'DELETE FROM visits WHERE id = ?',
       [id]
     );
     
     if (result.affectedRows === 0) {
-      await connection.rollback();
       return res.status(404).json({ error: 'Visit not found' });
     }
     
-    // Commit the transaction
-    await connection.commit();
     console.log(`Successfully deleted visit ID: ${id} and all related data`);
     
     res.json({ 
@@ -1024,16 +1005,10 @@ app.delete('/visits/:id', async (req, res) => {
     });
     
   } catch (err) {
-    // Rollback the transaction on error
-    await connection.rollback();
     console.error('Error deleting visit:', err);
     res.status(500).json({ error: err.message });
-  } finally {
-    // Release the connection
-    connection.release();
   }
 });
-
 app.put('/visits/:id', async (req, res) => {
   const { id } = req.params;
   const { visit_date, type_id, chief_complaint, diagnosis, notes, status_id } = req.body;

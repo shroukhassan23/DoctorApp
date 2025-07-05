@@ -291,9 +291,6 @@ INSERT INTO `imaging_studies` VALUES
 (7,'X-Ray Chest',NULL,NOW()),
 (8,'X-Ray Spine',NULL,NOW());
 
-INSERT INTO `patients` VALUES 
-(34,'mona',19,'2005-10-06','female','4445',NULL,NULL,'2025-06-11 11:54:01'),
-(35,'sara',29,'1995-10-12','female',NULL,NULL,NULL,'2025-06-11 12:08:18');
 
 INSERT INTO `visits` VALUES 
 (1,34,'2025-06-13',10,2,'','','',NULL,NOW()),

@@ -79,9 +79,6 @@ CREATE TABLE `patients` (
   `deleted_at` TEXT DEFAULT NULL
 );
 
-INSERT INTO `patients` VALUES 
-(34,'mona',19,'2005-10-06','female','4445',NULL,NULL,'2025-06-11 11:54:01',NULL),
-(35,'sara',29,'1995-10-12','female',NULL,NULL,NULL,'2025-06-11 12:08:18',NULL);
 
 -- Table structure for table `status`
 DROP TABLE IF EXISTS `status`;
@@ -127,11 +124,6 @@ CREATE TABLE `visits` (
   FOREIGN KEY (`status_id`) REFERENCES `status` (`id`)
 );
 
-INSERT INTO `visits` VALUES 
-(1,34,'2025-06-13',10,2,'','','',NULL,datetime('now')),
-(2,34,'2025-06-13',10,2,'s','s','s',NULL,datetime('now')),
-(3,34,'2025-06-13',10,2,'h','d','d',NULL,datetime('now')),
-(4,34,'2025-06-13',10,2,'f','f','f',NULL,datetime('now'));
 
 -- Table structure for table `doctor_profile`
 DROP TABLE IF EXISTS `doctor_profile`;
@@ -257,7 +249,16 @@ CREATE TABLE `prescription_lab_tests` (
     FOREIGN KEY (`prescription_id`) REFERENCES `prescription`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`lab_test_id`) REFERENCES `lab_tests`(`id`) ON DELETE CASCADE
 );
-
+-- Table structure for table `prescription_imaging_studies`
+DROP TABLE IF EXISTS `prescription_imaging_studies`;
+CREATE TABLE `prescription_imaging_studies` (
+    `id` INTEGER PRIMARY KEY AUTOINCREMENT,
+    `prescription_id` INTEGER NOT NULL,
+    `imaging_study_id` INTEGER NOT NULL,
+    `created_at` TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (`prescription_id`) REFERENCES `prescription`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`imaging_study_id`) REFERENCES `imaging_studies`(`id`) ON DELETE CASCADE
+);
 -- Table structure for table `visit_medicines`
 DROP TABLE IF EXISTS `visit_medicines`;
 CREATE TABLE `visit_medicines` (
