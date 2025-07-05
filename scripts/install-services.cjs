@@ -25,28 +25,52 @@ function findProjectRoot(startPath) {
 async function installServices() {
   try {
     const projectRoot = findProjectRoot(__dirname);
-    
+
     // Find NSSM executable
     const nssmPath = path.resolve(projectRoot, 'dist-installers', 'win-unpacked', 'resources', 'nssm.exe');
     debug(`Looking for NSSM at: ${nssmPath}`);
-    
+
     if (!fs.existsSync(nssmPath)) {
       throw new Error(`NSSM not found at: ${nssmPath}\nMake sure NSSM is included in your build.`);
     }
-    
-    debug('✅ NSSM found successfully');
-    
-    // Find Node.js executable
-    const nodeExe = path.join(process.resourcesPath, 'node.exe');
-    if (!fs.existsSync(nodeExe)) {
-      console.debug(`Bundled Node.js not found at: ${nodeExecutable}. Trying process.execPath...`);
-      nodeExe = process.execPath;
-      if (!fs.existsSync(nodeExe)) throw new Error(`Bundled Node.js not found at: ${nodeExe}`);
-    }
-    
-    debug(`Using bundled Node.js: ${nodeExe}`);
 
-    
+    debug('✅ NSSM found successfully');
+
+    // Find Node.js executable
+    let nodeExe;
+
+
+    const bundledNode = path.join(projectRoot, 'dist-installers', 'win-unpacked', 'resources', 'node.exe');
+    if (fs.existsSync(bundledNode)) {
+      nodeExe = bundledNode;
+      debug(`Using bundled Node.js: ${nodeExe}`);
+    } else {
+      debug(`Bundled Node.js not found at: ${bundledNode}`);
+
+      // Fallback to system Node.js
+      const commonPaths = [
+        process.execPath, // Current Node.js process
+        'C:\\Program Files\\nodejs\\node.exe',
+        'C:\\Program Files (x86)\\nodejs\\node.exe'
+      ];
+
+      for (const testPath of commonPaths) {
+        if (testPath && fs.existsSync(testPath)) {
+          nodeExe = testPath;
+          debug(`Using system Node.js: ${nodeExe}`);
+          break;
+        }
+      }
+    }
+
+    if (!nodeExe) {
+      throw new Error('Node.js executable not found in any expected location');
+    }
+
+    debug(`Final Node.js path: ${nodeExe}`);
+
+
+
     const services = [
       { name: 'DoctorApp-Patient', file: 'patient.cjs', port: 3001, displayName: 'DoctorApp Patient Service' },
       { name: 'DoctorApp-Visit', file: 'visit.cjs', port: 3002, displayName: 'DoctorApp Visit Service' },
@@ -57,24 +81,24 @@ async function installServices() {
 
     for (const service of services) {
       debug(`\n=== Installing ${service.displayName} ===`);
-      
+
       // Find service file
       const servicePath = path.resolve(projectRoot, 'dist-installers', 'win-unpacked', 'resources', service.file);
       debug(`Service file path: ${servicePath}`);
-      
+
       if (!fs.existsSync(servicePath)) {
         throw new Error(`Service file not found: ${servicePath}`);
       }
-      
+
       debug(`✅ Service file found: ${servicePath}`);
-      
+
       try {
         // Check if service already exists
         debug(`Checking if service ${service.name} already exists...`);
         try {
           execSync(`sc.exe query "${service.name}"`, { encoding: 'utf8', stdio: 'pipe' });
           debug(`Service ${service.name} already exists, removing it first...`);
-          
+
           // Stop service if running
           try {
             execSync(`"${nssmPath}" stop "${service.name}"`, { encoding: 'utf8', stdio: 'pipe' });
@@ -82,42 +106,42 @@ async function installServices() {
           } catch (stopError) {
             debug(`Service ${service.name} was not running`);
           }
-          
+
           // Remove existing service
           execSync(`"${nssmPath}" remove "${service.name}" confirm`, { encoding: 'utf8', stdio: 'pipe' });
           debug(`Removed existing service: ${service.name}`);
-          
+
           // Wait for service to be fully removed
           await new Promise(resolve => setTimeout(resolve, 2000));
-          
+
         } catch (queryError) {
           debug(`Service ${service.name} does not exist yet`);
         }
-        
+
         // Install new service
         debug(`Installing service: ${service.name}`);
         const installCmd = `"${nssmPath}" install "${service.name}" "${nodeExe}" "${servicePath}"`;
         debug(`Install command: ${installCmd}`);
-        
+
         execSync(installCmd, { encoding: 'utf8' });
         debug(`✅ Service ${service.name} installed successfully`);
-        
+
         // Set service display name
         execSync(`"${nssmPath}" set "${service.name}" DisplayName "${service.displayName}"`, { encoding: 'utf8' });
-        
+
         // Set service description
         execSync(`"${nssmPath}" set "${service.name}" Description "${service.displayName} - Backend API service"`, { encoding: 'utf8' });
-        
+
         // Set working directory
         const workingDir = path.dirname(servicePath);
         execSync(`"${nssmPath}" set "${service.name}" AppDirectory "${workingDir}"`, { encoding: 'utf8' });
-        
+
         // Set service to start automatically
         execSync(`"${nssmPath}" set "${service.name}" Start SERVICE_AUTO_START`, { encoding: 'utf8' });
-        
+
         // Set restart policy (restart on failure)
         execSync(`"${nssmPath}" set "${service.name}" AppRestartDelay 5000`, { encoding: 'utf8' });
-        
+
         // Set environment variables
         const envVars = [
           'DB_TYPE=sqlite',
@@ -127,24 +151,24 @@ async function installServices() {
           `PORT=${service.port}`,
           'ELECTRON_DEV=false'
         ];
-        
+
         for (let i = 0; i < envVars.length; i++) {
           execSync(`"${nssmPath}" set "${service.name}" AppEnvironmentExtra "${envVars[i]}"`, { encoding: 'utf8' });
         }
-        
+
         debug(`Configured service ${service.name} successfully`);
-        
+
         // Start the service
         debug(`Starting service: ${service.name}`);
         execSync(`"${nssmPath}" start "${service.name}"`, { encoding: 'utf8' });
         debug(`✅ Service ${service.name} started successfully`);
-        
+
         // Wait a moment for service to initialize
         await new Promise(resolve => setTimeout(resolve, 3000));
-        
+
         // Verify service is running
         const statusResult = execSync(`sc.exe query "${service.name}"`, { encoding: 'utf8' });
-        
+
         if (statusResult.includes('RUNNING')) {
           debug(`✅ ${service.name} verified as RUNNING`);
         } else if (statusResult.includes('STOPPED')) {
@@ -152,7 +176,7 @@ async function installServices() {
         } else {
           debug(`ℹ️ ${service.name} status: ${statusResult.split('\n')[0]}`);
         }
-        
+
       } catch (error) {
         debug(`❌ Failed to install ${service.name}: ${error.message}`);
         throw error;
@@ -161,16 +185,16 @@ async function installServices() {
 
     console.log('\n=== Installation Summary ===');
     console.log('All services installed successfully!');
-    
+
     // Final verification
     debug('\nFinal service status check...');
     services.forEach(service => {
       try {
         const queryResult = execSync(`sc.exe query "${service.name}"`, { encoding: 'utf8' });
-        const status = queryResult.includes('RUNNING') ? 'RUNNING' : 
-                     queryResult.includes('STOPPED') ? 'STOPPED' : 'UNKNOWN';
+        const status = queryResult.includes('RUNNING') ? 'RUNNING' :
+          queryResult.includes('STOPPED') ? 'STOPPED' : 'UNKNOWN';
         console.log(`${service.displayName}: ${status}`);
-        
+
         if (status === 'RUNNING') {
           // Test if the service is actually responding
           setTimeout(() => {
@@ -183,19 +207,19 @@ async function installServices() {
             }
           }, 1000);
         }
-        
+
       } catch (error) {
         console.log(`${service.displayName}: NOT_FOUND`);
       }
     });
-    
+
     console.log('\n✅ Services installation completed!');
     console.log('Services will now:');
     console.log('- Start automatically with Windows');
     console.log('- Restart automatically if they crash');
     console.log('- Run independently of the main app');
     console.log('\nYou can now run Doctor App.exe and it will connect to these services.');
-    
+
   } catch (error) {
     debug(`Installation failed: ${error.message}`);
     console.error('❌ Error installing services:', error.message);

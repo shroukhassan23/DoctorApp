@@ -98,17 +98,41 @@ class BackendManager {
                 ELECTRON_DEV: process.env.ELECTRON_DEV || 'false'
             };
 
+            // Determine Node.js executable - FIXED VERSION
             let nodeExecutable;
             if (isDev) {
                 nodeExecutable = 'node';
             } else {
-                // Use bundled Node.js
-                nodeExecutable = path.join(process.resourcesPath, 'node.exe');
-                if (!fs.existsSync(nodeExecutable)) {
-                    console.debug(`Bundled Node.js not found at: ${nodeExecutable}. Trying process.execPath...`);
-                    nodeExecutable = process.execPath; // This might not work for services
+                try {
+                    // Try bundled Node.js first
+                    nodeExecutable = path.join(process.resourcesPath, 'node.exe');
+                    if (!fs.existsSync(nodeExecutable)) {
+                        console.log(`Bundled Node.js not found at: ${nodeExecutable}`);
 
-                    if (!fs.existsSync(nodeExecutable)) throw new Error(`Bundled Node.js not found at: ${nodeExecutable}. Make sure it's included in the build.`);
+                        // Fallback to system Node.js
+                        const commonPaths = [
+                            'C:\\Program Files\\nodejs\\node.exe',
+                            'C:\\Program Files (x86)\\nodejs\\node.exe',
+                            process.execPath // Current process (might be Electron)
+                        ];
+
+                        for (const testPath of commonPaths) {
+                            if (testPath && fs.existsSync(testPath)) {
+                                nodeExecutable = testPath;
+                                console.log(`Using system Node.js: ${nodeExecutable}`);
+                                break;
+                            }
+                        }
+                    } else {
+                        console.log(`Using bundled Node.js: ${nodeExecutable}`);
+                    }
+
+                    if (!nodeExecutable || !fs.existsSync(nodeExecutable)) {
+                        throw new Error('Node.js executable not found in any expected location');
+                    }
+
+                } catch (error) {
+                    throw new Error(`Failed to find Node.js executable: ${error.message}`);
                 }
             }
 
