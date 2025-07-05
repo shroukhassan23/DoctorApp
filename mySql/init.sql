@@ -291,13 +291,6 @@ INSERT INTO `imaging_studies` VALUES
 (7,'X-Ray Chest',NULL,NOW()),
 (8,'X-Ray Spine',NULL,NOW());
 
-
-INSERT INTO `visits` VALUES 
-(1,34,'2025-06-13',10,2,'','','',NULL,NOW()),
-(2,34,'2025-06-13',10,2,'s','s','s',NULL,NOW()),
-(3,34,'2025-06-13',10,2,'h','d','d',NULL,NOW()),
-(4,34,'2025-06-13',10,2,'f','f','f',NULL,NOW());
-
 -- 5. إضافة Foreign Key Constraints بعد إدراج البيانات
 
 -- Foreign Keys للوصفات الطبية

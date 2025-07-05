@@ -62,6 +62,11 @@ const safeConsole = {
 
     // Initialize database
     db = await initDatabase();
+    console.log("🔍 DEBUG: Actual database path being used:");
+    console.log("DB_PATH environment:", process.env.DB_PATH);
+    const [testRows] = await db.query('SELECT * FROM patients WHERE deleted_at IS NULL');
+    console.log("🔍 DEBUG: Actual patients in database:", testRows);
+
     safeConsole.log("✅ Patient service database initialized.");
     await logger.info("Patient service database initialized successfully");
 
