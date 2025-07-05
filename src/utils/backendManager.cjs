@@ -6,20 +6,39 @@ class BackendManager {
     constructor(appPath) {
         this.appPath = appPath;
         this.processes = new Map();
+        this.isShuttingDown = false;
     }
 
     async startServices(installationType, config) {
+        // IMPORTANT: Only start services for MASTER installations
+        if (installationType === 'client') {
+            console.log('Client installation detected - not starting local services');
+            console.log('Client will connect to master services at:', {
+                patientService: `http://${config.masterHost}:${config.patientServicePort}`,
+                visitService: `http://${config.masterHost}:${config.visitServicePort}`,
+                reportsService: `http://${config.masterHost}:${config.reportsServicePort}`
+            });
+            return; // Clients don't run their own services!
+        }
+    
+        // NEW: Check if Windows services are installed
+        if (process.platform === 'win32' && config.installAsServices) {
+            console.log('Windows services are installed - not starting as regular processes');
+            return; // Services are already running as Windows services
+        }
+    
+        console.log('Master installation detected - starting local services as regular processes');
+        // ... rest of your existing code
+
         const patientPort = config.services?.patientPort || 3001;
         const visitPort = config.services?.visitPort || 3002;
         const reportsPort = config.services?.reportsPort || 3003;
 
-        
         const services = [
             { name: 'patient', file: 'patient.cjs', port: patientPort },
             { name: 'visit', file: 'visit.cjs', port: visitPort },
             { name: 'reports', file: 'reports.cjs', port: reportsPort }
         ];
-    
 
         for (const service of services) {
             await this.startService(service, config);
@@ -31,7 +50,7 @@ class BackendManager {
             const isDev = process.env.ELECTRON_DEV === 'true';
             let servicePath;
 
-            // تحديد مسار الخدمة بشكل أفضل
+            // Find service file path
             if (isDev) {
                 servicePath = path.join(this.appPath, service.file);
             } else {
@@ -40,31 +59,28 @@ class BackendManager {
                 console.log('  __dirname:', __dirname);
                 console.log('  process.resourcesPath:', process.resourcesPath);
                 console.log('  process.execPath:', process.execPath);
-                // محاولة مسارات مختلفة للـ production
+                
                 const possiblePaths = [
-                    path.join(process.resourcesPath, 'app', service.file),    // From extraFiles
-                    path.join(process.resourcesPath, service.file),           // From extraResources
-                    path.join(this.appPath, service.file),                   // Same directory as electron.cjs
-                    path.join(__dirname, service.file),                      // Current directory
-                    path.join(path.dirname(process.execPath), 'resources', 'app', service.file), // Relative to exe
-                    path.join(this.appPath, '..', service.file),            // Parent directory
+                    path.join(process.resourcesPath, 'app', service.file),
+                    path.join(process.resourcesPath, service.file),
+                    path.join(this.appPath, service.file),
+                    path.join(__dirname, service.file),
+                    path.join(path.dirname(process.execPath), 'resources', 'app', service.file),
+                    path.join(this.appPath, '..', service.file),
                 ];
 
                 console.log(`Looking for ${service.file} in these paths:`);
                 possiblePaths.forEach(p => console.log(`  - ${p} (exists: ${fs.existsSync(p)})`));
 
-
                 for (const testPath of possiblePaths) {
                     if (fs.existsSync(testPath)) {
                         servicePath = testPath;
                         console.log(`✅ Found ${service.file} at: ${testPath}`);
-
                         break;
                     }
                 }
             }
 
-            // التحقق من وجود ملف الخدمة
             if (!servicePath || !fs.existsSync(servicePath)) {
                 throw new Error(`Service file not found: ${service.file}. Searched paths: ${isDev ? path.join(this.appPath, service.file) : 'multiple production paths'}`);
             }
@@ -82,21 +98,19 @@ class BackendManager {
                 ELECTRON_DEV: process.env.ELECTRON_DEV || 'false'
             };
 
-            // تحديد مسار Node.js بشكل أفضل
+            // Determine Node.js executable
             let nodeExecutable;
             if (isDev) {
                 nodeExecutable = 'node';
             } else {
-                // للـ production في Electron
                 if (process.platform === 'win32') {
                     nodeExecutable = path.join(process.resourcesPath, 'node.exe') || 'node';
                 } else {
                     nodeExecutable = path.join(process.resourcesPath, 'node') || 'node';
                 }
 
-                // التحقق من وجود Node.js في المسار المحدد
                 if (!fs.existsSync(nodeExecutable)) {
-                    nodeExecutable = 'node'; // استخدام Node.js من النظام
+                    nodeExecutable = 'node';
                 }
             }
 
@@ -104,14 +118,13 @@ class BackendManager {
 
             const serviceProcess = spawn(nodeExecutable, [servicePath], {
                 env,
-                stdio: ['ignore', 'pipe', 'pipe'], // Ignore stdin to prevent EPIPE
+                stdio: ['ignore', 'pipe', 'pipe'],
                 cwd: path.dirname(servicePath),
                 detached: false,
                 shell: process.platform === 'win32',
-                windowsHide: true // Hide console window on Windows
+                windowsHide: true
             });
 
-            // إضافة timeout للتأكد من بدء الخدمة
             const startupTimeout = setTimeout(() => {
                 if (serviceProcess && !serviceProcess.killed) {
                     console.warn(`${service.name} startup timeout - but keeping process running`);
@@ -122,7 +135,6 @@ class BackendManager {
                 const output = data.toString().trim();
                 if (output) {
                     console.log(`${service.name}:`, output);
-                    // إذا رأينا رسالة نجاح البدء، نلغي الـ timeout
                     if (output.includes('listening') || output.includes('started') || output.includes(`${service.port}`)) {
                         clearTimeout(startupTimeout);
                     }
@@ -133,7 +145,6 @@ class BackendManager {
                 const error = data.toString().trim();
                 if (error) {
                     console.error(`${service.name} Error:`, error);
-                    // Log more details for debugging
                     if (error.includes('Cannot find module')) {
                         console.error(`${service.name} Module not found error - check NODE_PATH:`, env.NODE_PATH);
                     }
@@ -143,13 +154,11 @@ class BackendManager {
             serviceProcess.on('exit', (code, signal) => {
                 console.log(`${service.name} process exited with code ${code}, signal: ${signal}`);
 
-                // Don't treat exit code 0 as error if it's a clean shutdown
-                if (code !== 0 && !isShuttingDown) {
+                if (code !== 0 && !this.isShuttingDown) {
                     console.error(`${service.name} unexpected exit with code ${code}`);
                     console.error(`Working directory was: ${path.dirname(servicePath)}`);
                     console.error(`Service path was: ${servicePath}`);
 
-                    // Attempt to restart the service once
                     setTimeout(() => {
                         if (!this.processes.has(service.name)) {
                             console.log(`Attempting to restart ${service.name}...`);
@@ -164,7 +173,6 @@ class BackendManager {
                 this.processes.delete(service.name);
             });
 
-
             serviceProcess.on('error', (error) => {
                 console.error(`Failed to start ${service.name}:`, error);
                 clearTimeout(startupTimeout);
@@ -172,12 +180,11 @@ class BackendManager {
             });
 
             serviceProcess.on('close', (code, signal) => {
-                console.log(`${service.name} process exited with code ${code}, signal: ${signal}`);
+                console.log(`${service.name} process closed with code ${code}, signal: ${signal}`);
                 clearTimeout(startupTimeout);
                 this.processes.delete(service.name);
             });
 
-            // التحقق من أن العملية بدأت بنجاح
             if (serviceProcess.pid) {
                 this.processes.set(service.name, serviceProcess);
                 console.log(`Started ${service.name} service (PID: ${serviceProcess.pid}) on port ${service.port}`);
@@ -185,7 +192,6 @@ class BackendManager {
                 throw new Error(`Failed to start ${service.name} service - no PID assigned`);
             }
 
-            // انتظار قصير للتأكد من عدم انهيار العملية فوراً
             await new Promise(resolve => setTimeout(resolve, 1000));
 
             if (serviceProcess.killed || serviceProcess.exitCode !== null) {
@@ -198,8 +204,8 @@ class BackendManager {
         }
     }
 
-    // Add this new method to BackendManager class
     async gracefulShutdown() {
+        this.isShuttingDown = true;
         console.log('Initiating graceful shutdown of all services...');
 
         for (const [name, process] of this.processes) {
@@ -207,10 +213,8 @@ class BackendManager {
                 if (!process.killed && process.exitCode === null) {
                     console.log(`Sending shutdown signal to ${name} (PID: ${process.pid})`);
 
-                    // Send graceful shutdown signal
                     process.kill('SIGTERM');
 
-                    // Wait for graceful shutdown
                     await new Promise(resolve => {
                         const timeout = setTimeout(() => {
                             console.log(`Force killing ${name} after timeout`);
@@ -246,13 +250,10 @@ class BackendManager {
                     console.log(`Stopping ${name} service (PID: ${process.pid})`);
 
                     if (process.platform === 'win32') {
-                        // Windows
                         spawn('taskkill', ['/pid', process.pid, '/f', '/t'], { stdio: 'inherit' });
                     } else {
-                        // Unix-like systems
                         process.kill('SIGTERM');
 
-                        // إعطاء وقت للإنهاء السليم ثم فرض الإنهاء إذا لزم الأمر
                         setTimeout(() => {
                             if (!process.killed && process.exitCode === null) {
                                 process.kill('SIGKILL');
@@ -269,7 +270,6 @@ class BackendManager {
         console.log('All services stopped');
     }
 
-    // دالة للتحقق من حالة الخدمات
     getServicesStatus() {
         const status = {};
         for (const [name, process] of this.processes) {
@@ -282,11 +282,9 @@ class BackendManager {
         return status;
     }
 
-    // دالة لإعادة تشغيل خدمة معينة
     async restartService(serviceName, config) {
         const process = this.processes.get(serviceName);
         if (process) {
-            // إيقاف الخدمة أولاً
             try {
                 if (process.platform === 'win32') {
                     process.kill('SIGKILL');
@@ -299,7 +297,6 @@ class BackendManager {
             this.processes.delete(serviceName);
         }
 
-        // إعادة تشغيل الخدمة
         const services = [
             { name: 'patient', file: 'patient.cjs', port: 3001 },
             { name: 'visit', file: 'visit.cjs', port: 3002 },

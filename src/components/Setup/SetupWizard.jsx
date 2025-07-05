@@ -1,4 +1,4 @@
-// src/components/Setup/SetupWizard.jsx
+// src/components/Setup/SetupWizard.jsx - Fixed Version
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,12 +12,15 @@ const SetupWizard = ({ onSetupComplete }) => {
   const [step, setStep] = useState(1);
   const [installationType, setInstallationType] = useState('');
   const [config, setConfig] = useState({
-    dbHost: 'localhost',
-    dbPort: '3306',
-    dbUser: 'root',
-    dbPassword: '',
+    // Master configuration
     sharedFolderPath: '',
-    mysqlPort: '3306'
+    installAsServices: true,
+    
+    // Client configuration (only needs master IP)
+    masterHost: '192.168.1.100',
+    patientServicePort: '3001',
+    visitServicePort: '3002', 
+    reportsServicePort: '3003'
   });
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState(null);
@@ -26,25 +29,23 @@ const SetupWizard = ({ onSetupComplete }) => {
   const handleInstallationTypeChange = (value) => {
     setInstallationType(value);
     if (value === 'master') {
-        // Get default path asynchronously
-        const getDefaultPath = async () => {
-          try {
-            const defaultPath = window.electron ? await window.electron.getDefaultDocumentsPath() : 'C:';
-            return `${defaultPath}/DoctorApp/SharedFiles`;
-          } catch (error) {
-            return 'C:/DoctorApp/SharedFiles';
-          }
-        };
-      
-        getDefaultPath().then(defaultPath => {
-          setConfig(prev => ({
-            ...prev,
-            dbHost: 'localhost',
-            dbPort: '3306',
-            sharedFolderPath: defaultPath
-          }));
-        });
-      }
+      // Get default path for master
+      const getDefaultPath = async () => {
+        try {
+          const defaultPath = window.electron ? await window.electron.getDefaultDocumentsPath() : 'C:';
+          return `${defaultPath}/DoctorApp/SharedFiles`;
+        } catch (error) {
+          return 'C:/DoctorApp/SharedFiles';
+        }
+      };
+    
+      getDefaultPath().then(defaultPath => {
+        setConfig(prev => ({
+          ...prev,
+          sharedFolderPath: defaultPath
+        }));
+      });
+    }
   };
 
   const testConnection = async () => {
@@ -53,28 +54,32 @@ const SetupWizard = ({ onSetupComplete }) => {
 
     try {
       if (installationType === 'client') {
-        // Test database connection
-        const dbResult = await window.electron.testDatabaseConnection({
-          host: config.dbHost,
-          port: parseInt(config.dbPort),
-          user: config.dbUser,
-          password: config.dbPassword
+        // Test HTTP connection to master services
+        const testResult = await window.electron.testMasterServices({
+          masterHost: config.masterHost,
+          patientServicePort: config.patientServicePort,
+          visitServicePort: config.visitServicePort,
+          reportsServicePort: config.reportsServicePort
         });
 
-        // Test shared folder access
-        const folderResult = await window.electron.testSharedFolder(config.sharedFolderPath);
-
-        if (dbResult.success && folderResult.success) {
-          setTestResult({ success: true, message: 'Connection successful!' });
+        if (testResult.success) {
+          setTestResult({ 
+            success: true, 
+            message: `Successfully connected to master at ${config.masterHost}` 
+          });
         } else {
           setTestResult({ 
             success: false, 
-            message: `Connection failed: ${dbResult.error || folderResult.error}` 
+            message: `Connection failed: ${testResult.error}` 
           });
         }
       } else {
-        // For master installation, just validate paths
-        setTestResult({ success: true, message: 'Configuration validated!' });
+        // For master installation, just validate folder path
+        if (config.sharedFolderPath) {
+          setTestResult({ success: true, message: 'Master configuration validated!' });
+        } else {
+          setTestResult({ success: false, message: 'Please specify shared folder path' });
+        }
       }
     } catch (error) {
       setTestResult({ success: false, message: `Test failed: ${error.message}` });
@@ -88,19 +93,17 @@ const SetupWizard = ({ onSetupComplete }) => {
     
     try {
       if (installationType === 'master') {
-        // Install MySQL and setup shared folder
+        // Setup master with SQLite + services
         await window.electron.setupMasterInstallation({
-          mysqlPort: parseInt(config.mysqlPort),
           sharedFolderPath: config.sharedFolderPath
         });
       } else {
-        // Save client configuration
+        // Setup client with master connection info
         await window.electron.setupClientConfiguration({
-          host: config.dbHost,
-          port: parseInt(config.dbPort),
-          user: config.dbUser,
-          password: config.dbPassword,
-          sharedFolderPath: config.sharedFolderPath
+          masterHost: config.masterHost,
+          patientServicePort: config.patientServicePort,
+          visitServicePort: config.visitServicePort,
+          reportsServicePort: config.reportsServicePort
         });
       }
 
@@ -125,7 +128,7 @@ const SetupWizard = ({ onSetupComplete }) => {
               <div>
                 <div className="font-medium">Master Installation</div>
                 <div className="text-sm text-gray-500">
-                  Install database and shared storage on this machine
+                  Install database and API services on this machine
                 </div>
               </div>
             </Label>
@@ -162,75 +165,100 @@ const SetupWizard = ({ onSetupComplete }) => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {installationType === 'master' ? (
-          <>
-            <div className="space-y-2">
-              <Label htmlFor="mysqlPort">MySQL Port</Label>
-              <Input
-                id="mysqlPort"
-                value={config.mysqlPort}
-                onChange={(e) => setConfig(prev => ({ ...prev, mysqlPort: e.target.value }))}
-                placeholder="3306"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="sharedFolder">Shared Folder Path</Label>
-              <Input
-                id="sharedFolder"
-                value={config.sharedFolderPath}
-                onChange={(e) => setConfig(prev => ({ ...prev, sharedFolderPath: e.target.value }))}
-                placeholder="C:/DoctorApp/SharedFiles"
-              />
-            </div>
+      {installationType === 'master' ? (
+  <>
+    <div className="space-y-2">
+      <Label htmlFor="sharedFolder">Shared Folder Path</Label>
+      <Input
+        id="sharedFolder"
+        value={config.sharedFolderPath}
+        onChange={(e) => setConfig(prev => ({ ...prev, sharedFolderPath: e.target.value }))}
+        placeholder="C:/DoctorApp/SharedFiles"
+      />
+      <div className="text-sm text-gray-500">
+        This folder will store uploaded files and backups
+      </div>
+    </div>
+
+    <div className="flex items-center space-x-2">
+      <input
+        type="checkbox"
+        id="installAsServices"
+        checked={config.installAsServices || false}
+        onChange={(e) => setConfig(prev => ({ ...prev, installAsServices: e.target.checked }))}
+        className="rounded border-gray-300"
+      />
+      <Label htmlFor="installAsServices" className="text-sm">
+        Install as Windows Services (recommended for production)
+      </Label>
+    </div>
+    <div className="text-xs text-gray-500">
+      Services will start automatically with Windows and run in the background
+    </div>
+    
+    <Alert>
+      <AlertDescription>
+        Master installation will:
+        <ul className="list-disc list-inside mt-2 space-y-1">
+          <li>Setup SQLite database</li>
+          <li>Install 3 API services (ports 3001-3003)</li>
+          <li>Create shared storage folder</li>
+          {config.installAsServices && <li>Install services to run automatically with Windows</li>}
+        </ul>
+      </AlertDescription>
+    </Alert>
           </>
         ) : (
           <>
             <div className="space-y-2">
-              <Label htmlFor="dbHost">Database Server IP</Label>
+              <Label htmlFor="masterHost">Master Server IP Address</Label>
               <Input
-                id="dbHost"
-                value={config.dbHost}
-                onChange={(e) => setConfig(prev => ({ ...prev, dbHost: e.target.value }))}
+                id="masterHost"
+                value={config.masterHost}
+                onChange={(e) => setConfig(prev => ({ ...prev, masterHost: e.target.value }))}
                 placeholder="192.168.1.100"
               />
+              <div className="text-sm text-gray-500">
+                IP address of the machine running the master installation
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="dbPort">Database Port</Label>
-              <Input
-                id="dbPort"
-                value={config.dbPort}
-                onChange={(e) => setConfig(prev => ({ ...prev, dbPort: e.target.value }))}
-                placeholder="3306"
-              />
+
+            <div className="grid grid-cols-3 gap-2">
+              <div className="space-y-2">
+                <Label htmlFor="patientServicePort">Patient Port</Label>
+                <Input
+                  id="patientServicePort"
+                  value={config.patientServicePort}
+                  onChange={(e) => setConfig(prev => ({ ...prev, patientServicePort: e.target.value }))}
+                  placeholder="3001"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="visitServicePort">Visit Port</Label>
+                <Input
+                  id="visitServicePort"
+                  value={config.visitServicePort}
+                  onChange={(e) => setConfig(prev => ({ ...prev, visitServicePort: e.target.value }))}
+                  placeholder="3002"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="reportsServicePort">Reports Port</Label>
+                <Input
+                  id="reportsServicePort"
+                  value={config.reportsServicePort}
+                  onChange={(e) => setConfig(prev => ({ ...prev, reportsServicePort: e.target.value }))}
+                  placeholder="3003"
+                />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="dbUser">Database User</Label>
-              <Input
-                id="dbUser"
-                value={config.dbUser}
-                onChange={(e) => setConfig(prev => ({ ...prev, dbUser: e.target.value }))}
-                placeholder="root"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="dbPassword">Database Password</Label>
-              <Input
-                id="dbPassword"
-                type="password"
-                value={config.dbPassword}
-                onChange={(e) => setConfig(prev => ({ ...prev, dbPassword: e.target.value }))}
-                placeholder="Password (leave empty if none)"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="sharedFolderPath">Shared Folder Path</Label>
-              <Input
-                id="sharedFolderPath"
-                value={config.sharedFolderPath}
-                onChange={(e) => setConfig(prev => ({ ...prev, sharedFolderPath: e.target.value }))}
-                placeholder="\\192.168.1.100\DoctorApp\SharedFiles"
-              />
-            </div>
+
+            <Alert>
+              <AlertDescription>
+                Client installation will only setup the user interface. 
+                All data will be accessed from the master server.
+              </AlertDescription>
+            </Alert>
           </>
         )}
 
@@ -290,14 +318,15 @@ const SetupWizard = ({ onSetupComplete }) => {
           <p><strong>Installation Type:</strong> {installationType === 'master' ? 'Master' : 'Client'}</p>
           {installationType === 'master' ? (
             <>
-              <p><strong>MySQL Port:</strong> {config.mysqlPort}</p>
               <p><strong>Shared Folder:</strong> {config.sharedFolderPath}</p>
+              <p><strong>Services:</strong> Will run on ports 3001, 3002, 3003</p>
             </>
           ) : (
             <>
-              <p><strong>Database Server:</strong> {config.dbHost}:{config.dbPort}</p>
-              <p><strong>Database User:</strong> {config.dbUser}</p>
-              <p><strong>Shared Folder:</strong> {config.sharedFolderPath}</p>
+              <p><strong>Master Server:</strong> {config.masterHost}</p>
+              <p><strong>Patient Service:</strong> {config.masterHost}:{config.patientServicePort}</p>
+              <p><strong>Visit Service:</strong> {config.masterHost}:{config.visitServicePort}</p>
+              <p><strong>Reports Service:</strong> {config.masterHost}:{config.reportsServicePort}</p>
             </>
           )}
         </div>
@@ -305,8 +334,8 @@ const SetupWizard = ({ onSetupComplete }) => {
         <Alert>
           <AlertDescription>
             {installationType === 'master' 
-              ? 'This will install MySQL database and create shared folders on this machine.'
-              : 'This will configure the application to connect to the master installation.'
+              ? 'This will install SQLite database and API services on this machine.'
+              : 'This will configure the application to connect to the master server.'
             }
           </AlertDescription>
         </Alert>

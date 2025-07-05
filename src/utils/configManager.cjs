@@ -52,6 +52,25 @@ class ConfigManager {
                 reportsPort: 3003
             },
             sharedFolderPath: config.sharedFolderPath,
+            installAsServices: config.installAsServices || false, // Add this line
+            createdAt: new Date().toISOString()
+        };
+        await this.saveConfig(fullConfig);
+    }
+
+    async saveClientConfig(config) {
+        const fullConfig = {
+            installationType: 'client',
+            setupComplete: true,
+            // Client configuration - connect to master services
+            masterHost: config.masterHost,
+            patientServicePort: config.patientServicePort || '3001',
+            visitServicePort: config.visitServicePort || '3002', 
+            reportsServicePort: config.reportsServicePort || '3003',
+            // No local database configuration for clients
+            database: null,
+            services: null,
+            sharedFolderPath: null, // Clients don't have local shared folders
             createdAt: new Date().toISOString()
         };
         await this.saveConfig(fullConfig);
@@ -65,27 +84,113 @@ class ConfigManager {
         };
     }
 
-    async saveClientConfig(config) {
-        const fullConfig = {
-            installationType: 'client',
-            setupComplete: true,
-            database: {
-                type: 'sqlite',
-                database: 'doctor'
-            },
-            services: {
-                patientPort: 3001,
-                visitPort: 3002,
-                reportsPort: 3003
-            },
-            sharedFolderPath: config.sharedFolderPath,
-            createdAt: new Date().toISOString()
-        };
-        await this.saveConfig(fullConfig);
-    }
-
     async getConfig() {
         return await this.loadConfig();
+    }
+
+    // Helper method to check if this is a client installation
+    async isClientInstallation() {
+        try {
+            const config = await this.loadConfig();
+            return config.installationType === 'client';
+        } catch {
+            return false;
+        }
+    }
+
+    // Helper method to check if this is a master installation
+    async isMasterInstallation() {
+        try {
+            const config = await this.loadConfig();
+            return config.installationType === 'master';
+        } catch {
+            return false;
+        }
+    }
+
+    // Get service URLs for the current configuration
+    async getServiceUrls() {
+        const config = await this.loadConfig();
+        
+        if (config.installationType === 'client') {
+            // Client connects to remote master services
+            return {
+                patient: `http://${config.masterHost}:${config.patientServicePort}`,
+                visit: `http://${config.masterHost}:${config.visitServicePort}`,
+                reports: `http://${config.masterHost}:${config.reportsServicePort}`
+            };
+        } else {
+            // Master uses local services
+            return {
+                patient: `http://localhost:${config.services?.patientPort || 3001}`,
+                visit: `http://localhost:${config.services?.visitPort || 3002}`,
+                reports: `http://localhost:${config.services?.reportsPort || 3003}`
+            };
+        }
+    }
+
+    // Validate client configuration
+    async validateClientConfig() {
+        const config = await this.loadConfig();
+        
+        if (config.installationType !== 'client') {
+            return { valid: true, message: 'Not a client installation' };
+        }
+
+        const required = ['masterHost', 'patientServicePort', 'visitServicePort', 'reportsServicePort'];
+        const missing = required.filter(field => !config[field]);
+
+        if (missing.length > 0) {
+            return { 
+                valid: false, 
+                message: `Missing client configuration: ${missing.join(', ')}` 
+            };
+        }
+
+        return { valid: true, message: 'Client configuration is valid' };
+    }
+
+    // Update master host for client configurations
+    async updateMasterHost(newHost) {
+        const config = await this.loadConfig();
+        
+        if (config.installationType === 'client') {
+            config.masterHost = newHost;
+            config.updatedAt = new Date().toISOString();
+            await this.saveConfig(config);
+            return true;
+        }
+        
+        return false;
+    }
+
+    // Get configuration summary for debugging
+    async getConfigSummary() {
+        try {
+            const config = await this.loadConfig();
+            
+            return {
+                installationType: config.installationType,
+                setupComplete: config.setupComplete,
+                createdAt: config.createdAt,
+                updatedAt: config.updatedAt,
+                ...(config.installationType === 'master' && {
+                    hasDatabase: !!config.database,
+                    hasServices: !!config.services,
+                    sharedFolderPath: config.sharedFolderPath
+                }),
+                ...(config.installationType === 'client' && {
+                    masterHost: config.masterHost,
+                    servicesPorts: {
+                        patient: config.patientServicePort,
+                        visit: config.visitServicePort,
+                        reports: config.reportsServicePort
+                    }
+                })
+            };
+        } catch (error) {
+            return { error: error.message };
+        }
     }
 }
 

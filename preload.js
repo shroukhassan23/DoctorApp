@@ -17,7 +17,8 @@ contextBridge.exposeInMainWorld('electron', {
   // Connection Testing - SQLite doesn't need network testing
   testDatabaseConnection: (config) => ipcRenderer.invoke('test-database-connection', config),
   testSharedFolder: (folderPath) => ipcRenderer.invoke('test-shared-folder', folderPath),
-  
+  testMasterServices: (config) => ipcRenderer.invoke('test-master-services', config), // Add this line
+
   // Configuration Access
   getConfig: () => ipcRenderer.invoke('get-config'),
   
@@ -34,6 +35,8 @@ contextBridge.exposeInMainWorld('electron', {
   // Logging Functions
   getRecentLogs: (lines) => ipcRenderer.invoke('get-recent-logs', lines),
   exportLogs: () => ipcRenderer.invoke('export-logs'),
+
+  getConfigSync: () => ipcRenderer.invoke('get-config-sync'),
   
   // App Information
   platform: process.platform,

@@ -21,6 +21,67 @@ class DoctorApp {
     this.isSetupComplete = false;
   }
 
+  async installWindowsServices() {
+    try {
+      const { spawn } = require('child_process');
+      const isDev = process.env.ELECTRON_DEV === 'true';
+      
+      let scriptPath;
+      if (isDev) {
+        scriptPath = path.join(process.cwd(), 'scripts', 'install-services.cjs');
+      } else {
+        // In production, the script should be in resources
+        scriptPath = path.join(process.resourcesPath, 'install-services.cjs');
+      }
+  
+      await this.logger.logSystemEvent('Starting Windows service installation', { scriptPath });
+      
+      return new Promise((resolve, reject) => {
+        const installProcess = spawn('node', [scriptPath], {
+          stdio: 'pipe',
+          cwd: path.dirname(scriptPath),
+          shell: true // Important for Windows
+        });
+        
+        let output = '';
+        let errorOutput = '';
+        
+        installProcess.stdout.on('data', (data) => {
+          const message = data.toString();
+          output += message;
+          console.log('Service Install:', message);
+        });
+        
+        installProcess.stderr.on('data', (data) => {
+          const message = data.toString();
+          errorOutput += message;
+          console.error('Service Install Error:', message);
+        });
+        
+        installProcess.on('close', async (code) => {
+          if (code === 0) {
+            await this.logger.logSystemEvent('Windows services installed successfully');
+            resolve();
+          } else {
+            await this.logger.error('Service installation failed', new Error(`Exit code: ${code}`), {
+              output,
+              errorOutput
+            });
+            reject(new Error(`Service installation failed with code ${code}. Check logs for details.`));
+          }
+        });
+        
+        installProcess.on('error', async (error) => {
+          await this.logger.error('Service installation process error', error);
+          reject(error);
+        });
+      });
+    } catch (error) {
+      await this.logger.error('Failed to start service installation', error);
+      throw new Error(`Failed to install Windows services: ${error.message}`);
+    }
+  }
+
   async initialize() {
     try {
       // Set up app data directory
@@ -208,26 +269,35 @@ class DoctorApp {
       return this.isSetupComplete;
     });
 
+
+
     ipcMain.handle('setup-master-installation', async (event, config) => {
       try {
         await this.logger.logUserAction('Master installation setup started', { config });
-
+    
         // Start SQLite database
         await this.sqliteManager.startDatabase();
         await this.logger.logDatabaseOperation('SQLite database started');
-
+    
         // Create shared folder
         await fs.mkdir(config.sharedFolderPath, { recursive: true });
         await this.logger.logSystemEvent('Shared folder created', { path: config.sharedFolderPath });
-
+    
         // Save configuration
         await this.saveSetupConfig('master', config);
-
-        // Start backend services
-        const fullConfig = await this.configManager.getConfig();
-        await this.backendManager.startServices('master', fullConfig);
-        await this.logger.logSystemEvent('Backend services started for master');
-
+    
+        // Install Windows services if requested
+        if (config.installAsServices && process.platform === 'win32') {
+          await this.logger.logSystemEvent('Installing Windows services');
+          await this.installWindowsServices();
+          await this.logger.logSystemEvent('Windows services installation completed');
+        } else {
+          // Start backend services as regular processes (for development)
+          const fullConfig = await this.configManager.getConfig();
+          await this.backendManager.startServices('master', fullConfig);
+          await this.logger.logSystemEvent('Backend services started as regular processes');
+        }
+    
         await this.logger.logUserAction('Master installation completed successfully');
         return { success: true };
       } catch (error) {
@@ -247,29 +317,33 @@ class DoctorApp {
       }
     });
 
+    // Updated client setup handler
     ipcMain.handle('setup-client-configuration', async (event, config) => {
       try {
-        await this.logger.logUserAction('Client configuration setup started', { config });
-
-        // Test connection first
-        const testResult = await this.testDatabaseConnection(config);
+        await this.logger.logUserAction('Client configuration setup started', config);
+    
+        // Test connection to master services first
+        const testResult = await this.testMasterServices(config);
         if (!testResult.success) {
-          await this.logger.error('Database connection test failed during client setup', null, { testResult });
-          throw new Error(`Database connection failed: ${testResult.error}`);
+          await this.logger.error('Master services connection test failed during client setup', null, { testResult });
+          throw new Error(`Cannot connect to master services: ${testResult.error}`);
         }
-
-        // Save configuration
-        await this.saveSetupConfig('client', config);
-
-        // Start backend services
-        const fullConfig = await this.configManager.getConfig();
-        await this.backendManager.startServices('client', fullConfig);
-        await this.logger.logSystemEvent('Backend services started for client');
-
+    
+        // Save client configuration (no database needed)
+        await this.saveSetupConfig('client', {
+          masterHost: config.masterHost,
+          patientServicePort: config.patientServicePort,
+          visitServicePort: config.visitServicePort,
+          reportsServicePort: config.reportsServicePort
+        });
+    
+        // DO NOT start backend services for clients!
+        // Clients will use the master's services directly
+    
         await this.logger.logUserAction('Client configuration completed successfully');
         return { success: true };
       } catch (error) {
-        await this.logger.error('Client configuration failed', error, { config });
+        await this.logger.error('Client configuration failed', error, config);
         throw error;
       }
     });
@@ -385,6 +459,135 @@ class DoctorApp {
         throw error;
       }
     });
+
+    ipcMain.handle('get-config-sync', () => {
+      try {
+        return this.configManager ? this.configManager.loadConfig() : {};
+      } catch (error) {
+        return {};
+      }
+    });
+
+    ipcMain.handle('test-master-services', async (event, config) => {
+      try {
+        await this.logger.logUserAction('Testing master services connection', config);
+        
+        const { masterHost, patientServicePort, visitServicePort, reportsServicePort } = config;
+        
+        // Test each service endpoint
+        const testUrls = [
+          `http://${masterHost}:${patientServicePort}/Patients`,
+          `http://${masterHost}:${visitServicePort}/Visittypes`, 
+          `http://${masterHost}:${reportsServicePort}/reports/today`
+        ];
+        
+        const testResults = [];
+        
+        for (let i = 0; i < testUrls.length; i++) {
+          const url = testUrls[i];
+          const serviceName = ['Patient', 'Visit', 'Reports'][i];
+          
+          try {
+            // Use Node.js fetch or http module to test connection
+            const response = await fetch(url, { 
+              method: 'GET',
+              timeout: 5000 // 5 second timeout
+            });
+            
+            if (response.ok) {
+              testResults.push({ service: serviceName, success: true });
+            } else {
+              testResults.push({ 
+                service: serviceName, 
+                success: false, 
+                error: `HTTP ${response.status}` 
+              });
+            }
+          } catch (error) {
+            testResults.push({ 
+              service: serviceName, 
+              success: false, 
+              error: error.message 
+            });
+          }
+        }
+        
+        const allSuccessful = testResults.every(result => result.success);
+        const failedServices = testResults.filter(result => !result.success);
+        
+        await this.logger.logSystemEvent('Master services test completed', {
+          allSuccessful,
+          testResults
+        });
+        
+        if (allSuccessful) {
+          return { 
+            success: true, 
+            message: 'All services are accessible',
+            results: testResults
+          };
+        } else {
+          return { 
+            success: false, 
+            error: `Failed to connect to: ${failedServices.map(s => s.service).join(', ')}`,
+            results: testResults
+          };
+        }
+        
+      } catch (error) {
+        await this.logger.error('Master services test failed', error, config);
+        return { success: false, error: error.message };
+      }
+    });
+    
+    
+  }
+
+  async testMasterServices(config) {
+    try {
+      const { masterHost, patientServicePort, visitServicePort, reportsServicePort } = config;
+      
+      // Simple HTTP requests to test connectivity
+      const testUrls = [
+        `http://${masterHost}:${patientServicePort}/Patients`,
+        `http://${masterHost}:${visitServicePort}/Visittypes`,
+        `http://${masterHost}:${reportsServicePort}/reports/today`
+      ];
+      
+      for (const url of testUrls) {
+        try {
+          const response = await fetch(url, { 
+            method: 'GET',
+            timeout: 5000,
+            // Add CORS headers if needed
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+          
+          // Try to parse response to ensure service is working properly
+          await response.json();
+          
+        } catch (error) {
+          await this.logger.error('Master service test failed', error, { url });
+          return { 
+            success: false, 
+            error: `Failed to connect to ${url}: ${error.message}` 
+          };
+        }
+      }
+      
+      await this.logger.logSystemEvent('Master services connectivity test passed');
+      return { success: true };
+      
+    } catch (error) {
+      await this.logger.error('Master services test failed', error);
+      return { success: false, error: error.message };
+    }
   }
 
   async testDatabaseConnection(config) {

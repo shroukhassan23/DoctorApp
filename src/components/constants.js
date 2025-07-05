@@ -1,17 +1,28 @@
 // Dynamic configuration based on installation type
-const getBaseUrls = () => {
+const getBaseUrls = async () => {
     // Check if we're in Electron environment and have access to config
     if (typeof window !== 'undefined' && window.electron && window.electron.getConfig) {
       try {
-        const config = window.electron.getConfig();
-        const host = config.database?.host || 'localhost';
-        const mysqlPort = parseInt(config.database?.port || '3306');
-
-        const patientPort = config.services?.patientPort || 3001;
-        const visitPort = config.services?.visitPort || 3002;
-        const reportsPort = config.services?.reportsPort || 3003;
+        const config = await window.electron.getConfig();  // Add await here
         
-        // Backend services run on MySQL port + 1, +2, +3
+        // For client installations, use master host
+        // For master installations, use localhost
+        const host = config.installationType === 'client' 
+          ? config.masterHost 
+          : 'localhost';
+
+        const patientPort = config.installationType === 'client'
+          ? config.patientServicePort || 3001
+          : config.services?.patientPort || 3001;
+          
+        const visitPort = config.installationType === 'client'
+          ? config.visitServicePort || 3002
+          : config.services?.visitPort || 3002;
+          
+        const reportsPort = config.installationType === 'client'
+          ? config.reportsServicePort || 3003
+          : config.services?.reportsPort || 3003;
+        
         return {
             patient: `http://${host}:${patientPort}`,
             visit: `http://${host}:${visitPort}`,
@@ -28,10 +39,53 @@ const getBaseUrls = () => {
       visit: 'http://localhost:3002', 
       reports: 'http://localhost:3003'
     };
+};
+  
+ // Get current URLs - synchronous version that works immediately
+const getUrlsSync = () => {
+    // Check if we're in Electron environment and have access to config
+    if (typeof window !== 'undefined' && window.electron) {
+      try {
+        // Try to get config synchronously (this may be cached)
+        const config = window.electron.getConfigSync ? window.electron.getConfigSync() : null;
+        
+        if (config) {
+          const host = config.installationType === 'client' 
+            ? config.masterHost 
+            : 'localhost';
+  
+          const patientPort = config.installationType === 'client'
+            ? config.patientServicePort || 3001
+            : config.services?.patientPort || 3001;
+            
+          const visitPort = config.installationType === 'client'
+            ? config.visitServicePort || 3002
+            : config.services?.visitPort || 3002;
+            
+          const reportsPort = config.installationType === 'client'
+            ? config.reportsServicePort || 3003
+            : config.services?.reportsPort || 3003;
+          
+          return {
+            patient: `http://${host}:${patientPort}`,
+            visit: `http://${host}:${visitPort}`,
+            reports: `http://${host}:${reportsPort}`
+          };
+        }
+      } catch (error) {
+        // Fallback to localhost
+      }
+    }
+    
+    // Default fallback
+    return {
+      patient: 'http://localhost:3001',
+      visit: 'http://localhost:3002', 
+      reports: 'http://localhost:3003'
+    };
   };
   
-  // Get current URLs
-  const urls = getBaseUrls();
+  const urls = getUrlsSync();
   
   // Patient Management APIs
   export const patientUrl = `${urls.patient}/Patients`;
@@ -125,13 +179,16 @@ const getBaseUrls = () => {
   export const updateImagingStudyUrl = (id) => `${urls.visit}/management/imagingstudies/${id}`;
   export const deleteImagingStudyUrl = (id) => `${urls.visit}/management/imagingstudies/${id}`;
   
-  // Helper function to refresh URLs when configuration changes
-  export const refreshUrls = () => {
-    const newUrls = getBaseUrls();
-    // This function can be called when the configuration changes
-    // to update all URL references dynamically
-    return newUrls;
-  };
+    // Helper function to refresh URLs when configuration changes
+    export const refreshUrls = () => {
+        const newUrls = getBaseUrls();
+        
+        // Update all exported URL constants
+        Object.assign(urls, newUrls);
+        
+        // Trigger re-export of all URL constants
+        return newUrls;
+    };
   
   // Export the current URLs object for debugging
   export const getCurrentUrls = () => urls;

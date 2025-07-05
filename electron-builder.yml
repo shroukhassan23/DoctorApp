@@ -71,8 +71,14 @@ win:
       to: "dump.sql"
     - from: "src/utils/mysqlManager.cjs"
       to: "mysqlManager.cjs"
-    - from: "tools/nssm/nssm.exe"          # ✅ Add NSSM
+    - from: "tools/nssm/nssm.exe"
       to: "nssm.exe" 
+    - from: "utils/backendLogger.cjs"
+      to: "backendLogger.cjs" 
+    - from: "scripts/install-services.cjs"
+      to: "install-services.cjs"
+    - from: "scripts/uninstall-services.cjs"
+      to: "uninstall-services.cjs"
 
 
 # macOS configuration  
