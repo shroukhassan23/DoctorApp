@@ -20,13 +20,13 @@ class BackendManager {
             });
             return; // Clients don't run their own services!
         }
-    
+
         // NEW: Check if Windows services are installed
         if (process.platform === 'win32' && config.installAsServices) {
             console.log('Windows services are installed - not starting as regular processes');
             return; // Services are already running as Windows services
         }
-    
+
         console.log('Master installation detected - starting local services as regular processes');
         // ... rest of your existing code
 
@@ -59,7 +59,7 @@ class BackendManager {
                 console.log('  __dirname:', __dirname);
                 console.log('  process.resourcesPath:', process.resourcesPath);
                 console.log('  process.execPath:', process.execPath);
-                
+
                 const possiblePaths = [
                     path.join(process.resourcesPath, 'app', service.file),
                     path.join(process.resourcesPath, service.file),
@@ -98,27 +98,17 @@ class BackendManager {
                 ELECTRON_DEV: process.env.ELECTRON_DEV || 'false'
             };
 
-            // Determine Node.js executable
-            /*
-            const nodeExe = path.join(process.resourcesPath, 'electron-dist', 'node.exe');
-    if (!fs.existsSync(nodeExe)) {
-      nodeExe = path.join(path.dirname(process.execPath), 'node.exe');
-      if (!fs.existsSync(nodeExe)) throw new Error(`Bundled Node.js not found at: ${nodeExe}`);
-    }
-
-            */
             let nodeExecutable;
             if (isDev) {
                 nodeExecutable = 'node';
             } else {
-                if (process.platform === 'win32') {
-                    nodeExecutable = path.join(process.resourcesPath, 'node.exe') || 'node';
-                } else {
-                    nodeExecutable = path.join(process.resourcesPath, 'node') || 'node';
-                }
-
+                // Use bundled Node.js
+                nodeExecutable = path.join(process.resourcesPath, 'node.exe');
                 if (!fs.existsSync(nodeExecutable)) {
-                    nodeExecutable = 'node';
+                    console.debug(`Bundled Node.js not found at: ${nodeExecutable}. Trying process.execPath...`);
+                    nodeExecutable = process.execPath; // This might not work for services
+
+                    if (!fs.existsSync(nodeExecutable)) throw new Error(`Bundled Node.js not found at: ${nodeExecutable}. Make sure it's included in the build.`);
                 }
             }
 

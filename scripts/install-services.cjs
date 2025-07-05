@@ -37,9 +37,10 @@ async function installServices() {
     debug('✅ NSSM found successfully');
     
     // Find Node.js executable
-    const nodeExe = path.join(process.resourcesPath, 'electron-dist', 'node.exe');
+    const nodeExe = path.join(process.resourcesPath, 'node.exe');
     if (!fs.existsSync(nodeExe)) {
-      nodeExe = path.join(path.dirname(process.execPath), 'node.exe');
+      console.debug(`Bundled Node.js not found at: ${nodeExecutable}. Trying process.execPath...`);
+      nodeExe = process.execPath;
       if (!fs.existsSync(nodeExe)) throw new Error(`Bundled Node.js not found at: ${nodeExe}`);
     }
     
