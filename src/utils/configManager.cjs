@@ -52,7 +52,7 @@ class ConfigManager {
                 reportsPort: 3003
             },
             sharedFolderPath: config.sharedFolderPath,
-            installAsServices: config.installAsServices || false, // Add this line
+            installAsServices: true,
             createdAt: new Date().toISOString()
         };
         await this.saveConfig(fullConfig);
