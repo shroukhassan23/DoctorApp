@@ -79,6 +79,9 @@ win:
       to: "install-services.cjs"
     - from: "scripts/uninstall-services.cjs"
       to: "uninstall-services.cjs"
+    - from: "node_modules/electron/dist"
+      to: "electron-dist"
+      filter: ["node.exe"] 
 
 
 # macOS configuration  

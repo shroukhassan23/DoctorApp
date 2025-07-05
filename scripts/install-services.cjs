@@ -37,8 +37,14 @@ async function installServices() {
     debug('✅ NSSM found successfully');
     
     // Find Node.js executable
-    const nodeExe = process.execPath;
-    debug(`Node.js executable: ${nodeExe}`);
+    const nodeExe = path.join(process.resourcesPath, 'electron-dist', 'node.exe');
+    if (!fs.existsSync(nodeExe)) {
+      nodeExe = path.join(path.dirname(process.execPath), 'node.exe');
+      if (!fs.existsSync(nodeExe)) throw new Error(`Bundled Node.js not found at: ${nodeExe}`);
+    }
+    
+    debug(`Using bundled Node.js: ${nodeExe}`);
+
     
     const services = [
       { name: 'DoctorApp-Patient', file: 'patient.cjs', port: 3001, displayName: 'DoctorApp Patient Service' },

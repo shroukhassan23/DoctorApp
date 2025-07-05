@@ -99,6 +99,14 @@ class BackendManager {
             };
 
             // Determine Node.js executable
+            /*
+            const nodeExe = path.join(process.resourcesPath, 'electron-dist', 'node.exe');
+    if (!fs.existsSync(nodeExe)) {
+      nodeExe = path.join(path.dirname(process.execPath), 'node.exe');
+      if (!fs.existsSync(nodeExe)) throw new Error(`Bundled Node.js not found at: ${nodeExe}`);
+    }
+
+            */
             let nodeExecutable;
             if (isDev) {
                 nodeExecutable = 'node';
