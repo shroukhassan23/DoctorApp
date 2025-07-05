@@ -67,6 +67,12 @@ const safeConsole = {
     const [testRows] = await db.query('SELECT * FROM patients WHERE deleted_at IS NULL');
     console.log("🔍 DEBUG: Actual patients in database:", testRows);
 
+    console.log("🔍 DEBUG: Database path being used:", process.env.DB_PATH);
+
+    const [debugRows] = await db.query('SELECT * FROM patients WHERE deleted_at IS NULL');
+    console.log("🔍 DEBUG: Patients found in database:", debugRows);
+    console.log("🔍 DEBUG: Number of patients:", debugRows.length);
+
     safeConsole.log("✅ Patient service database initialized.");
     await logger.info("Patient service database initialized successfully");
 
@@ -78,20 +84,58 @@ const safeConsole = {
     // GET all Patients
     app.get('/Patients', async (req, res) => {
       try {
+        console.log('🔍 DEBUG: GET /Patients called');
         await logger.info('Fetching all patients');
+        
+        // Debug: Check database connection
+        console.log('🔍 DEBUG: Database object:', !!db);
+        
         const [rows] = await db.query('SELECT * FROM patients WHERE deleted_at IS NULL');
-
+        
+        console.log('🔍 DEBUG: Raw database query result:', rows);
+        console.log('🔍 DEBUG: Number of rows from DB:', rows.length);
+        console.log('🔍 DEBUG: First row:', rows[0]);
+    
         await logger.logDatabaseQuery(
           'SELECT * FROM patients WHERE deleted_at IS NULL',
           [],
           rows
         );
-
+    
         await logger.info('Patients fetched successfully', { count: rows.length });
+        
+        console.log('🔍 DEBUG: About to send response:', rows);
         res.send(rows);
       } catch (err) {
+        console.error('🔍 DEBUG: Error in GET /Patients:', err);
         await logger.error('Failed to fetch patients', err);
         res.status(500).send({ error: 'Failed to fetch patients', details: err.message });
+      }
+    });
+
+
+    app.get('/debug/test-db', async (req, res) => {
+      try {
+        console.log('🔍 Testing database directly...');
+        
+        // Test direct database access
+        const [allTables] = await db.query("SELECT name FROM sqlite_master WHERE type='table'");
+        console.log('🔍 All tables:', allTables);
+        
+        const [patientCount] = await db.query("SELECT COUNT(*) as count FROM patients");
+        console.log('🔍 Patient count:', patientCount);
+        
+        const [allPatients] = await db.query("SELECT * FROM patients");
+        console.log('🔍 All patients (including deleted):', allPatients);
+        
+        res.json({
+          tables: allTables,
+          patientCount: patientCount[0],
+          allPatients: allPatients
+        });
+      } catch (err) {
+        console.error('🔍 Database test error:', err);
+        res.status(500).json({ error: err.message });
       }
     });
 
