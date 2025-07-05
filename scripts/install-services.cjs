@@ -50,6 +50,7 @@ console.log('Working directory: ${path.dirname(path.resolve(serviceFile))}');
 
 // Create a new service object
 const svc = new Service({
+  id: 'doctorapp${serviceName.toLowerCase()}service',
   name: 'DoctorApp ${serviceName} Service',
   description: 'Doctor App ${serviceName} backend service',
   script: '${path.resolve(serviceFile).replace(/\\/g, '\\\\')}',
