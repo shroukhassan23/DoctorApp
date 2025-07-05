@@ -12,17 +12,10 @@ class SQLiteManager {
 
   initializePaths(appPath) {
     // Use safe directory for database
-    if (process.env.DB_PATH) {
-      this.dataPath = path.dirname(process.env.DB_PATH);
-      this.dbPath = process.env.DB_PATH;
-    } else {
-      // Fallback for development
-      const os = require('os');
-      const userDataPath = path.join(os.homedir(), 'AppData', 'Roaming', 'doctor-app-desktop');
-      this.dataPath = userDataPath;
-      this.dbPath = path.join(userDataPath, 'doctor-app.db');
-    }
-    
+    const os = require('os');
+    const userDataPath = path.join(os.homedir(), 'AppData', 'Roaming', 'doctor-app-desktop');
+    this.dataPath = userDataPath;
+    this.dbPath = path.join(userDataPath, 'doctor-app.db');
     console.log('SQLite Database Path:', this.dbPath);
   }
 

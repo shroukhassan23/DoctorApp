@@ -51,11 +51,23 @@ const safeConsole = {
   }
 };
 
+let sqliteManagerInstance = null;
+
+
 (async () => {
   try {
     // Initialize Logger first
     logger = new BackendLogger('patients-service');
     await logger.initialize();
+
+
+    const os = require('os');
+    const path = require('path');
+
+    const userDataPath = path.join(os.homedir(), 'AppData', 'Roaming', 'doctor-app-desktop');
+    possibleDbPath = path.join(userDataPath, 'doctor-app.db');
+    console.log("🔍 DEBUG: Calculated database path should be:", possibleDbPath);
+    await logger.info("Database path calculated as", { path: possibleDbPath });
 
     safeConsole.log('Patient service starting with SQLite...');
     await logger.info('Patient service starting with SQLite');
@@ -86,24 +98,33 @@ const safeConsole = {
       try {
         console.log('🔍 DEBUG: GET /Patients called');
         await logger.info('Fetching all patients');
-        
+
+        const os = require('os');
+        const path = require('path');
+
+        const userDataPath = path.join(os.homedir(), 'AppData', 'Roaming', 'doctor-app-desktop');
+        calculatedDbPath = path.join(userDataPath, 'doctor-app.db');
+
+        console.log('🔍 DEBUG: Database should be located at:', calculatedDbPath);
+        await logger.info('Database location', { calculatedPath: calculatedDbPath });
+
         // Debug: Check database connection
         console.log('🔍 DEBUG: Database object:', !!db);
-        
+
         const [rows] = await db.query('SELECT * FROM patients WHERE deleted_at IS NULL');
-        
+
         console.log('🔍 DEBUG: Raw database query result:', rows);
         console.log('🔍 DEBUG: Number of rows from DB:', rows.length);
         console.log('🔍 DEBUG: First row:', rows[0]);
-    
+
         await logger.logDatabaseQuery(
           'SELECT * FROM patients WHERE deleted_at IS NULL',
           [],
           rows
         );
-    
+
         await logger.info('Patients fetched successfully', { count: rows.length });
-        
+
         console.log('🔍 DEBUG: About to send response:', rows);
         res.send(rows);
       } catch (err) {
@@ -117,17 +138,17 @@ const safeConsole = {
     app.get('/debug/test-db', async (req, res) => {
       try {
         console.log('🔍 Testing database directly...');
-        
+
         // Test direct database access
         const [allTables] = await db.query("SELECT name FROM sqlite_master WHERE type='table'");
         console.log('🔍 All tables:', allTables);
-        
+
         const [patientCount] = await db.query("SELECT COUNT(*) as count FROM patients");
         console.log('🔍 Patient count:', patientCount);
-        
+
         const [allPatients] = await db.query("SELECT * FROM patients");
         console.log('🔍 All patients (including deleted):', allPatients);
-        
+
         res.json({
           tables: allTables,
           patientCount: patientCount[0],
