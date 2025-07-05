@@ -92,10 +92,13 @@ const SetupWizard = ({ onSetupComplete }) => {
     setInstalling(true);
     
     try {
+      console.log('DEBUG: About to install with config:', config);
+      
       if (installationType === 'master') {
         // Setup master with SQLite + services
         await window.electron.setupMasterInstallation({
-          sharedFolderPath: config.sharedFolderPath
+          sharedFolderPath: config.sharedFolderPath,
+          installAsServices: config.installAsServices  // Make sure this is being sent
         });
       } else {
         // Setup client with master connection info
