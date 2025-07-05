@@ -73,7 +73,7 @@ win:
       to: "mysqlManager.cjs"
     - from: "tools/nssm/nssm.exe"
       to: "nssm.exe" 
-    - from: "utils/backendLogger.cjs"
+    - from: "src/utils/backendLogger.cjs"
       to: "backendLogger.cjs" 
     - from: "scripts/install-services.cjs"
       to: "install-services.cjs"
