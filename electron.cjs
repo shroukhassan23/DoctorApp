@@ -30,7 +30,7 @@ class DoctorApp {
       if (isDev) {
         scriptPath = path.join(process.cwd(), 'scripts', 'install-services.cjs');
       } else {
-        // In production, the script should be in resources
+        // In production, the script is in resources
         scriptPath = path.join(process.resourcesPath, 'install-services.cjs');
       }
   
@@ -81,7 +81,7 @@ class DoctorApp {
       throw new Error(`Failed to install Windows services: ${error.message}`);
     }
   }
-
+  
   async initialize() {
     try {
       // Set up app data directory
@@ -283,14 +283,19 @@ class DoctorApp {
         await fs.mkdir(config.sharedFolderPath, { recursive: true });
         await this.logger.logSystemEvent('Shared folder created', { path: config.sharedFolderPath });
     
-        // Save configuration
+        // Save configuration FIRST
         await this.saveSetupConfig('master', config);
     
-        // Install Windows services if requested
+        // NEW: Install Windows services if requested
         if (config.installAsServices && process.platform === 'win32') {
           await this.logger.logSystemEvent('Installing Windows services');
-          await this.installWindowsServices();
-          await this.logger.logSystemEvent('Windows services installation completed');
+          try {
+            await this.installWindowsServices();
+            await this.logger.logSystemEvent('Windows services installation completed');
+          } catch (serviceError) {
+            await this.logger.error('Windows service installation failed', serviceError);
+            throw new Error(`Failed to install Windows services: ${serviceError.message}`);
+          }
         } else {
           // Start backend services as regular processes (for development)
           const fullConfig = await this.configManager.getConfig();
