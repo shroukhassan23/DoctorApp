@@ -12,7 +12,7 @@ let db;
 (async () => {
   try {
     console.log('Reports service starting with SQLite...');
-    
+
     db = await initDatabase();
     let logger;
     try {
@@ -28,11 +28,11 @@ let db;
     app.get('/reports/debug', async (req, res) => {
       try {
         console.log('🔍 Debug endpoint called');
-        
+
         // Check visits table structure
         const [visitColumns] = await db.execute("PRAGMA table_info(visits)");
         console.log('📊 Visit columns:', visitColumns);
-        
+
         // Check all visits with their dates
         const [allVisits] = await db.execute(`
           SELECT 
@@ -47,19 +47,19 @@ let db;
           ORDER BY visit_date DESC
         `);
         console.log('📋 All visits with dates:', allVisits);
-        
+
         // Check status table
         const [statusTable] = await db.execute("SELECT * FROM status").catch(() => [[]]);
         console.log('🏷️ Status table:', statusTable);
-        
+
         // Check type table
         const [typeTable] = await db.execute("SELECT * FROM type").catch(() => [[]]);
         console.log('🏷️ Type table:', typeTable);
-        
+
         // Test date comparison
         const testDate = new Date().toISOString().split('T')[0];
         console.log('🧪 Testing date comparison for:', testDate);
-        
+
         const [dateTest] = await db.execute(`
           SELECT 
             COUNT(*) as count,
@@ -68,9 +68,9 @@ let db;
           WHERE DATE(visit_date) = ?
           GROUP BY DATE(visit_date)
         `, [testDate]);
-        
+
         console.log('📅 Date test results:', dateTest);
-        
+
         res.json({
           visitColumns,
           allVisits,
@@ -94,11 +94,11 @@ let db;
     app.get('/reports/visits', async (req, res) => {
       const { from, to } = req.query;
       console.log('📅 Fetching visits from:', from, 'to:', to);
-    
+
       if (!from || !to) {
         return res.status(400).json({ error: 'Both from and to dates are required' });
       }
-    
+
       try {
         // Debug query first
         console.log('🔍 Testing date range query...');
@@ -112,7 +112,7 @@ let db;
           FROM visits
         `, [from, to]);
         console.log('🔍 Date test results:', testRows);
-    
+
         const [rows] = await db.execute(
           `SELECT 
             v.id AS visit_id, 
@@ -126,9 +126,9 @@ let db;
            ORDER BY v.visit_date ASC`,
           [from, to]
         );
-    
+
         console.log('📋 Found visits:', rows.length);
-        
+
         // If no results, try alternative approach
         if (rows.length === 0) {
           console.log('⚠️ No visits found with date(), trying string comparison...');
@@ -156,14 +156,89 @@ let db;
       }
     });
 
+
+    // Add this debug endpoint
+    app.get('/reports/debug-database', async (req, res) => {
+      try {
+        console.log('🔍 Debugging database state...');
+
+        // 1. Check if we're actually connected to the same database
+        const [dbInfo] = await db.execute("SELECT sqlite_version() as version");
+        console.log('📊 SQLite version:', dbInfo);
+
+        // 2. Check all tables
+        const [tables] = await db.execute("SELECT name FROM sqlite_master WHERE type='table'");
+        console.log('📊 Available tables:', tables);
+
+        // 3. Check patients table
+        const [patientCount] = await db.execute("SELECT COUNT(*) as count FROM patients");
+        console.log('👥 Total patients:', patientCount[0]);
+
+        const [nonDeletedPatients] = await db.execute("SELECT COUNT(*) as count FROM patients WHERE deleted_at IS NULL");
+        console.log('👥 Non-deleted patients:', nonDeletedPatients[0]);
+
+        // 4. Check visits table structure
+        const [visitStructure] = await db.execute("PRAGMA table_info(visits)");
+        console.log('🏥 Visits table structure:', visitStructure);
+
+        // 5. Check visits count
+        const [visitCount] = await db.execute("SELECT COUNT(*) as count FROM visits");
+        console.log('🏥 Total visits:', visitCount[0]);
+
+        // 6. Check actual visit data with patient info
+        const [visitData] = await db.execute(`
+      SELECT 
+        v.id as visit_id,
+        v.patient_id,
+        v.visit_date,
+        v.type_id,
+        v.status_id,
+        p.id as patient_real_id,
+        p.name as patient_name,
+        p.deleted_at as patient_deleted
+      FROM visits v
+      LEFT JOIN patients p ON v.patient_id = p.id
+      LIMIT 10
+    `);
+        console.log('🏥 Visit data with patient info:', visitData);
+
+        // 7. Check for orphaned visits
+        const [orphanedVisits] = await db.execute(`
+      SELECT v.*, 'ORPHANED' as status
+      FROM visits v
+      LEFT JOIN patients p ON v.patient_id = p.id
+      WHERE p.id IS NULL
+    `);
+        console.log('⚠️ Orphaned visits:', orphanedVisits);
+
+        res.json({
+          database: dbInfo[0],
+          tables: tables,
+          patientCount: patientCount[0],
+          nonDeletedPatients: nonDeletedPatients[0],
+          visitStructure: visitStructure,
+          visitCount: visitCount[0],
+          visitData: visitData,
+          orphanedVisits: orphanedVisits
+        });
+
+      } catch (error) {
+        console.error('❌ Database debug error:', error);
+        res.status(500).json({
+          error: error.message,
+          stack: error.stack
+        });
+      }
+    });
+
     app.get('/reports/visit-stats', async (req, res) => {
       const { from, to } = req.query;
       console.log('📊 Fetching visit stats from:', from, 'to:', to);
-    
+
       if (!from || !to) {
         return res.status(400).json({ error: 'Both from and to dates are required' });
       }
-    
+
       try {
         // Debug: Let's see what we're working with
         console.log('🔍 Debug: Checking all visits first...');
@@ -178,7 +253,7 @@ let db;
           ORDER BY visit_date DESC
         `);
         console.log('🔍 All visits in DB:', allVisits);
-    
+
         // Main query with proper date handling
         const [stats] = await db.execute(`
           SELECT 
@@ -191,13 +266,13 @@ let db;
           FROM visits v
           WHERE date(v.visit_date) >= date(?) AND date(v.visit_date) <= date(?)
         `, [from, to]);
-    
+
         console.log('📊 Query result:', stats[0]);
-    
+
         // If no results, try a more permissive query for debugging
         if (!stats[0] || stats[0].totalVisits === 0) {
           console.log('⚠️ No results with date filter, trying broader query...');
-          
+
           const [debugStats] = await db.execute(`
             SELECT 
               COUNT(*) as totalVisits,
@@ -211,15 +286,15 @@ let db;
             WHERE substr(date(v.visit_date), 1, 10) >= ? 
             AND substr(date(v.visit_date), 1, 10) <= ?
           `, [from, to]);
-          
+
           console.log('📊 Debug stats with string comparison:', debugStats[0]);
-          
+
           if (debugStats[0] && debugStats[0].totalVisits > 0) {
             res.json(debugStats[0]);
             return;
           }
         }
-    
+
         const result = stats[0] || {
           totalVisits: 0,
           primaryVisits: 0,
@@ -228,7 +303,7 @@ let db;
           completedVisits: 0,
           cancelledVisits: 0
         };
-    
+
         res.json(result);
       } catch (error) {
         console.error('❌ Error fetching visit stats:', error);
@@ -248,7 +323,7 @@ let db;
           FROM visits v
           WHERE date(v.visit_date) = date('now')
         `);
-    
+
         res.json({
           date: new Date().toISOString().split('T')[0],
           ...(todayStats[0] || {

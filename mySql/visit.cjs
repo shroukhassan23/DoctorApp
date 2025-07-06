@@ -171,6 +171,41 @@ const baseDir = process.env.DB_PATH ?
 app.use('/uploads', express.static(path.join(baseDir, 'uploads')));
 
 
+// Add this debug endpoint to visit.cjs
+app.get('/debug/database-state', async (req, res) => {
+  try {
+    // Check if we're connected to the same database file
+    const [visitCount] = await db.query("SELECT COUNT(*) as count FROM visits");
+    const [patientCount] = await db.query("SELECT COUNT(*) as count FROM patients WHERE deleted_at IS NULL");
+    
+    // Check the actual data
+    const [recentVisits] = await db.query(`
+      SELECT v.*, p.name as patient_name 
+      FROM visits v 
+      LEFT JOIN patients p ON v.patient_id = p.id 
+      ORDER BY v.created_at DESC 
+      LIMIT 5
+    `);
+    
+    console.log('🔍 Visit service DB state:', {
+      visits: visitCount[0],
+      patients: patientCount[0],
+      recentVisits: recentVisits
+    });
+    
+    res.json({
+      service: 'visit-service',
+      visits: visitCount[0],
+      patients: patientCount[0],
+      recentVisits: recentVisits,
+      dbPath: process.env.DB_PATH || 'default path'
+    });
+    
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.get('/Visittypes', async (req, res) => {
   try {
     const [rows] = await db.query('SELECT * FROM type');
