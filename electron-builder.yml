@@ -57,7 +57,8 @@ win:
       to: "initDb.cjs"            
     - from: "dump.sql"
       to: "app/src/utils/dump.sql"
-    
+    - from: "dump.sql"
+      to: "dump.sql"
     # Utility files for services
     - from: "src/utils/sqliteManager.cjs"
       to: "sqliteManager.cjs"
@@ -105,4 +106,4 @@ nodeGypRebuild: false
 
 # IMPORTANT: Custom build hooks
 beforeBuild:
-  - scripts/prepare-native-modules.js
+  - scripts/prepare-native-modules.cjs
