@@ -1,4 +1,4 @@
-# electron-builder.yml - Complete solution for better-sqlite3
+# electron-builder.yml - Fixed configuration
 appId: com.doctorapp.desktop
 productName: "Doctor App"
 copyright: "Copyright © 2025 Doctor App"
@@ -59,6 +59,7 @@ win:
       to: "app/src/utils/dump.sql"
     - from: "dump.sql"
       to: "dump.sql"
+    
     # Utility files for services
     - from: "src/utils/sqliteManager.cjs"
       to: "sqliteManager.cjs"
@@ -104,6 +105,4 @@ compression: "normal"
 includeSubNodeModules: false
 nodeGypRebuild: false
 
-# IMPORTANT: Custom build hooks
-beforeBuild:
-  - scripts/prepare-native-modules.cjs
+# REMOVED: beforeBuild - this was causing the error
