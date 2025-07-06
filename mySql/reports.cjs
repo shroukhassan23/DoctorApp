@@ -91,7 +91,6 @@ let db;
       res.json({ message: 'Reports service is working!', timestamp: new Date().toISOString() });
     });
 
-    // GET /reports/visits - مُحسن للتعامل مع مشاكل التواريخ
     app.get('/reports/visits', async (req, res) => {
       const { from, to } = req.query;
       console.log('📅 Fetching visits from:', from, 'to:', to);
@@ -101,30 +100,62 @@ let db;
       }
     
       try {
+        // Debug query first
+        console.log('🔍 Testing date range query...');
+        const [testRows] = await db.execute(`
+          SELECT 
+            id,
+            visit_date,
+            date(visit_date) as date_only,
+            date(visit_date) >= date(?) as date_gte,
+            date(visit_date) <= date(?) as date_lte
+          FROM visits
+        `, [from, to]);
+        console.log('🔍 Date test results:', testRows);
+    
         const [rows] = await db.execute(
           `SELECT 
             v.id AS visit_id, 
             v.*, 
             p.*, 
             p.id AS patient_id,
-            date(v.visit_date) as visit_date_only,
-            datetime(v.visit_date) as full_visit_datetime
+            date(v.visit_date) as visit_date_only
            FROM visits v
-           JOIN patients p ON v.patient_id = p.id
+           JOIN patients p ON v.patient_id = p.id AND p.deleted_at IS NULL
            WHERE date(v.visit_date) >= date(?) AND date(v.visit_date) <= date(?)
            ORDER BY v.visit_date ASC`,
           [from, to]
         );
     
         console.log('📋 Found visits:', rows.length);
-        res.json(rows);
+        
+        // If no results, try alternative approach
+        if (rows.length === 0) {
+          console.log('⚠️ No visits found with date(), trying string comparison...');
+          const [altRows] = await db.execute(
+            `SELECT 
+              v.id AS visit_id, 
+              v.*, 
+              p.*, 
+              p.id AS patient_id,
+              substr(v.visit_date, 1, 10) as visit_date_only
+             FROM visits v
+             JOIN patients p ON v.patient_id = p.id AND p.deleted_at IS NULL
+             WHERE substr(v.visit_date, 1, 10) >= ? AND substr(v.visit_date, 1, 10) <= ?
+             ORDER BY v.visit_date ASC`,
+            [from, to]
+          );
+          console.log('📋 Alternative query found visits:', altRows.length);
+          res.json(altRows);
+        } else {
+          res.json(rows);
+        }
       } catch (error) {
         console.error('❌ Error fetching visits:', error);
         res.status(500).json({ error: 'Failed to fetch visits' });
       }
     });
 
-    // GET /reports/visit-stats - مُحسن لحل مشاكل التواريخ
     app.get('/reports/visit-stats', async (req, res) => {
       const { from, to } = req.query;
       console.log('📊 Fetching visit stats from:', from, 'to:', to);
@@ -134,6 +165,21 @@ let db;
       }
     
       try {
+        // Debug: Let's see what we're working with
+        console.log('🔍 Debug: Checking all visits first...');
+        const [allVisits] = await db.execute(`
+          SELECT 
+            id,
+            visit_date,
+            date(visit_date) as date_only,
+            type_id,
+            status_id
+          FROM visits 
+          ORDER BY visit_date DESC
+        `);
+        console.log('🔍 All visits in DB:', allVisits);
+    
+        // Main query with proper date handling
         const [stats] = await db.execute(`
           SELECT 
             COUNT(*) as totalVisits,
@@ -146,14 +192,44 @@ let db;
           WHERE date(v.visit_date) >= date(?) AND date(v.visit_date) <= date(?)
         `, [from, to]);
     
-        res.json(stats[0] || {
+        console.log('📊 Query result:', stats[0]);
+    
+        // If no results, try a more permissive query for debugging
+        if (!stats[0] || stats[0].totalVisits === 0) {
+          console.log('⚠️ No results with date filter, trying broader query...');
+          
+          const [debugStats] = await db.execute(`
+            SELECT 
+              COUNT(*) as totalVisits,
+              COUNT(CASE WHEN v.type_id = 9 THEN 1 END) as primaryVisits,
+              COUNT(CASE WHEN v.type_id = 10 THEN 1 END) as followUpVisits,
+              COUNT(CASE WHEN v.status_id = 1 THEN 1 END) as waitingVisits,
+              COUNT(CASE WHEN v.status_id = 2 THEN 1 END) as completedVisits,
+              COUNT(CASE WHEN v.status_id = 3 THEN 1 END) as cancelledVisits,
+              GROUP_CONCAT(date(v.visit_date)) as found_dates
+            FROM visits v
+            WHERE substr(date(v.visit_date), 1, 10) >= ? 
+            AND substr(date(v.visit_date), 1, 10) <= ?
+          `, [from, to]);
+          
+          console.log('📊 Debug stats with string comparison:', debugStats[0]);
+          
+          if (debugStats[0] && debugStats[0].totalVisits > 0) {
+            res.json(debugStats[0]);
+            return;
+          }
+        }
+    
+        const result = stats[0] || {
           totalVisits: 0,
           primaryVisits: 0,
           followUpVisits: 0,
           waitingVisits: 0,
           completedVisits: 0,
           cancelledVisits: 0
-        });
+        };
+    
+        res.json(result);
       } catch (error) {
         console.error('❌ Error fetching visit stats:', error);
         res.status(500).json({ error: 'Failed to fetch visit stats' });
