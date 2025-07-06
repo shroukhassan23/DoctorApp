@@ -19,6 +19,23 @@ app.use(cors({
 }));
 
 
+function formatDateForSQLite(dateInput) {
+  if (!dateInput) return null;
+  
+  const date = new Date(dateInput);
+  if (isNaN(date.getTime())) {
+    throw new Error('Invalid date format');
+  }
+  
+  // Return YYYY-MM-DD HH:MM:SS format
+  return date.toISOString().replace('T', ' ').slice(0, 19);
+}
+
+function validateDate(dateString) {
+  const date = new Date(dateString);
+  return !isNaN(date.getTime());
+}
+
 
 // Add this entire section after the CORS setup and before the multer configuration
 (async () => {
@@ -206,21 +223,40 @@ app.post('/Visit/add', async (req, res) => {
     notes,
     status_id
   } = req.body;
-console.log(patient_id);
 
   try {
+    // Validate and format visit_date
+    let formattedVisitDate;
+    if (visit_date) {
+      // If it's a date object or string, format it properly
+      const dateObj = new Date(visit_date);
+      if (isNaN(dateObj.getTime())) {
+        return res.status(400).json({ error: 'Invalid visit date format' });
+      }
+      // Format as YYYY-MM-DD HH:MM:SS for SQLite
+      formattedVisitDate = dateObj.toISOString().replace('T', ' ').slice(0, 19);
+    } else {
+      // Use current datetime if no date provided
+      formattedVisitDate = new Date().toISOString().replace('T', ' ').slice(0, 19);
+    }
+
     const [result] = await db.query(
       `INSERT INTO visits 
-       (patient_id, visit_date, type_id, chief_complaint, diagnosis, notes, status_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [patient_id, visit_date, type_id, chief_complaint, diagnosis, notes, status_id]
+       (patient_id, visit_date, type_id, chief_complaint, diagnosis, notes, status_id, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
+      [patient_id, formattedVisitDate, type_id, chief_complaint, diagnosis, notes, status_id]
     );
+
+    // Update history
+    if (diagnosis) await updateHistory('diagnosis_history', diagnosis);
+    if (notes) await updateHistory('notes_history', notes);
 
     res.status(201).json({ message: 'Visit added successfully', visitId: result.insertId });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
+
 app.post('/prescription/add', async (req, res) => {
   const {
     patient_id,
@@ -231,12 +267,28 @@ app.post('/prescription/add', async (req, res) => {
   } = req.body;
 
   try {
+    // Format prescription date
+    let formattedPrescriptionDate;
+    if (prescription_date) {
+      const dateObj = new Date(prescription_date);
+      if (isNaN(dateObj.getTime())) {
+        return res.status(400).json({ error: 'Invalid prescription date format' });
+      }
+      formattedPrescriptionDate = dateObj.toISOString().replace('T', ' ').slice(0, 19);
+    } else {
+      formattedPrescriptionDate = new Date().toISOString().replace('T', ' ').slice(0, 19);
+    }
+
     const [result] = await db.query(
       `INSERT INTO prescription 
        (patient_id, visit_id, diagnosis, notes, prescription_date)
        VALUES (?, ?, ?, ?, ?)`,
-      [patient_id, visit_id, diagnosis, notes, prescription_date]
+      [patient_id, visit_id, diagnosis, notes, formattedPrescriptionDate]
     );
+
+    // Update history
+    if (diagnosis) await updateHistory('diagnosis_history', diagnosis);
+    if (notes) await updateHistory('notes_history', notes);
 
     res.status(201).json({ message: 'Prescription added successfully', prescriptionId: result.insertId });
   } catch (err) {
@@ -260,8 +312,8 @@ app.post('/prescription/medicines/add', async (req, res) => {
     for (const med of medicines) {
       await db.query(
         `INSERT INTO prescription_items 
-         (prescription_id, medicine_id, dosage, frequency, duration, instructions)
-         VALUES (?, ?, ?, ?, ?, ?)`,
+         (prescription_id, medicine_id, dosage, frequency, duration, instructions, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
         [
           med.prescription_id,
           med.medicine_id,
@@ -273,6 +325,10 @@ app.post('/prescription/medicines/add', async (req, res) => {
       );
       insertedCount++;
     }
+
+    if (med.dosage) await updateHistory('dosage_history', med.dosage);
+    if (med.duration) await updateHistory('duration_history', med.duration);
+    if (med.instructions) await updateHistory('instruction_history', med.instructions);
 
     res.status(201).json({ 
       message: 'Prescription medicines added successfully', 
@@ -299,8 +355,8 @@ app.post('/prescription/labtests/add', async (req, res) => {
     for (const test of labTests) {
       await db.query(
         `INSERT INTO prescription_lab_tests 
-         (prescription_id, lab_test_id)
-         VALUES (?, ?)`,
+         (prescription_id, lab_test_id, created_at)
+         VALUES (?, ?, datetime('now'))`,
         [test.prescription_id, test.lab_test_id]
       );
       insertedCount++;
@@ -333,8 +389,8 @@ app.post('/prescription/imagingstudies/add', async (req, res) => {
     for (const study of imagingStudies) {
       await db.query(
         `INSERT INTO prescription_imaging_studies 
-         (prescription_id, imaging_studies_id, comments)
-         VALUES (?, ?, ?)`,
+         (prescription_id, imaging_studies_id, comments, created_at)
+         VALUES (?, ?, ?, datetime('now'))`,
         [
           study.prescription_id,
           study.imaging_studies_id,
@@ -1030,19 +1086,31 @@ app.delete('/visits/:id', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+
 app.put('/visits/:id', async (req, res) => {
   const { id } = req.params;
   const { visit_date, type_id, chief_complaint, diagnosis, notes, status_id } = req.body;
   
   try {
+    // Format visit_date if provided
+    let formattedVisitDate = visit_date;
+    if (visit_date) {
+      const dateObj = new Date(visit_date);
+      if (isNaN(dateObj.getTime())) {
+        return res.status(400).json({ error: 'Invalid visit date format' });
+      }
+      formattedVisitDate = dateObj.toISOString().replace('T', ' ').slice(0, 19);
+    }
+
     const [result] = await db.query(
       `UPDATE visits SET 
        visit_date = ?, type_id = ?, chief_complaint = ?, 
        diagnosis = ?, notes = ?, status_id = ?
        WHERE id = ?`,
-      [visit_date, type_id, chief_complaint, diagnosis, notes, status_id, id]
+      [formattedVisitDate, type_id, chief_complaint, diagnosis, notes, status_id, id]
     );
-    
+
     if (result.affectedRows === 0) {
       return res.status(404).json({ error: 'Visit not found' });
     }
@@ -1295,13 +1363,20 @@ async function updateHistory(table, text) {
   const trimmedText = text.trim();
   
   try {
-    await db.query(`
-      INSERT INTO ${table} (text, usage_count, last_used, created_at)
-      VALUES (?, 1, datetime("now"), datetime("now"))
-      ON DUPLICATE KEY UPDATE
-      usage_count = usage_count + 1,
-      last_used = datetime("now")
+    // First try to update existing record
+    const [updateResult] = await db.query(`
+      UPDATE ${table} 
+      SET usage_count = usage_count + 1, last_used = datetime('now')
+      WHERE text = ?
     `, [trimmedText]);
+    
+    // If no rows affected, insert new record
+    if (updateResult.affectedRows === 0) {
+      await db.query(`
+        INSERT INTO ${table} (text, usage_count, last_used, created_at)
+        VALUES (?, 1, datetime('now'), datetime('now'))
+      `, [trimmedText]);
+    }
   } catch (error) {
     console.error(`Error updating ${table}:`, error);
   }
