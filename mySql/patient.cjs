@@ -82,7 +82,7 @@ let sqliteManagerInstance = null;
 
     // Initialize database
     db = await initDatabase();
-    console.log("🔍 DEBUG: Actual database path being used:");
+    console.log("🔍 DEBUG: Actual database path being used:", process.env.DB_PATH || 'Using SQLite manager default path detection');
     const [testRows] = await db.query('SELECT COUNT(*) as count FROM patients WHERE deleted_at IS NULL');
     await logger.info('Database connection verified', {
       patientCount: testRows[0]?.count || 0,
@@ -98,11 +98,6 @@ let sqliteManagerInstance = null;
 
     safeConsole.log("✅ Patient service database initialized.");
     await logger.info("Patient service database initialized successfully");
-
-    // Add middleware for logging
-    app.use(async (req, res, next) => {
-      await logger.logRequest(req, res, next);
-    });
 
     // GET all Patients
     app.get('/Patients', async (req, res) => {
