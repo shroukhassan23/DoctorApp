@@ -29,3 +29,4 @@ mysql-resources
 mysql-9.3.0-macos15-arm64.tar.gz
 mysql-8.0.42-macos15-arm64
 app_dist
+dist-native
