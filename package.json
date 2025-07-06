@@ -29,7 +29,7 @@
     "start-services": "net start \"DoctorApp Patient Service\" && net start \"DoctorApp Visit Service\" && net start \"DoctorApp Reports Service\"",
     "stop-services": "net stop \"DoctorApp Patient Service\" && net stop \"DoctorApp Visit Service\" && net stop \"DoctorApp Reports Service\"",
     "test:sqlite": "node -e \"const db = require('better-sqlite3')(':memory:'); console.log('✅ better-sqlite3 working!'); db.close();\"",
-    "postinstall": "npm run rebuild:sqlite"
+    "postinstall": "electron-builder install-app-deps"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
