@@ -1,4 +1,4 @@
-# electron-builder.yml - Platform-specific resources
+# electron-builder.yml - Fixed configuration for SQLite and fileLog
 appId: com.doctorapp.desktop
 productName: "Doctor App"
 copyright: "Copyright © 2025 Doctor App"
@@ -12,25 +12,25 @@ files:
   - "preload.js"
   - "src/utils/**/*"
   - "dump.sql"
-  - "mySql/patient.cjs"
-  - "mySql/visit.cjs"  
-  - "mySql/reports.cjs"
-  - "!package.json"
   - "initDb.cjs"
-  - "backendLogger.cjs"
-  - "scripts/**/*" 
+  - "!package.json"
+  # Remove service files from main app bundle - they go to extraResources instead
 
 extraFiles:
-  - from: "mySql/patient.cjs"
-    to: "app/patient.cjs"
-  - from: "mySql/visit.cjs" 
-    to: "app/visit.cjs"
-  - from: "mySql/reports.cjs"
-    to: "app/reports.cjs"
-  - from: "src/utils/backendLogger.cjs"  
-    to: "app/backendLogger.cjs"
+  # These files are bundled WITH the Electron app (for app functionality)
   - from: "src/utils/fileLog.cjs"  
     to: "app/fileLog.cjs"
+  - from: "src/utils/sqliteManager.cjs"
+    to: "app/sqliteManager.cjs"
+  - from: "src/utils/backendManager.cjs"
+    to: "app/backendManager.cjs"
+  - from: "src/utils/configManager.cjs"
+    to: "app/configManager.cjs"
+  - from: "src/utils/licenseManager.cjs"
+    to: "app/licenseManager.cjs"
+  - from: "src/utils/logger.cjs"
+    to: "app/logger.cjs"
+  # Required Node.js modules for services
   - from: "node_modules/sqlite3"
     to: "app/node_modules/sqlite3"
     filter: ["**/*"]
@@ -45,6 +45,9 @@ extraFiles:
     filter: ["**/*"]
   - from: "node_modules/node-machine-id"
     to: "app/node_modules/node-machine-id"
+    filter: ["**/*"]
+  - from: "node_modules/sql.js"
+    to: "app/node_modules/sql.js"
     filter: ["**/*"]
 
 extraMetadata:
@@ -61,29 +64,39 @@ win:
       arch: ["x64"]
   icon: "build/icon.ico"
   extraResources:
+    # Service files for Windows services (separate from Electron app)
     - from: "mySql/patient.cjs"
       to: "patient.cjs"
     - from: "mySql/visit.cjs"
       to: "visit.cjs"
-    - from: "initDb.cjs"          
-      to: "initDb.cjs"            
     - from: "mySql/reports.cjs"
       to: "reports.cjs"
+    
+    # Database and initialization
+    - from: "initDb.cjs"          
+      to: "initDb.cjs"            
     - from: "dump.sql"
       to: "dump.sql"
+    
+    # Utility files for services
     - from: "src/utils/sqliteManager.cjs"
       to: "sqliteManager.cjs"
-    - from: "tools/nssm/nssm.exe"
-      to: "nssm.exe" 
-    - from: "src/utils/backendLogger.cjs"
-      to: "backendLogger.cjs" 
+    - from: "src/utils/fileLog.cjs"
+      to: "fileLog.cjs"
+    
+    # Windows service management
+    - from: "tools/nssm"
+      to: "nssm"
+      filter: ["**/*"]
     - from: "scripts/install-services.cjs"
       to: "install-services.cjs"
     - from: "scripts/uninstall-services.cjs"
       to: "uninstall-services.cjs"
+    
+    # Node.js executable (try to bundle it, but make it optional)
     - from: "C:/Program Files/nodejs/node.exe"
       to: "node.exe"
-
+      filter: ["node.exe"]
 
 # macOS configuration  
 mac:
@@ -95,12 +108,7 @@ mac:
   hardenedRuntime: false
   gatekeeperAssess: false
   extraResources:
-    # Remove MySQL:
-    # - from: "mysql-resources/mysql-macos"
-    #   to: "mysql-macos"
-    #   filter: ["**/*"]
-    
-    # Keep schema file:
+    # macOS doesn't need Windows services, just the schema
     - from: "dump.sql"
       to: "dump.sql"
 
