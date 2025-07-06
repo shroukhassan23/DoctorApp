@@ -6,6 +6,8 @@ const fs = require('fs');
 const initDatabase = require('./initDb.cjs');
 let db;
 const app = express();
+const SimpleFileLogger = require('./fileLog.cjs');
+
 app.use(express.json());
 
 app.use(cors({
@@ -17,6 +19,7 @@ app.use(cors({
 }));
 
 
+
 // Add this entire section after the CORS setup and before the multer configuration
 (async () => {
   try {
@@ -24,6 +27,14 @@ app.use(cors({
     console.log('Visit service starting with SQLite...');
 
     db = await initDatabase(); 
+    let logger;
+    try {
+      logger = new SimpleFileLogger('visit-service');
+      await logger.initialize();
+      await logger.info('Visit service starting with SQLite');
+    } catch (error) {
+      console.error('Logger initialization failed:', error);
+    }
     console.log("✅ Visit service database initialized.");
 
     // All your existing routes go here...
@@ -45,7 +56,13 @@ app.use(cors({
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     const { patientId } = req.params;
-    const uploadPath = path.join(__dirname, 'uploads', 'patients', patientId);
+    
+    // Use data directory from environment or fallback
+    const baseDir = process.env.DB_PATH ? 
+      path.dirname(process.env.DB_PATH) : 
+      path.join(process.execPath ? path.dirname(process.execPath) : __dirname, 'data');
+    
+    const uploadPath = path.join(baseDir, 'uploads', 'patients', patientId);
     
     // Create directory if it doesn't exist
     fs.mkdirSync(uploadPath, { recursive: true });
@@ -131,7 +148,11 @@ app.use((error, req, res, next) => {
 });
 
 
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+const baseDir = process.env.DB_PATH ? 
+  path.dirname(process.env.DB_PATH) : 
+  path.join(process.execPath ? path.dirname(process.execPath) : __dirname, 'data');
+app.use('/uploads', express.static(path.join(baseDir, 'uploads')));
+
 
 app.get('/Visittypes', async (req, res) => {
   try {

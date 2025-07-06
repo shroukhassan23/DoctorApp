@@ -9,23 +9,42 @@ async function initDatabase(config = {}) {
     if (!sqliteManager) {
       let managerPath;
       if (process.env.ELECTRON_DEV === 'true') {
-        managerPath = './src/utils/mysqlManager.cjs';
+        managerPath = './src/utils/sqliteManager.cjs';
       } else {
-        // In production, copy mysqlManager.cjs to same directory as initDb.cjs
-        managerPath = './mysqlManager.cjs';
+        // In production, copy sqliteManager.cjs to same directory as initDb.cjs
+        managerPath = './sqliteManager.cjs';
       }
       const SQLiteManager = require(managerPath);
       sqliteManager = new SQLiteManager();
 
-      // Get app path - works both in dev and production
+      // FIXED: Get app path and database path from environment or fallback
       let appPath;
-      if (process.env.ELECTRON_DEV === 'true') {
+      let dbPath;
+      
+      if (process.env.DB_PATH) {
+        // Use explicit database path from environment
+        dbPath = process.env.DB_PATH;
+        appPath = path.dirname(dbPath);
+      } else if (process.env.ELECTRON_DEV === 'true') {
+        // Development mode
         appPath = process.cwd();
       } else {
+        // Production mode - use resources or executable directory
         appPath = process.resourcesPath || path.dirname(process.execPath);
       }
 
+      console.log('initDb: Using app path:', appPath);
+      console.log('initDb: Database path:', dbPath || 'Will be determined by SQLiteManager');
+
       sqliteManager.initializePaths(appPath);
+      
+      // If we have an explicit DB path, override the manager's path
+      if (dbPath) {
+        sqliteManager.dbPath = dbPath;
+        sqliteManager.dataPath = path.dirname(dbPath);
+        console.log('initDb: Overrode SQLiteManager paths with explicit DB_PATH');
+      }
+      
       await sqliteManager.startDatabase();
     }
 

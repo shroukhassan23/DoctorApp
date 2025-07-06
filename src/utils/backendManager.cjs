@@ -28,7 +28,6 @@ class BackendManager {
         }
 
         console.log('Master installation detected - starting local services as regular processes');
-        // ... rest of your existing code
 
         const patientPort = config.services?.patientPort || 3001;
         const visitPort = config.services?.visitPort || 3002;
@@ -87,16 +86,24 @@ class BackendManager {
 
             console.log(`Found service file at: ${servicePath}`);
 
+            // FIXED: Set explicit database path for consistent location
+            const dbPath = this.getServiceDatabasePath(config);
+            const logDir = path.join(path.dirname(dbPath), 'logs');
+
             const env = {
                 ...process.env,
                 DB_TYPE: 'sqlite',
                 DB_NAME: 'doctor',
-                DB_PATH: path.join(require('os').homedir(), 'AppData', 'Roaming', 'doctor-app-desktop', 'doctor-app.db'),
+                DB_PATH: dbPath, // FIXED: Explicit path instead of using os.homedir()
+                LOG_DIR: logDir, // FIXED: Explicit log directory
                 SHARED_FOLDER_PATH: config.sharedFolderPath || '',
                 NODE_ENV: isDev ? 'development' : 'production',
                 PORT: service.port.toString(),
                 ELECTRON_DEV: process.env.ELECTRON_DEV || 'false'
             };
+
+            console.log(`Service ${service.name} will use database at: ${dbPath}`);
+            console.log(`Service ${service.name} will use logs at: ${logDir}`);
 
             // Determine Node.js executable - FIXED VERSION
             let nodeExecutable;
@@ -224,6 +231,23 @@ class BackendManager {
             console.error(`Error starting ${service.name} service:`, error);
             throw error;
         }
+    }
+
+    // FIXED: Helper method to determine consistent database path
+    getServiceDatabasePath(config) {
+        // Priority 1: Environment variable
+        if (process.env.DB_PATH) {
+            return process.env.DB_PATH;
+        }
+
+        // Priority 2: Use application path
+        if (this.appPath) {
+            return path.join(this.appPath, 'data', 'doctor-app.db');
+        }
+
+        // Priority 3: Use executable directory
+        const execDir = path.dirname(process.execPath);
+        return path.join(execDir, 'data', 'doctor-app.db');
     }
 
     async gracefulShutdown() {

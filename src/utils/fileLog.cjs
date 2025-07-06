@@ -10,16 +10,20 @@ class SimpleFileLogger {
   }
 
   getDefaultLogDir() {
-    const os = require('os');
-    
-    // Use the same pattern as SQLiteManager for consistency
-    if (process.platform === 'win32') {
-      return path.join(os.homedir(), 'AppData', 'Roaming', 'doctor-app-desktop', 'logs');
-    } else if (process.platform === 'darwin') {
-      return path.join(os.homedir(), 'Library', 'Application Support', 'doctor-app-desktop', 'logs');
-    } else {
-      return path.join(os.homedir(), '.doctor-app-desktop', 'logs');
+    // FIXED: Use environment variable or explicit path instead of os.homedir()
+    if (process.env.LOG_DIR) {
+      return process.env.LOG_DIR;
     }
+    
+    if (process.env.DB_PATH) {
+      // Use same directory as database but in a logs subfolder
+      const dbDir = path.dirname(process.env.DB_PATH);
+      return path.join(dbDir, 'logs');
+    }
+    
+    // Fallback: use executable directory
+    const execDir = path.dirname(process.execPath);
+    return path.join(execDir, 'logs');
   }
 
   async initialize() {

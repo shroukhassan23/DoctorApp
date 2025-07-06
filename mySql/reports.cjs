@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const initDatabase = require('./initDb.cjs');
+const SimpleFileLogger = require('./fileLog.cjs');
 
 const app = express();
 app.use(express.json());
@@ -13,6 +14,14 @@ let db;
     console.log('Reports service starting with SQLite...');
     
     db = await initDatabase();
+    let logger;
+    try {
+      logger = new SimpleFileLogger('reports-service');
+      await logger.initialize();
+      await logger.info('Reports service starting with SQLite');
+    } catch (error) {
+      console.error('Logger initialization failed:', error);
+    }
     console.log("✅ Reports service database initialized.");
 
     // Debug endpoint - اختبر دا الأول

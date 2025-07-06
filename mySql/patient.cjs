@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const initDatabase = require('./initDb.cjs');
-const BackendLogger = require('./backendLogger.cjs');
+const SimpleFileLogger = require('./fileLog.cjs');
 
 const app = express();
 app.use(cors());
@@ -57,29 +57,40 @@ let sqliteManagerInstance = null;
 (async () => {
   try {
     // Initialize Logger first
-    logger = new BackendLogger('patients-service');
+    logger = new SimpleFileLogger('patients-service');
     await logger.initialize();
 
+    await logger.info('🔍 Service startup - Database path debugging', {
+      'process.env.DB_PATH': process.env.DB_PATH,
+      'process.env.LOG_DIR': process.env.LOG_DIR,
+      'process.execPath': process.execPath,
+      'process.cwd()': process.cwd(),
+      '__dirname': __dirname,
+      'NODE_ENV': process.env.NODE_ENV,
+      'ELECTRON_DEV': process.env.ELECTRON_DEV
+    });
 
-    const os = require('os');
-    const path = require('path');
-
-    const userDataPath = path.join(os.homedir(), 'AppData', 'Roaming', 'doctor-app-desktop');
-    possibleDbPath = path.join(userDataPath, 'doctor-app.db');
-    console.log("🔍 DEBUG: Calculated database path should be:", possibleDbPath);
-    await logger.info("Database path calculated as", { path: possibleDbPath });
+    console.log('🔍 Patient Service - Database Path Info:');
+    console.log('  DB_PATH env var:', process.env.DB_PATH);
+    console.log('  LOG_DIR env var:', process.env.LOG_DIR);
+    console.log('  Current working dir:', process.cwd());
+    console.log('  Script location:', __dirname);
 
     safeConsole.log('Patient service starting with SQLite...');
     await logger.info('Patient service starting with SQLite');
 
+
     // Initialize database
     db = await initDatabase();
     console.log("🔍 DEBUG: Actual database path being used:");
-    console.log("DB_PATH environment:", process.env.DB_PATH);
-    const [testRows] = await db.query('SELECT * FROM patients WHERE deleted_at IS NULL');
-    console.log("🔍 DEBUG: Actual patients in database:", testRows);
+    const [testRows] = await db.query('SELECT COUNT(*) as count FROM patients WHERE deleted_at IS NULL');
+    await logger.info('Database connection verified', {
+      patientCount: testRows[0]?.count || 0,
+      actualDbPath: process.env.DB_PATH || 'using initDb default path detection'
+    });
 
-    console.log("🔍 DEBUG: Database path being used:", process.env.DB_PATH);
+    console.log(`📊 Found ${testRows[0]?.count || 0} patients in database`);
+    console.log("✅ Patient service database initialized and verified.");
 
     const [debugRows] = await db.query('SELECT * FROM patients WHERE deleted_at IS NULL');
     console.log("🔍 DEBUG: Patients found in database:", debugRows);
@@ -99,11 +110,6 @@ let sqliteManagerInstance = null;
         console.log('🔍 DEBUG: GET /Patients called');
         await logger.info('Fetching all patients');
 
-        const os = require('os');
-        const path = require('path');
-
-        const userDataPath = path.join(os.homedir(), 'AppData', 'Roaming', 'doctor-app-desktop');
-        calculatedDbPath = path.join(userDataPath, 'doctor-app.db');
 
         console.log('🔍 DEBUG: Database should be located at:', calculatedDbPath);
         await logger.info('Database location', { calculatedPath: calculatedDbPath });

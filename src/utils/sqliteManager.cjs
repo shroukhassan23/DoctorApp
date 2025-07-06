@@ -12,18 +12,38 @@ class SQLiteManager {
     this.logger = new SimpleFileLogger('sqlite-manager');
   }
 
-
   initializePaths(appPath) {
-    // Use safe directory for database
- 
-      // Fallback for development
-      const os = require('os');
-      const userDataPath = path.join(os.homedir(), 'AppData', 'Roaming', 'doctor-app-desktop');
-      this.dataPath = userDataPath;
-      this.dbPath = path.join(userDataPath, 'doctor-app.db');
- 
+    // FIXED: Use environment variable or explicit path instead of os.homedir()
+    if (process.env.DB_PATH) {
+      // Use explicit database path from environment
+      this.dbPath = process.env.DB_PATH;
+      this.dataPath = path.dirname(this.dbPath);
+    } else if (appPath) {
+      // Use application path for database
+      this.dataPath = path.join(appPath, 'data');
+      this.dbPath = path.join(this.dataPath, 'doctor-app.db');
+    } else {
+      // Fallback: use current executable directory
+      const fallbackPath = path.join(path.dirname(process.execPath), 'data');
+      this.dataPath = fallbackPath;
+      this.dbPath = path.join(fallbackPath, 'doctor-app.db');
+    }
     
-    console.log('SQLite Database Path:', this.dbPath);
+    console.log('📂 SQLite Database Location:');
+    console.log('  Database file:', this.dbPath);
+    console.log('  Data directory:', this.dataPath);
+    console.log('  Source: DB_PATH env var:', !!process.env.DB_PATH);
+    console.log('  Source: appPath provided:', !!appPath);
+    console.log('  Process type:', process.env.ELECTRON_DEV === 'true' ? 'Development' : 'Production');
+
+    if (this.logger) {
+      this.logger.info('Database paths initialized', {
+        dbPath: this.dbPath,
+        dataPath: this.dataPath,
+        source: process.env.DB_PATH ? 'DB_PATH env' : appPath ? 'appPath' : 'fallback',
+        processType: process.env.ELECTRON_DEV === 'true' ? 'development' : 'production'
+      });
+    }
   }
 
   async initializeDatabase() {
@@ -75,46 +95,48 @@ class SQLiteManager {
 
   async importSchema(schemaPath) {
     try {
-      
-      // Use SQLite schema instead of converting MySQL
-      let sqliteSchemaPath;
+      // FIXED: Use only dump.sql (not dump-sqlite.sql)
+      let actualSchemaPath;
       if (process.env.ELECTRON_DEV === 'true') {
-        sqliteSchemaPath = path.join(process.cwd(), 'dump-sqlite.sql');
-        await this.logger.info(" sqliteSchemaPath: "+sqliteSchemaPath)
+        actualSchemaPath = path.join(process.cwd(), 'dump.sql');
+        await this.logger.info("Development schema path: " + actualSchemaPath);
       } else {
-        sqliteSchemaPath = path.join(path.dirname(__filename), 'dump-sqlite.sql');
-       await this.logger.info(" sqliteSchemaPath: "+sqliteSchemaPath)
-
+        // In production, look for dump.sql in resources
+        const possiblePaths = [
+          path.join(process.resourcesPath, 'dump.sql'),
+          path.join(path.dirname(__filename), 'dump.sql'),
+          path.join(path.dirname(process.execPath), 'resources', 'dump.sql'),
+          path.join(path.dirname(process.execPath), 'dump.sql')
+        ];
+        
+        for (const testPath of possiblePaths) {
+          try {
+            await fs.access(testPath);
+            actualSchemaPath = testPath;
+            break;
+          } catch (e) {
+            // Continue searching
+          }
+        }
+        
+        if (!actualSchemaPath) {
+          throw new Error('dump.sql not found in any expected location');
+        }
+        
+        await this.logger.info("Production schema path: " + actualSchemaPath);
       }
       
-      // Check if SQLite schema exists, fallback to MySQL conversion if not
-      try {
-        await fs.access(sqliteSchemaPath);
-        schemaPath = sqliteSchemaPath;
-        console.log('Using native SQLite schema:', sqliteSchemaPath);
-      } catch (error) {
-        console.log('SQLite schema not found, using MySQL conversion');
-      }
-  
-      const sqlContent = await fs.readFile(schemaPath, 'utf8');
+      const sqlContent = await fs.readFile(actualSchemaPath, 'utf8');
       
-      let sqliteSchema;
-      // if (schemaPath.includes('sqlite')) {
-      //   // Use SQLite schema as-is
-      //   sqliteSchema = sqlContent;
-      // } else {
-      //   // Convert MySQL schema (fallback)
-      //   sqliteSchema = this.convertMySQLToSQLite(sqlContent);
-      // }
-
-      sqliteSchema = sqlContent;
+      // Convert MySQL schema to SQLite if needed
+      const sqliteSchema = this.convertMySQLToSQLite(sqlContent);
       
       // Split by semicolon and execute each statement
       const statements = sqliteSchema
         .split(';')
         .map(stmt => stmt.trim())
         .filter(stmt => stmt.length > 0 && !stmt.startsWith('--'));
-  
+
       for (const statement of statements) {
         if (statement.trim()) {
           try {
@@ -126,11 +148,11 @@ class SQLiteManager {
           }
         }
       }
-  
+
       await this.saveDatabase();
       console.log('Schema imported successfully');
       return true;
-  
+
     } catch (error) {
       console.error('Schema import failed:', error);
       throw new Error(`Schema import failed: ${error.message}`);
@@ -206,16 +228,7 @@ class SQLiteManager {
       
       if (!tables.length || tables[0].values.length === 0) {
         console.log('No tables found, importing schema...');
-        
-        let schemaPath;
-        if (process.env.ELECTRON_DEV === 'true') {
-          schemaPath = path.join(process.cwd(), 'dump.sql');
-        } else {
-          // In production, dump.sql should be in the same directory as other service files
-          schemaPath = path.join(path.dirname(__filename), 'dump.sql');
-        }
-          
-        await this.importSchema(schemaPath);
+        await this.importSchema(); // Schema path will be determined internally
       }
 
       console.log('SQLite database is ready');

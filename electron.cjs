@@ -5,8 +5,8 @@ const SQLiteManager = require('./src/utils/mysqlManager.cjs');
 const LicenseManager = require('./src/utils/licenseManager.cjs');
 const ConfigManager = require('./src/utils/configManager.cjs');
 const BackendManager = require('./src/utils/backendManager.cjs');
-const Logger = require('./src/utils/logger.cjs'); // Add logger import
-
+const Logger = require('./src/utils/logger.cjs'); // Keep this
+const SimpleFileLogger = require('./src/utils/fileLog.cjs'); // Add this
 const isDev = process.env.ELECTRON_DEV === 'true';
 
 class DoctorApp {
@@ -84,38 +84,48 @@ class DoctorApp {
 
   async initialize() {
     try {
-      // Set up app data directory
+      // Set up app data directory - FIXED: Use explicit path for services
       this.appDataPath = path.join(app.getPath('userData'));
       await fs.mkdir(this.appDataPath, { recursive: true });
-
-      // Initialize logger first
+  
+      // FIXED: Set database path in environment for consistency across all processes
+      const databasePath = path.join(this.appDataPath, 'doctor-app.db');
+      const logDir = path.join(this.appDataPath, 'logs');
+      
+      process.env.DB_PATH = databasePath;
+      process.env.LOG_DIR = logDir;
+      
+      console.log('Set database path:', databasePath);
+      console.log('Set log directory:', logDir);
+  
+      // Initialize logger with explicit log directory
       this.logger = new Logger(this.appDataPath);
       await this.logger.initialize();
-
+  
       await this.logger.logSystemEvent('App initialization started');
-
+  
       // Initialize license manager
       await this.licenseManager.initialize(this.appDataPath);
       await this.logger.logSystemEvent('License manager initialized');
-
-      // Initialize MySQL paths
-      const appPath = isDev ?
-        process.cwd() :
-        process.resourcesPath;
-      this.sqliteManager.initializePaths(appPath);
-      await this.logger.logSystemEvent('SQLite paths initialized', { appPath });
-
+  
+      // Initialize SQLite paths with explicit app data path
+      this.sqliteManager.initializePaths(this.appDataPath);
+      await this.logger.logSystemEvent('SQLite paths initialized', { 
+        appPath: this.appDataPath,
+        dbPath: databasePath 
+      });
+  
       // Initialize other managers
       this.configManager = new ConfigManager(this.appDataPath);
-      this.backendManager = new BackendManager(__dirname);
+      this.backendManager = new BackendManager(this.appDataPath); // Pass appDataPath instead of __dirname
       await this.logger.logSystemEvent('Managers initialized');
-
+  
       // Check if setup is complete
       await this.checkSetupStatus();
-
+  
       // Set up IPC handlers
       this.setupIPCHandlers();
-
+  
       await this.logger.logSystemEvent('App initialization completed');
     } catch (error) {
       if (this.logger) {
@@ -125,6 +135,7 @@ class DoctorApp {
       throw error;
     }
   }
+  
 
   async checkSetupStatus() {
     try {
@@ -279,9 +290,13 @@ class DoctorApp {
         console.log('DEBUG: installAsServices value:', config.installAsServices);
         console.log('DEBUG: Platform:', process.platform);
     
+        // FIXED: Initialize SQLite with explicit path
+        const databasePath = process.env.DB_PATH || path.join(this.appDataPath, 'doctor-app.db');
+        this.sqliteManager.initializePaths(this.appDataPath);
+        
         // Start SQLite database
         await this.sqliteManager.startDatabase();
-        await this.logger.logDatabaseOperation('SQLite database started');
+        await this.logger.logDatabaseOperation('SQLite database started', { dbPath: databasePath });
     
         // Create shared folder
         await fs.mkdir(config.sharedFolderPath, { recursive: true });
