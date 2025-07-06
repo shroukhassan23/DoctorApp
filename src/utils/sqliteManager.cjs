@@ -29,21 +29,8 @@ class SQLiteManager {
       this.dbPath = path.join(fallbackPath, 'doctor-app.db');
     }
     
-    console.log('📂 SQLite Database Location:');
-    console.log('  Database file:', this.dbPath);
-    console.log('  Data directory:', this.dataPath);
-    console.log('  Source: DB_PATH env var:', !!process.env.DB_PATH);
-    console.log('  Source: appPath provided:', !!appPath);
-    console.log('  Process type:', process.env.ELECTRON_DEV === 'true' ? 'Development' : 'Production');
-
-    if (this.logger) {
-      this.logger.info('Database paths initialized', {
-        dbPath: this.dbPath,
-        dataPath: this.dataPath,
-        source: process.env.DB_PATH ? 'DB_PATH env' : appPath ? 'appPath' : 'fallback',
-        processType: process.env.ELECTRON_DEV === 'true' ? 'development' : 'production'
-      });
-    }
+    console.log('SQLite Database Path:', this.dbPath);
+    console.log('SQLite Data Directory:', this.dataPath);
   }
 
   async initializeDatabase() {
@@ -128,11 +115,11 @@ class SQLiteManager {
       
       const sqlContent = await fs.readFile(actualSchemaPath, 'utf8');
       
-      // Convert MySQL schema to SQLite if needed
-      const sqliteSchema = this.convertMySQLToSQLite(sqlContent);
+      // REMOVED: No need to convert - dump.sql is already SQLite format
+      console.log('📄 Using native SQLite schema (no conversion needed)');
       
       // Split by semicolon and execute each statement
-      const statements = sqliteSchema
+      const statements = sqlContent
         .split(';')
         .map(stmt => stmt.trim())
         .filter(stmt => stmt.length > 0 && !stmt.startsWith('--'));
@@ -144,77 +131,20 @@ class SQLiteManager {
           } catch (error) {
             if (!error.message.includes('already exists')) {
               console.warn('Schema statement warning:', error.message);
+              console.warn('Statement:', statement.substring(0, 100) + '...');
             }
           }
         }
       }
 
       await this.saveDatabase();
-      console.log('Schema imported successfully');
+      console.log('✅ SQLite schema imported successfully');
       return true;
 
     } catch (error) {
       console.error('Schema import failed:', error);
       throw new Error(`Schema import failed: ${error.message}`);
     }
-  }
-
-  convertMySQLToSQLite(mysqlSchema) {
-    let sqliteSchema = mysqlSchema;
-
-    // Remove MySQL-specific commands
-    sqliteSchema = sqliteSchema.replace(/SET NAMES utf8mb4;/gi, '');
-    sqliteSchema = sqliteSchema.replace(/SET FOREIGN_KEY_CHECKS = [01];/gi, '');
-    sqliteSchema = sqliteSchema.replace(/SET SESSION sql_mode = '[^']+';/gi, '');
-    sqliteSchema = sqliteSchema.replace(/CREATE DATABASE[^;]+;/gi, '');
-    sqliteSchema = sqliteSchema.replace(/USE [^;]+;/gi, '');
-    sqliteSchema = sqliteSchema.replace(/LOCK TABLES[^;]+;/gi, '');
-    sqliteSchema = sqliteSchema.replace(/UNLOCK TABLES;/gi, '');
-
-    // Fix PRIMARY KEY issues - replace AUTO_INCREMENT with AUTOINCREMENT
-    sqliteSchema = sqliteSchema.replace(/`id` int NOT NULL AUTO_INCREMENT,[\s\S]*?PRIMARY KEY \(`id`\)/gi, '`id` INTEGER PRIMARY KEY AUTOINCREMENT');
-    
-    // Convert data types
-    sqliteSchema = sqliteSchema.replace(/int\(\d+\)/gi, 'INTEGER');
-    sqliteSchema = sqliteSchema.replace(/int NOT NULL AUTO_INCREMENT/gi, 'INTEGER PRIMARY KEY AUTOINCREMENT');
-    sqliteSchema = sqliteSchema.replace(/AUTO_INCREMENT=\d+/gi, '');
-    sqliteSchema = sqliteSchema.replace(/varchar\((\d+)\)/gi, 'TEXT');
-    sqliteSchema = sqliteSchema.replace(/text/gi, 'TEXT');
-    sqliteSchema = sqliteSchema.replace(/date/gi, 'TEXT');
-    sqliteSchema = sqliteSchema.replace(/timestamp/gi, 'TEXT');
-    sqliteSchema = sqliteSchema.replace(/TIMESTAMP/gi, 'TEXT');
-    sqliteSchema = sqliteSchema.replace(/decimal\(\d+,\d+\)/gi, 'REAL');
-    sqliteSchema = sqliteSchema.replace(/DECIMAL\(\d+,\d+\)/gi, 'REAL');
-
-    // Convert enum to TEXT with CHECK constraint
-    sqliteSchema = sqliteSchema.replace(/enum\('male','female','other'\)/gi, "TEXT CHECK(gender IN ('male','female','other'))");
-    
-    // Handle DEFAULT CURRENT_TIMESTAMP
-    sqliteSchema = sqliteSchema.replace(/DEFAULT CURRENT_TIMESTAMP/gi, "DEFAULT (datetime('now'))");
-    sqliteSchema = sqliteSchema.replace(/ON UPDATE CURRENT_TIMESTAMP/gi, '');
-
-    // Remove MySQL-specific syntax
-    sqliteSchema = sqliteSchema.replace(/ENGINE=InnoDB/gi, '');
-    sqliteSchema = sqliteSchema.replace(/DEFAULT CHARSET=utf8mb4/gi, '');
-    sqliteSchema = sqliteSchema.replace(/COLLATE=utf8mb4_unicode_ci/gi, '');
-    sqliteSchema = sqliteSchema.replace(/CHARACTER SET utf8mb4/gi, '');
-
-    // Remove ALL KEY constraints (SQLite handles them as CREATE INDEX separately)
-    sqliteSchema = sqliteSchema.replace(/,\s*KEY `[^`]+` \([^)]+\)/gi, '');
-    sqliteSchema = sqliteSchema.replace(/,\s*UNIQUE KEY `[^`]+` \([^)]+\)/gi, '');
-    sqliteSchema = sqliteSchema.replace(/,\s*CONSTRAINT `[^`]+` FOREIGN KEY[^,)]+/gi, '');
-
-    // Remove FOREIGN KEY constraints from table definitions (add them separately later)
-    sqliteSchema = sqliteSchema.replace(/,\s*FOREIGN KEY[^,)]+/gi, '');
-
-    // Convert INSERT statements to use proper datetime
-    sqliteSchema = sqliteSchema.replace(/NOW\(\)/gi, "datetime('now')");
-
-    // Clean up extra commas and spaces
-    sqliteSchema = sqliteSchema.replace(/,(\s*\))/gi, '$1');
-    sqliteSchema = sqliteSchema.replace(/,\s*,/gi, ',');
-
-    return sqliteSchema;
   }
 
   async startDatabase() {

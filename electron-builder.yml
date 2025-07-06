@@ -84,10 +84,9 @@ win:
     - from: "src/utils/fileLog.cjs"
       to: "fileLog.cjs"
     
-    # Windows service management
-    - from: "tools/nssm"
-      to: "nssm"
-      filter: ["**/*"]
+    # Windows service management - Fixed NSSM path
+    - from: "tools/nssm/nssm.exe"
+      to: "nssm.exe"
     - from: "scripts/install-services.cjs"
       to: "install-services.cjs"
     - from: "scripts/uninstall-services.cjs"
