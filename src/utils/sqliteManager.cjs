@@ -90,7 +90,7 @@ class SQLiteManager {
       } else {
         // In production, look for dump.sql in resources
         const possiblePaths = [
-          path.join(process.resourcesPath, 'dump.sql'),
+          process.resourcesPath ? path.join(process.resourcesPath, 'dump.sql') : null,
           path.join(path.dirname(__filename), 'dump.sql'),
           path.join(path.dirname(process.execPath), 'resources', 'dump.sql'),
           path.join(path.dirname(process.execPath), 'dump.sql'),
@@ -99,7 +99,7 @@ class SQLiteManager {
           // Add relative path from current script location
           path.join(__dirname, '..', 'dump.sql'),
           path.join(__dirname, 'dump.sql')
-        ];
+        ].filter(Boolean);
         
         console.log('🔍 Searching for dump.sql in these locations:');
         for (const testPath of possiblePaths) {
