@@ -1,6 +1,7 @@
 const initSqlJs = require('sql.js');
 const path = require('path');
 const fs = require('fs').promises;
+const SimpleFileLogger = require('./fileLog.cjs');
 
 class SQLiteManager {
   constructor() {
@@ -8,14 +9,20 @@ class SQLiteManager {
     this.dbPath = null;
     this.isInitialized = false;
     this.SQL = null;
+    this.logger = new SimpleFileLogger('sqlite-manager');
   }
+
 
   initializePaths(appPath) {
     // Use safe directory for database
-    const os = require('os');
-    const userDataPath = path.join(os.homedir(), 'AppData', 'Roaming', 'doctor-app-desktop');
-    this.dataPath = userDataPath;
-    this.dbPath = path.join(userDataPath, 'doctor-app.db');
+ 
+      // Fallback for development
+      const os = require('os');
+      const userDataPath = path.join(os.homedir(), 'AppData', 'Roaming', 'doctor-app-desktop');
+      this.dataPath = userDataPath;
+      this.dbPath = path.join(userDataPath, 'doctor-app.db');
+ 
+    
     console.log('SQLite Database Path:', this.dbPath);
   }
 
@@ -68,12 +75,16 @@ class SQLiteManager {
 
   async importSchema(schemaPath) {
     try {
+      
       // Use SQLite schema instead of converting MySQL
       let sqliteSchemaPath;
       if (process.env.ELECTRON_DEV === 'true') {
         sqliteSchemaPath = path.join(process.cwd(), 'dump-sqlite.sql');
+        await this.logger.info(" sqliteSchemaPath: "+sqliteSchemaPath)
       } else {
         sqliteSchemaPath = path.join(path.dirname(__filename), 'dump-sqlite.sql');
+       await this.logger.info(" sqliteSchemaPath: "+sqliteSchemaPath)
+
       }
       
       // Check if SQLite schema exists, fallback to MySQL conversion if not
