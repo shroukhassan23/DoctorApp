@@ -49,7 +49,7 @@ try {
   }
 
   // Copy better-sqlite3 to dist-native for packaging
-  console.log('📦 Copying better-sqlite3 for packaging...');
+  console.log('📦 Copying better-sqlite3 and dependencies for packaging...');
   const sourcePath = path.join(process.cwd(), 'node_modules', 'better-sqlite3');
   const destPath = path.join(distNativeDir, 'better-sqlite3');
   
@@ -63,6 +63,28 @@ try {
     execSync(`xcopy "${sourcePath}" "${destPath}" /E /I /Y /Q`, { stdio: 'inherit' });
   } else {
     execSync(`cp -r "${sourcePath}" "${destPath}"`, { stdio: 'inherit' });
+  }
+  
+  // Also copy bindings module
+  console.log('📦 Copying bindings module...');
+  const bindingsSourcePath = path.join(process.cwd(), 'node_modules', 'bindings');
+  const bindingsDestPath = path.join(distNativeDir, 'bindings');
+  
+  if (fs.existsSync(bindingsSourcePath)) {
+    if (process.platform === 'win32') {
+      execSync(`xcopy "${bindingsSourcePath}" "${bindingsDestPath}" /E /I /Y /Q`, { stdio: 'inherit' });
+    } else {
+      execSync(`cp -r "${bindingsSourcePath}" "${bindingsDestPath}"`, { stdio: 'inherit' });
+    }
+    console.log('✅ Bindings module copied successfully');
+  } else {
+    console.warn('⚠️ Bindings module not found, installing it...');
+    execSync('npm install bindings', { stdio: 'inherit' });
+    if (process.platform === 'win32') {
+      execSync(`xcopy "${bindingsSourcePath}" "${bindingsDestPath}" /E /I /Y /Q`, { stdio: 'inherit' });
+    } else {
+      execSync(`cp -r "${bindingsSourcePath}" "${bindingsDestPath}"`, { stdio: 'inherit' });
+    }
   }
   
   console.log('✅ Native modules prepared successfully!');

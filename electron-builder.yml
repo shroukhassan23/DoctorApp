@@ -83,6 +83,11 @@ win:
     - from: "dist-native/better-sqlite3"
       to: "better-sqlite3"
       filter: ["**/*"]
+    
+    # Required dependencies for better-sqlite3
+    - from: "node_modules/bindings"
+      to: "bindings"
+      filter: ["**/*"]
 
 # macOS configuration  
 mac:
