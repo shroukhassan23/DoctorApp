@@ -1,4 +1,3 @@
-const Database = require('better-sqlite3');
 const path = require('path');
 const fs = require('fs').promises;
 const SimpleFileLogger = require('./fileLog.cjs');
@@ -12,7 +11,6 @@ class SQLiteManager {
   }
 
   initializePaths(appPath) {
-    // Use environment variable or explicit path
     if (process.env.DB_PATH) {
       this.dbPath = process.env.DB_PATH;
       this.dataPath = path.dirname(this.dbPath);
@@ -37,16 +35,31 @@ class SQLiteManager {
       const dbDir = path.dirname(this.dbPath);
       await fs.mkdir(dbDir, { recursive: true });
 
-      // Create database connection with better-sqlite3
+      // Try to load better-sqlite3 from bundled location first
+      let Database;
+      try {
+        // In production, use the bundled version
+        const bundledPath = path.join(process.resourcesPath || __dirname, 'better-sqlite3');
+        Database = require(bundledPath);
+        console.log('✅ Using bundled better-sqlite3');
+      } catch (error) {
+        // Fallback to regular require
+        Database = require('better-sqlite3');
+        console.log('✅ Using system better-sqlite3');
+      }
+
+      // Create database connection
       this.db = new Database(this.dbPath, {
         verbose: console.log, // Remove in production
         fileMustExist: false
       });
       
-      // Enable WAL mode for better concurrency
+      // Configure for optimal performance and reliability
       this.db.pragma('journal_mode = WAL');
       this.db.pragma('foreign_keys = ON');
       this.db.pragma('synchronous = NORMAL');
+      this.db.pragma('cache_size = 10000');
+      this.db.pragma('temp_store = memory');
       
       console.log('SQLite database initialized successfully with better-sqlite3');
       this.isInitialized = true;
@@ -68,6 +81,7 @@ class SQLiteManager {
         const possiblePaths = [
           path.join(__dirname, 'dump.sql'),
           path.join(process.cwd(), 'dump.sql'),
+          process.resourcesPath ? path.join(process.resourcesPath, 'app', 'src', 'utils', 'dump.sql') : null,
           process.resourcesPath ? path.join(process.resourcesPath, 'dump.sql') : null,
           path.join(path.dirname(process.execPath), 'dump.sql')
         ].filter(Boolean);
@@ -76,9 +90,10 @@ class SQLiteManager {
           try {
             await fs.access(testPath);
             actualSchemaPath = testPath;
+            console.log(`✅ Found schema at: ${testPath}`);
             break;
           } catch (e) {
-            // Continue searching
+            console.log(`❌ Schema not found at: ${testPath}`);
           }
         }
         
@@ -141,6 +156,8 @@ class SQLiteManager {
       if (tables.length === 0) {
         console.log('No tables found, importing schema...');
         await this.importSchema();
+      } else {
+        console.log(`✅ Found ${tables.length} tables in database`);
       }
 
       console.log('SQLite database is ready');
@@ -155,6 +172,7 @@ class SQLiteManager {
   async stopDatabase() {
     try {
       if (this.db) {
+        // better-sqlite3 saves automatically, just close
         this.db.close();
         this.db = null;
         console.log('SQLite database closed');
@@ -207,13 +225,20 @@ class SQLiteManager {
       databaseFile: false,
       databaseConnection: false,
       writeTest: false,
-      schemaLoaded: false
+      schemaLoaded: false,
+      dbPath: this.dbPath
     };
 
     try {
       // Check if database file exists
       await fs.access(this.dbPath);
       diagnostics.databaseFile = true;
+      
+      // Get file stats
+      const stats = await fs.stat(this.dbPath);
+      diagnostics.fileSize = stats.size;
+      diagnostics.lastModified = stats.mtime;
+      
     } catch (error) {
       console.log('Database file does not exist yet');
     }
@@ -241,6 +266,12 @@ class SQLiteManager {
       const tables = this.db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='patients'").all();
       if (tables.length > 0) {
         diagnostics.schemaLoaded = true;
+        
+        // Get row counts
+        const patientCount = this.db.prepare("SELECT COUNT(*) as count FROM patients").get();
+        const visitCount = this.db.prepare("SELECT COUNT(*) as count FROM visits").get();
+        diagnostics.patientCount = patientCount.count;
+        diagnostics.visitCount = visitCount.count;
       }
     } catch (error) {
       console.error('Schema check failed:', error);

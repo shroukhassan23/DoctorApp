@@ -1,4 +1,4 @@
-# electron-builder.yml - Fixed configuration for better-sqlite3 with proper rebuild
+# electron-builder.yml - Complete solution for better-sqlite3
 appId: com.doctorapp.desktop
 productName: "Doctor App"
 copyright: "Copyright © 2025 Doctor App"
@@ -72,14 +72,14 @@ win:
     - from: "scripts/uninstall-services.cjs"
       to: "uninstall-services.cjs"
     
-    # Node.js executable - MUST match the version you're building with
+    # Node.js executable - Use the bundled one
     - from: "C:/Program Files/nodejs/node.exe"
       to: "node.exe"
       filter: ["node.exe"]
     
-    # CRITICAL: Pre-built better-sqlite3 for Node.js v20
-    - from: "better-sqlite3-prebuilt"
-      to: "better-sqlite3-prebuilt"
+    # CRITICAL: Properly rebuilt better-sqlite3
+    - from: "dist-native/better-sqlite3"
+      to: "better-sqlite3"
       filter: ["**/*"]
 
 # macOS configuration  
@@ -94,17 +94,15 @@ mac:
   extraResources:
     - from: "dump.sql"
       to: "dump.sql"
-    - from: "better-sqlite3-prebuilt"
-      to: "better-sqlite3-prebuilt"
+    - from: "dist-native/better-sqlite3"
+      to: "better-sqlite3"
       filter: ["**/*"]
-
-# CRITICAL: Build scripts to prepare better-sqlite3
-beforeBuild: 
-  - mkdir -p better-sqlite3-prebuilt
-  - npm install better-sqlite3 --target=20.19.3 --target_platform=win32 --target_arch=x64 --build-from-source
-  - cp -r node_modules/better-sqlite3 better-sqlite3-prebuilt/
 
 asar: false
 compression: "normal"
 includeSubNodeModules: false
-nodeGypRebuild: true
+nodeGypRebuild: false
+
+# IMPORTANT: Custom build hooks
+beforeBuild:
+  - scripts/prepare-native-modules.js

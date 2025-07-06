@@ -13,17 +13,23 @@
     "build:dev": "vite build --mode development --outDir app_dist",
     "prepare:mysql": "node scripts/extract-mysql.cjs",
     "prepare:installer": "node scripts/create-installer.cjs",
-    "prepare:build": "npm run build && npm run prepare:mysql && npm run prepare:installer",
+    "prepare:native": "node scripts/prepare-native-modules.cjs",
+    "rebuild:sqlite": "npm uninstall better-sqlite3 && npm install better-sqlite3 --build-from-source",
+    "prepare:build": "npm run build && npm run prepare:mysql && npm run prepare:native && npm run prepare:installer",
     "dist": "npm run prepare:build && electron-builder --config electron-builder.yml",
     "dist:win": "npm run prepare:build && electron-builder --win --config electron-builder.yml",
     "dist:mac": "npm run prepare:build && electron-builder --mac --config electron-builder.yml",
     "pack": "npm run prepare:build && electron-builder --dir --config electron-builder.yml",
-    "clean": "rimraf app_dist dist-installers mysql-resources/mysql-* build node_modules/.cache",
-    "rebuild": "npm run clean && npm run dist",
+    "clean": "rimraf app_dist dist-installers dist-native mysql-resources/mysql-* build node_modules/.cache",
+    "clean:full": "npm run clean && rimraf node_modules package-lock.json",
+    "rebuild": "npm run clean && npm install && npm run dist",
+    "rebuild:full": "npm run clean:full && npm install && npm run dist",
     "install-services": "node scripts/install-services.cjs",
     "uninstall-services": "node scripts/uninstall-services.cjs",
     "start-services": "net start \"DoctorApp Patient Service\" && net start \"DoctorApp Visit Service\" && net start \"DoctorApp Reports Service\"",
-    "stop-services": "net stop \"DoctorApp Patient Service\" && net stop \"DoctorApp Visit Service\" && net stop \"DoctorApp Reports Service\""
+    "stop-services": "net stop \"DoctorApp Patient Service\" && net stop \"DoctorApp Visit Service\" && net stop \"DoctorApp Reports Service\"",
+    "test:sqlite": "node -e \"const db = require('better-sqlite3')(':memory:'); console.log('✅ better-sqlite3 working!'); db.close();\"",
+    "postinstall": "npm run rebuild:sqlite"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
@@ -56,7 +62,8 @@
     "@radix-ui/react-tooltip": "^1.1.4",
     "@supabase/supabase-js": "^2.49.8",
     "@tanstack/react-query": "^5.56.2",
-    "better-sqlite3": "^12.2.0",
+    "better-sqlite3": "^9.2.2",
+    "bindings": "^1.5.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",
@@ -65,12 +72,14 @@
     "date-fns": "^3.6.0",
     "electron-store": "^8.1.0",
     "embla-carousel-react": "^8.3.0",
-    "express": "^5.1.0",
+    "express": "^4.18.2",
     "input-otp": "^1.2.4",
     "lucide-react": "^0.462.0",
-    "multer": "^2.0.1",
+    "multer": "^1.4.5-lts.1",
     "mysql2": "^3.14.1",
     "next-themes": "^0.3.0",
+    "node-addon-api": "^8.0.0",
+    "node-gyp": "^10.0.1",
     "node-machine-id": "^1.1.12",
     "node-windows": "^1.0.0-beta.8",
     "react": "^18.3.1",
@@ -83,6 +92,7 @@
     "react-router-dom": "^6.26.2",
     "recharts": "^2.12.7",
     "sonner": "^1.5.0",
+    "sql.js": "^1.10.3",
     "tailwind-merge": "^2.5.2",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^0.9.3",
@@ -96,17 +106,42 @@
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react-swc": "^3.5.0",
     "autoprefixer": "^10.4.20",
-    "electron": "^36.4.0",
+    "electron": "^32.0.0",
     "electron-builder": "^24.13.3",
+    "electron-rebuild": "^3.2.9",
     "eslint": "^9.9.0",
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",
     "eslint-plugin-react-refresh": "^0.4.9",
     "globals": "^15.9.0",
     "lovable-tagger": "^1.1.7",
+    "node-gyp": "^10.0.1",
     "postcss": "^8.4.47",
+    "python3": "^0.0.1",
+    "rimraf": "^6.0.1",
     "tailwindcss": "^3.4.11",
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.0.1",
     "vite": "^5.4.1"
+  },
+  "optionalDependencies": {
+    "fsevents": "^2.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "os": [
+    "win32",
+    "darwin",
+    "linux"
+  ],
+  "cpu": [
+    "x64",
+    "arm64"
+  ],
+  "build": {
+    "beforeBuild": "scripts/prepare-native-modules.cjs",
+    "nodeGypRebuild": true,
+    "buildDependenciesFromSource": true
   }
 }
