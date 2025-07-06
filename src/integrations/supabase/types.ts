@@ -368,26 +368,26 @@ export type Database = {
       prescription_imaging_studies: {
         Row: {
           id: string
-          imaging_study_id: string
+          imaging_studies_id: string
           notes: string | null
           prescription_id: string
         }
         Insert: {
           id?: string
-          imaging_study_id: string
+          imaging_studies_id: string
           notes?: string | null
           prescription_id: string
         }
         Update: {
           id?: string
-          imaging_study_id?: string
+          imaging_studies_id?: string
           notes?: string | null
           prescription_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "prescription_imaging_studies_imaging_study_id_fkey"
-            columns: ["imaging_study_id"]
+            foreignKeyName: "prescription_imaging_studies_imaging_studies_id_fkey"
+            columns: ["imaging_studies_id"]
             isOneToOne: false
             referencedRelation: "imaging_studies"
             referencedColumns: ["id"]

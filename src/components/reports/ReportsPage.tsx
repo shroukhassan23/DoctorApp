@@ -53,8 +53,8 @@ export const ReportsPage = () => {
     queryKey: ['visit-details', fromDate, toDate, searchAllVisits],
     queryFn: async () => {
       const url = searchAllVisits
-        ? `${reportBaseUrl}/reports/visits/all`
-        : `${reportBaseUrl}/reports/visits?from=${fromDate}&to=${toDate}`;
+        ? `http://localhost:3003/reports/visits/all`
+        : `http://localhost:3003/reports/visits?from=${fromDate}&to=${toDate}`;
 
       const response = await fetch(url);
       if (!response.ok) throw new Error('Failed to fetch visit details');

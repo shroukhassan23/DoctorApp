@@ -637,7 +637,7 @@ app.get('/prescriptions/:id', async (req, res) => {
     const [imagingStudies] = await db.query(
       `SELECT pis.*, ist.name as study_name
        FROM prescription_imaging_studies pis
-       LEFT JOIN imaging_studies ist ON pis.imaging_study_id = ist.id
+       LEFT JOIN imaging_studies ist ON pis.imaging_studies_id = ist.id
        WHERE pis.prescription_id = ?`,
       [id]
     );

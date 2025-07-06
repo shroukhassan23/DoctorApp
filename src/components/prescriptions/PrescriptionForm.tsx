@@ -113,7 +113,7 @@ export const PrescriptionForm = React.memo(({
       // Load imaging studies
       if (prescription.prescription_imaging_studies) {
         const loadedImagingStudies = prescription.prescription_imaging_studies.map((study: any) => ({
-          studyId: String(study.imaging_study_id || study.imaging_studies_id),
+          studyId: String(study.imaging_studies_id || study.imaging_studies_id),
           name: study.imaging_studies?.name?.trim() || '',
           notes: study.comments || study.notes || ''
         }));

@@ -254,10 +254,11 @@ DROP TABLE IF EXISTS `prescription_imaging_studies`;
 CREATE TABLE `prescription_imaging_studies` (
     `id` INTEGER PRIMARY KEY AUTOINCREMENT,
     `prescription_id` INTEGER NOT NULL,
-    `imaging_study_id` INTEGER NOT NULL,
+    `imaging_studies_id` INTEGER NOT NULL,
+    `comment` TEXT, 
     `created_at` TEXT DEFAULT (datetime('now')),
     FOREIGN KEY (`prescription_id`) REFERENCES `prescription`(`id`) ON DELETE CASCADE,
-    FOREIGN KEY (`imaging_study_id`) REFERENCES `imaging_studies`(`id`) ON DELETE CASCADE
+    FOREIGN KEY (`imaging_studies_id`) REFERENCES `imaging_studies`(`id`) ON DELETE CASCADE
 );
 -- Table structure for table `visit_medicines`
 DROP TABLE IF EXISTS `visit_medicines`;

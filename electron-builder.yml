@@ -29,6 +29,8 @@ extraFiles:
     to: "app/reports.cjs"
   - from: "src/utils/backendLogger.cjs"  
     to: "app/backendLogger.cjs"
+  - from: "src/utils/fileLog.cjs"  
+    to: "app/fileLog.cjs"
   - from: "node_modules/sqlite3"
     to: "app/node_modules/sqlite3"
     filter: ["**/*"]

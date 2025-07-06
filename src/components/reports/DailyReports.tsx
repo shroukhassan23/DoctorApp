@@ -12,8 +12,8 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import { searchText } from '@/lib/arabicUtils';
 import { SectionLoading, CardLoading } from '@/components/ui/loading-spinner';
-import { reportBaseUrl } from '@/components/constants.js';
 
+const API_BASE_URL = 'http://localhost:3003';
 
 export const DailyReportsPage = () => {
   const today = new Date().toISOString().split('T')[0];
@@ -33,29 +33,70 @@ export const DailyReportsPage = () => {
   const { t, language } = useLanguage();
 
   useEffect(() => {
-    console.log('ReportsPage: searchTerm changed to:', searchTerm);
+    console.log('🔍 ReportsPage: searchTerm changed to:', searchTerm);
   }, [searchTerm]);
 
-  const { data: visitStats, isLoading, refetch } = useQuery({
+  // Test connection first
+  useEffect(() => {
+    const testConnection = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/reports/test`);
+        const data = await response.json();
+        console.log('✅ Service connection test:', data);
+      } catch (error) {
+        console.error('❌ Service connection failed:', error);
+      }
+    };
+    testConnection();
+  }, []);
+
+  const { data: visitStats, isLoading: statsLoading, refetch, error: statsError } = useQuery({
     queryKey: ['visit-stats', fromDate, toDate],
     queryFn: async () => {
-      const response = await fetch(`http://localhost:3003/reports/visit-stats?from=${fromDate}&to=${toDate}`);
-      if (!response.ok) throw new Error('Failed to fetch visit stats');
-      return await response.json();
-    }
+      const url = `${API_BASE_URL}/reports/visit-stats?from=${fromDate}&to=${toDate}`;
+      console.log('📊 Fetching visit stats from:', url);
+      
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch visit stats: ${response.status} ${response.statusText}`);
+      }
+      const data = await response.json();
+      console.log('📊 Visit stats received:', data);
+      return data;
+    },
+    retry: 3,
+    retryDelay: 1000
   });
 
-  const { data: visitDetails, refetch: refetchVisits } = useQuery({
+  const { data: visitDetails, isLoading: visitsLoading, refetch: refetchVisits, error: visitsError } = useQuery({
     queryKey: ['visit-details', fromDate, toDate, searchAllVisits],
     queryFn: async () => {
-      const url = 
-         `${reportBaseUrl}/reports/visits?from=${fromDate}&to=${toDate}`;
+      const url = `http://localhost:3003/reports/visits?from=${fromDate}&to=${toDate}`;
+      console.log('📋 Fetching visit details from:', url);
 
       const response = await fetch(url);
-      if (!response.ok) throw new Error('Failed to fetch visit details');
-      return await response.json();
-    }
+      if (!response.ok) {
+        throw new Error(`Failed to fetch visit details: ${response.status} ${response.statusText}`);
+      }
+      const data = await response.json();
+      console.log('📋 Visit details received:', data);
+      return data;
+    },
+    retry: 3,
+    retryDelay: 1000
   });
+
+  const isLoading = statsLoading || visitsLoading;
+
+  // Show errors in console
+  useEffect(() => {
+    if (statsError) {
+      console.error('❌ Stats Error:', statsError);
+    }
+    if (visitsError) {
+      console.error('❌ Visits Error:', visitsError);
+    }
+  }, [statsError, visitsError]);
 
   const statusMap: Record<number, string> = {
     1: 'waiting',
@@ -78,12 +119,11 @@ export const DailyReportsPage = () => {
     const result = !searchTerm || matchesTextSearch;
 
     if (searchTerm) {
-      console.log('Filtering visit:', visit.name, 'searchTerm:', searchTerm, 'matches:', result);
+      console.log('🔍 Filtering visit:', visit.name, 'searchTerm:', searchTerm, 'matches:', result);
     }
 
     return result;
-  })
-  || [];
+  }) || [];
 
   const handleEditVisit = (visit: any) => {
     setEditingVisit(visit);
@@ -133,11 +173,16 @@ export const DailyReportsPage = () => {
       <DailyDateSelector
         reportDate={fromDate}
         onSearch={() => {
+          console.log('🔍 Manual search triggered');
           refetch();
           refetchVisits();
-        } } onReportDateChange={function (date: string): void {
-          throw new Error('Function not implemented.');
-        } }      />
+        }}
+        onReportDateChange={(date: string) => {
+          console.log('📅 Date changed to:', date);
+          setFromDate(date);
+          setToDate(date);
+        }}
+      />
 
       <div className="mb-8">
         {isLoading ? (
@@ -151,19 +196,29 @@ export const DailyReportsPage = () => {
         )}
       </div>
 
+      {/* Debug Info - شيل دا في الإنتاج */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="mb-4 p-4 bg-gray-100 rounded">
+          <h3 className="font-bold">Debug Info:</h3>
+          <p>Stats Loading: {statsLoading ? 'Yes' : 'No'}</p>
+          <p>Visits Loading: {visitsLoading ? 'Yes' : 'No'}</p>
+          <p>Stats Error: {statsError ? statsError.message : 'None'}</p>
+          <p>Visits Error: {visitsError ? visitsError.message : 'None'}</p>
+          <p>Visit Stats: {JSON.stringify(visitStats)}</p>
+          <p>Visit Details Count: {visitDetails?.length || 0}</p>
+        </div>
+      )}
+
       {isLoading ? (
         <div className="mb-6">
-          <CardLoading lines={4}  />
+          <CardLoading lines={4} />
         </div>
       ) : (
         <div className="mb-6">
-        <StatusFilters
-    
-          statusFilter={statusFilter}
-          setStatusFilter={setStatusFilter}
-      
- 
-        />
+          <StatusFilters
+            statusFilter={statusFilter}
+            setStatusFilter={setStatusFilter}
+          />
         </div>
       )}
 
