@@ -106,9 +106,6 @@ let sqliteManagerInstance = null;
         await logger.info('Fetching all patients');
 
 
-        console.log('🔍 DEBUG: Database should be located at:', calculatedDbPath);
-        await logger.info('Database location', { calculatedPath: calculatedDbPath });
-
         // Debug: Check database connection
         console.log('🔍 DEBUG: Database object:', !!db);
 
