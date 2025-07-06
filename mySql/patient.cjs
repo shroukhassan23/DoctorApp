@@ -115,11 +115,6 @@ let sqliteManagerInstance = null;
         console.log('🔍 DEBUG: Number of rows from DB:', rows.length);
         console.log('🔍 DEBUG: First row:', rows[0]);
 
-        await logger.logDatabaseQuery(
-          'SELECT * FROM patients WHERE deleted_at IS NULL',
-          [],
-          rows
-        );
 
         await logger.info('Patients fetched successfully', { count: rows.length });
 
@@ -178,7 +173,6 @@ let sqliteManagerInstance = null;
 
         const [rows] = await db.query(query, [searchTerm, searchTerm, searchTerm]);
 
-        await logger.logDatabaseQuery(query, [searchTerm, searchTerm, searchTerm], rows);
         await logger.info('Patient search completed', {
           searchTerm: q,
           resultsCount: rows.length
@@ -218,12 +212,6 @@ let sqliteManagerInstance = null;
 
         const [results] = await db.query(query, params);
 
-        await logger.logDatabaseQuery(query, params, results);
-        await logger.logUserAction('Patient Created', null, {
-          patientId: results.insertId,
-          patientName: patient.name
-        });
-
         await logger.info('Patient created successfully', {
           patientId: results.insertId,
           patientName: patient.name
@@ -260,17 +248,10 @@ let sqliteManagerInstance = null;
 
         const [result] = await db.query(query, params);
 
-        await logger.logDatabaseQuery(query, params, result);
-
         if (result.affectedRows === 0) {
           await logger.warn('Patient not found for update', { patientId: id });
           return res.status(404).json({ error: "Patient not found" });
         }
-
-        await logger.logUserAction('Patient Updated', null, {
-          patientId: id,
-          patientName: patient.name
-        });
 
         await logger.info('Patient updated successfully', {
           patientId: id,
@@ -296,14 +277,11 @@ let sqliteManagerInstance = null;
         const query = 'UPDATE patients SET deleted_at = datetime("now") WHERE id = ? AND deleted_at IS NULL';
         const [result] = await db.query(query, [id]);
 
-        await logger.logDatabaseQuery(query, [id], result);
-
         if (result.affectedRows === 0) {
           await logger.warn('Patient not found for deletion', { patientId: id });
           return res.status(404).json({ error: 'Patient not found' });
         }
 
-        await logger.logUserAction('Patient Deleted', null, { patientId: id });
         await logger.info('Patient deleted successfully', { patientId: id });
 
         res.json({ success: true, message: 'Patient marked as deleted' });
