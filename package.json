@@ -20,7 +20,7 @@
     "dist:win": "npm run prepare:build && electron-builder --win --config electron-builder.yml",
     "dist:mac": "npm run prepare:build && electron-builder --mac --config electron-builder.yml",
     "pack": "npm run prepare:build && electron-builder --dir --config electron-builder.yml",
-    "clean": "rimraf app_dist dist-installers dist-native mysql-resources/mysql-* build node_modules/.cache",
+    "clean": "rimraf app_dist dist-installers dist-native mysql-resources build node_modules/.cache",
     "clean:full": "npm run clean && rimraf node_modules package-lock.json",
     "rebuild": "npm run clean && npm install && npm run dist",
     "rebuild:full": "npm run clean:full && npm install && npm run dist",
