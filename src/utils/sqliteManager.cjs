@@ -38,11 +38,27 @@ class SQLiteManager {
       // Try to load better-sqlite3 from bundled location first
       let Database;
       try {
-        // In production, use the bundled version
+        // In production, try the bundled version first
         const bundledPath = path.join(process.resourcesPath || __dirname, 'better-sqlite3');
+        
+        // Check if bindings module exists in the bundled location
+        const bindingsPath = path.join(process.resourcesPath || __dirname, 'bindings');
+        if (require('fs').existsSync(bindingsPath)) {
+          // Add the bundled bindings to the module path
+          const Module = require('module');
+          const originalResolveFilename = Module._resolveFilename;
+          Module._resolveFilename = function (request, parent, isMain, options) {
+            if (request === 'bindings') {
+              return path.join(bindingsPath, 'bindings.js');
+            }
+            return originalResolveFilename.call(this, request, parent, isMain, options);
+          };
+        }
+        
         Database = require(bundledPath);
         console.log('✅ Using bundled better-sqlite3');
       } catch (error) {
+        console.log('⚠️ Bundled better-sqlite3 failed, trying system version:', error.message);
         // Fallback to regular require
         Database = require('better-sqlite3');
         console.log('✅ Using system better-sqlite3');
