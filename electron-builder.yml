@@ -89,7 +89,7 @@ win:
       to: "bindings"
       filter: ["**/*"]
     - from: "node_modules/file-uri-to-path"
-      to: "file-uri-to-path"
+      to: "resources/file-uri-to-path"
       filter: ["**/*"]
 
 # macOS configuration  
