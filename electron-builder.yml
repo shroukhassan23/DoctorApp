@@ -76,7 +76,7 @@ win:
     - from: "initDb.cjs"          
       to: "initDb.cjs"            
     - from: "dump.sql"
-      to: "src/utils/dump.sql"
+      to: "app/src/utils/dump.sql"
     
     # Utility files for services
     - from: "src/utils/sqliteManager.cjs"
