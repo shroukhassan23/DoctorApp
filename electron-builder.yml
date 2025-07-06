@@ -14,6 +14,7 @@ files:
   - "dump.sql"
   - "initDb.cjs"
   - "!package.json"
+  - "node_modules/file-uri-to-path/**/*"
 
 extraFiles:
   # These files are bundled WITH the Electron app (for app functionality)
@@ -87,9 +88,6 @@ win:
     # Required dependencies for better-sqlite3
     - from: "node_modules/bindings"
       to: "bindings"
-      filter: ["**/*"]
-    - from: "node_modules/file-uri-to-path"
-      to: "resources/file-uri-to-path"
       filter: ["**/*"]
 
 # macOS configuration  
