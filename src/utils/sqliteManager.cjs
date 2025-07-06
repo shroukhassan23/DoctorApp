@@ -86,33 +86,43 @@ class SQLiteManager {
       let actualSchemaPath;
       if (process.env.ELECTRON_DEV === 'true') {
         actualSchemaPath = path.join(process.cwd(), 'dump.sql');
-        await this.logger.info("Development schema path: " + actualSchemaPath);
+        if (this.logger) await this.logger.info("Development schema path: " + actualSchemaPath);
       } else {
         // In production, look for dump.sql in resources
         const possiblePaths = [
           path.join(process.resourcesPath, 'dump.sql'),
           path.join(path.dirname(__filename), 'dump.sql'),
           path.join(path.dirname(process.execPath), 'resources', 'dump.sql'),
-          path.join(path.dirname(process.execPath), 'dump.sql')
+          path.join(path.dirname(process.execPath), 'dump.sql'),
+          // Add current working directory as fallback
+          path.join(process.cwd(), 'dump.sql'),
+          // Add relative path from current script location
+          path.join(__dirname, '..', 'dump.sql'),
+          path.join(__dirname, 'dump.sql')
         ];
         
+        console.log('🔍 Searching for dump.sql in these locations:');
         for (const testPath of possiblePaths) {
+          console.log(`  - ${testPath}`);
           try {
             await fs.access(testPath);
             actualSchemaPath = testPath;
+            console.log(`  ✅ Found at: ${testPath}`);
             break;
           } catch (e) {
+            console.log(`  ❌ Not found`);
             // Continue searching
           }
         }
         
         if (!actualSchemaPath) {
-          throw new Error('dump.sql not found in any expected location');
+          throw new Error(`dump.sql not found in any expected location. Searched paths:\n${possiblePaths.join('\n')}`);
         }
         
-        await this.logger.info("Production schema path: " + actualSchemaPath);
+        if (this.logger) await this.logger.info("Production schema path: " + actualSchemaPath);
       }
       
+      console.log('📄 Reading schema from:', actualSchemaPath);
       const sqlContent = await fs.readFile(actualSchemaPath, 'utf8');
       
       // REMOVED: No need to convert - dump.sql is already SQLite format
@@ -124,12 +134,19 @@ class SQLiteManager {
         .map(stmt => stmt.trim())
         .filter(stmt => stmt.length > 0 && !stmt.startsWith('--'));
 
+      console.log(`📊 Executing ${statements.length} SQL statements...`);
+      let successCount = 0;
+      let skipCount = 0;
+
       for (const statement of statements) {
         if (statement.trim()) {
           try {
             this.db.run(statement);
+            successCount++;
           } catch (error) {
-            if (!error.message.includes('already exists')) {
+            if (error.message.includes('already exists')) {
+              skipCount++;
+            } else {
               console.warn('Schema statement warning:', error.message);
               console.warn('Statement:', statement.substring(0, 100) + '...');
             }
@@ -138,7 +155,7 @@ class SQLiteManager {
       }
 
       await this.saveDatabase();
-      console.log('✅ SQLite schema imported successfully');
+      console.log(`✅ SQLite schema imported successfully: ${successCount} executed, ${skipCount} skipped`);
       return true;
 
     } catch (error) {
