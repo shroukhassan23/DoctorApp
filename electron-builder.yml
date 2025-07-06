@@ -1,4 +1,4 @@
-# electron-builder.yml - Fixed configuration for SQLite and fileLog
+# electron-builder.yml - Fixed configuration for better-sqlite3 with proper rebuild
 appId: com.doctorapp.desktop
 productName: "Doctor App"
 copyright: "Copyright © 2025 Doctor App"
@@ -14,7 +14,6 @@ files:
   - "dump.sql"
   - "initDb.cjs"
   - "!package.json"
-  # Remove service files from main app bundle - they go to extraResources instead
 
 extraFiles:
   # These files are bundled WITH the Electron app (for app functionality)
@@ -30,25 +29,6 @@ extraFiles:
     to: "app/licenseManager.cjs"
   - from: "src/utils/logger.cjs"
     to: "app/logger.cjs"
-  # Required Node.js modules for services
-  - from: "node_modules/sqlite3"
-    to: "app/node_modules/sqlite3"
-    filter: ["**/*"]
-  - from: "node_modules/express"
-    to: "app/node_modules/express"
-    filter: ["**/*"]
-  - from: "node_modules/cors"
-    to: "app/node_modules/cors"
-    filter: ["**/*"]
-  - from: "node_modules/multer"
-    to: "app/node_modules/multer"
-    filter: ["**/*"]
-  - from: "node_modules/node-machine-id"
-    to: "app/node_modules/node-machine-id"
-    filter: ["**/*"]
-  - from: "node_modules/sql.js"
-    to: "app/node_modules/sql.js"
-    filter: ["**/*"]
 
 extraMetadata:
   name: "doctor-app-desktop"
@@ -84,7 +64,7 @@ win:
     - from: "src/utils/fileLog.cjs"
       to: "fileLog.cjs"
     
-    # Windows service management - Fixed NSSM path
+    # Windows service management
     - from: "tools/nssm/nssm.exe"
       to: "nssm.exe"
     - from: "scripts/install-services.cjs"
@@ -92,10 +72,15 @@ win:
     - from: "scripts/uninstall-services.cjs"
       to: "uninstall-services.cjs"
     
-    # Node.js executable (try to bundle it, but make it optional)
+    # Node.js executable - MUST match the version you're building with
     - from: "C:/Program Files/nodejs/node.exe"
       to: "node.exe"
       filter: ["node.exe"]
+    
+    # CRITICAL: Pre-built better-sqlite3 for Node.js v20
+    - from: "better-sqlite3-prebuilt"
+      to: "better-sqlite3-prebuilt"
+      filter: ["**/*"]
 
 # macOS configuration  
 mac:
@@ -107,9 +92,19 @@ mac:
   hardenedRuntime: false
   gatekeeperAssess: false
   extraResources:
-    # macOS doesn't need Windows services, just the schema
     - from: "dump.sql"
       to: "dump.sql"
+    - from: "better-sqlite3-prebuilt"
+      to: "better-sqlite3-prebuilt"
+      filter: ["**/*"]
+
+# CRITICAL: Build scripts to prepare better-sqlite3
+beforeBuild: 
+  - mkdir -p better-sqlite3-prebuilt
+  - npm install better-sqlite3 --target=20.19.3 --target_platform=win32 --target_arch=x64 --build-from-source
+  - cp -r node_modules/better-sqlite3 better-sqlite3-prebuilt/
 
 asar: false
 compression: "normal"
+includeSubNodeModules: false
+nodeGypRebuild: true
