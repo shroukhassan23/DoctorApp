@@ -1,67 +1,76 @@
-// initDb.cjs - SQLite version
+// initDb.cjs - SQLite version with singleton pattern
 const path = require('path');
 
-let sqliteManager = null;
+// Singleton instance - shared across all services
+let sqliteManagerInstance = null;
 
 async function initDatabase(config = {}) {
   try {
-    // For SQLite, we ignore the MySQL config and use SQLiteManager 
-    if (!sqliteManager) {
-      let managerPath;
-      if (process.env.ELECTRON_DEV === 'true') {
-        managerPath = './src/utils/sqliteManager.cjs';
-      } else {
-        // In production, copy sqliteManager.cjs to same directory as initDb.cjs
-        managerPath = './sqliteManager.cjs';
-      }
-      const SQLiteManager = require(managerPath);
-      sqliteManager = new SQLiteManager();
-
-      // FIXED: Get app path and database path from environment or fallback
-      let appPath;
-      let dbPath;
-      
-      if (process.env.DB_PATH) {
-        // Use explicit database path from environment
-        dbPath = process.env.DB_PATH;
-        appPath = path.dirname(dbPath);
-      } else if (process.env.ELECTRON_DEV === 'true') {
-        // Development mode
-        appPath = process.cwd();
-      } else {
-        // Production mode - use resources or executable directory
-        appPath = process.resourcesPath || path.dirname(process.execPath);
-      }
-
-      console.log('initDb: Using app path:', appPath);
-      console.log('initDb: Database path:', dbPath || 'Will be determined by SQLiteManager');
-
-      sqliteManager.initializePaths(appPath);
-      
-      // If we have an explicit DB path, override the manager's path
-      if (dbPath) {
-        sqliteManager.dbPath = dbPath;
-        sqliteManager.dataPath = path.dirname(dbPath);
-        console.log('initDb: Overrode SQLiteManager paths with explicit DB_PATH');
-      }
-      
-      await sqliteManager.startDatabase();
+    // Return existing instance if already initialized
+    if (sqliteManagerInstance) {
+      console.log('Returning existing SQLite instance');
+      return {
+        query: async (sql, params) => {
+          return await sqliteManagerInstance.query(sql, params);
+        },
+        execute: async (sql, params) => {
+          return await sqliteManagerInstance.query(sql, params);
+        },
+        end: async () => {
+          // Don't close on individual service shutdown
+          console.log('Service requested database closure (ignored for singleton)');
+        }
+      };
     }
 
-    // Return a MySQL-compatible interface
+    // Create new instance only if none exists
+    let managerPath;
+    if (process.env.ELECTRON_DEV === 'true') {
+      managerPath = './src/utils/sqliteManager.cjs';
+    } else {
+      managerPath = './sqliteManager.cjs';
+    }
+    
+    const SQLiteManager = require(managerPath);
+    sqliteManagerInstance = new SQLiteManager();
+
+    // Setup paths
+    let appPath;
+    let dbPath;
+    
+    if (process.env.DB_PATH) {
+      dbPath = process.env.DB_PATH;
+      appPath = path.dirname(dbPath);
+    } else if (process.env.ELECTRON_DEV === 'true') {
+      appPath = process.cwd();
+    } else {
+      appPath = process.resourcesPath || path.dirname(process.execPath);
+    }
+
+    console.log('initDb: Using app path:', appPath);
+    console.log('initDb: Database path:', dbPath || 'Will be determined by SQLiteManager');
+
+    sqliteManagerInstance.initializePaths(appPath);
+    
+    if (dbPath) {
+      sqliteManagerInstance.dbPath = dbPath;
+      sqliteManagerInstance.dataPath = path.dirname(dbPath);
+      console.log('initDb: Overrode SQLiteManager paths with explicit DB_PATH');
+    }
+    
+    await sqliteManagerInstance.startDatabase();
+
+    // Return MySQL-compatible interface
     return {
       query: async (sql, params) => {
-        return await sqliteManager.query(sql, params);
+        return await sqliteManagerInstance.query(sql, params);
       },
-
-      // Add any other methods your services use
-      end: async () => {
-        await sqliteManager.stopDatabase();
-      },
-
-      // For backward compatibility
       execute: async (sql, params) => {
-        return await sqliteManager.query(sql, params);
+        return await sqliteManagerInstance.query(sql, params);
+      },
+      end: async () => {
+        // Don't close on individual service shutdown for singleton
+        console.log('Service requested database closure (ignored for singleton)');
       }
     };
 
@@ -71,4 +80,15 @@ async function initDatabase(config = {}) {
   }
 }
 
+// Graceful shutdown function
+async function closeDatabase() {
+  if (sqliteManagerInstance) {
+    await sqliteManagerInstance.stopDatabase();
+    sqliteManagerInstance = null;
+    console.log('SQLite singleton instance closed');
+  }
+}
+
+// Export both functions
 module.exports = initDatabase;
+module.exports.closeDatabase = closeDatabase;
