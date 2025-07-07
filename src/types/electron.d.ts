@@ -7,6 +7,8 @@ export interface LicenseStatus {
     totalHours?: number;
     usageHours?: number;
     startDate?: string;
+    endDate?: string;
+
     activatedDate?: string;
     machineId?: string;
   }

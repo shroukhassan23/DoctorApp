@@ -15,8 +15,7 @@ import SetupWizard from './components/Setup/SetupWizard';
 import LicenseActivation from './components/License/LicenseActivation';
 import { PrintSettingsProvider } from './components/prescriptions/PrintSettings';
 
-const queryClient = new QueryClient();
-
+const queryClient = new QueryClient();// src/App.tsx
 const AppCore = () => {
   const [setupComplete, setSetupComplete] = useState(false);
   const [licenseStatus, setLicenseStatus] = useState(null);
@@ -29,34 +28,25 @@ const AppCore = () => {
 
   const initializeApp = async () => {
     try {
-      // Check if we're in Electron environment
       if (!window.electron) {
-        console.warn('Running in browser mode - setup and license features disabled');
         setSetupComplete(true);
         setLicenseStatus({ isValid: true, type: 'browser' });
         setLoading(false);
         return;
       }
 
-      // Check if setup functions exist (for minimal build compatibility)
       if (!window.electron.isSetupComplete || !window.electron.checkLicense) {
-        console.error('Setup functions not available - this may be a build issue');
         setLoading(false);
-        // Don't set setupComplete to true - let it show setup wizard
         return;
       }
 
-      // Check setup status
       const isSetupComplete = await window.electron.isSetupComplete();
-      setSetupComplete(isSetupComplete);
-
-      // Check license status
       const license = await window.electron.checkLicense();
-      setLicenseStatus(license);
 
+      setSetupComplete(isSetupComplete);
+      setLicenseStatus(license);
       setLoading(false);
 
-      // Show license warnings if needed
       if (license.type === 'trial' && license.remainingHours < 2) {
         toast({
           title: "Trial Expiring Soon",
@@ -64,90 +54,69 @@ const AppCore = () => {
           variant: "destructive",
         });
       }
-
     } catch (error) {
-      console.error('Error initializing app:', error);
       setLoading(false);
-      toast({
-        title: "Initialization Error",
-        description: "There was an error starting the application.",
-        variant: "destructive",
-      });
     }
   };
 
-  const handleSetupComplete = async (installationType, config) => {
-    try {
-      setSetupComplete(true);
-      
-      toast({
-        title: "Setup Complete",
-        description: `${installationType === 'master' ? 'Master' : 'Client'} installation completed successfully.`,
-      });
-
-      // Refresh license status
-      const license = await window.electron.checkLicense();
-      setLicenseStatus(license);
-
-    } catch (error) {
-      console.error('Setup completion error:', error);
-      toast({
-        title: "Setup Error",
-        description: "There was an error completing the setup.",
-        variant: "destructive",
-      });
-    }
+  const handleSetupComplete = async () => {
+    setSetupComplete(true);
+    const license = await window.electron.checkLicense();
+    setLicenseStatus(license);
   };
 
   const handleLicenseActivated = async () => {
-    try {
-      // Refresh license status
-      const license = await window.electron.checkLicense();
-      setLicenseStatus(license);
-
-      toast({
-        title: "License Activated",
-        description: "Your license has been activated successfully.",
-      });
-
-    } catch (error) {
-      console.error('License activation error:', error);
-    }
+    const license = await window.electron.checkLicense();
+    setLicenseStatus(license);
+    toast({
+      title: "License Activated",
+      description: "Your license has been activated successfully.",
+    });
   };
 
-  // Loading screen
+  // ⏳ Show loading screen
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <h2 className="text-xl font-semibold text-gray-900">Loading Doctor App...</h2>
-          <p className="text-gray-600 mt-2">Please wait while we initialize the application</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div>Loading Doctor App...</div>
       </div>
     );
   }
 
-  // Setup wizard (first-time setup)
+  // 🛠️ First-time setup wizard
   if (!setupComplete) {
     return <SetupWizard onSetupComplete={handleSetupComplete} />;
   }
 
-  // License expired - force activation
-  if (licenseStatus && !licenseStatus.isValid) {
-    return <LicenseActivation onLicenseActivated={handleLicenseActivated} />;
+  // 🔒 License expired → show activation only (no dashboard)
+  if (
+    licenseStatus?.type === 'trial_expired' ||
+    (licenseStatus && !licenseStatus.isValid)
+  ) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <LicenseActivation onLicenseActivated={handleLicenseActivated} />
+      </div>
+    );
   }
-
-  // Main application - return your existing Dashboard structure
+  
+if (licenseStatus?.type === 'trial_expired' || !licenseStatus?.isValid) {
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <LicenseActivation onLicenseActivated={handleLicenseActivated} />
+    </div>
+  );
+}
+  // ✅ Main dashboard with top trial banner
   return (
     <HashRouter>
-      {/* License status bar for trial users */}
-      {licenseStatus?.type === 'trial' && (
-        <LicenseActivation onLicenseActivated={handleLicenseActivated} />
-      )}
       <PrintSettingsProvider>
-      {/* Your existing Dashboard component handles all the routing */}
-      <Dashboard licenseStatus={licenseStatus} />
+        <div className="flex flex-col min-h-screen">
+        
+
+          {/* 🧠 Main dashboard */}
+          <Dashboard licenseStatus={licenseStatus} />
+        </div>
       </PrintSettingsProvider>
     </HashRouter>
   );

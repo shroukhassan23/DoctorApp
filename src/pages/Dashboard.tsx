@@ -14,14 +14,31 @@ import LicenseTest from '@/components/License/LicenseTest';
 
 interface DashboardProps {
   licenseStatus?: any;
+  onRequestActivation?: () => void; // ✅ جديد
 }
 
-export const Dashboard = ({ licenseStatus }: DashboardProps) => {
+export const Dashboard = ({ licenseStatus, onRequestActivation }: DashboardProps) => {
   return (
     <div className="flex h-screen bg-gray-50">
       <Sidebar />
       <div className="flex-1 overflow-auto">
+    
+        {licenseStatus?.type === 'trial' && (
+          <div className="bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-2 m-2 rounded flex justify-between items-center">
+            <span>
+              Trial remaining: {licenseStatus.remainingHours?.toFixed(1)} hours
+            </span>
+            <button
+              onClick={onRequestActivation}
+              className="text-sm font-medium underline hover:text-yellow-700"
+            >
+              Activate Now
+            </button>
+          </div>
+        )}
         <Routes>
+    
+
           <Route path="/" element={<PatientsPage />} />
           <Route path="/patients" element={<PatientsPage />} />
           <Route path="/prescriptions" element={<PrescriptionsPage />} />

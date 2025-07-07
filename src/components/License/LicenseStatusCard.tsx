@@ -1,5 +1,5 @@
 // src/components/license/LicenseStatusCard.tsx
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -28,13 +28,18 @@ interface LicenseStatusCardProps {
 }
 
 export const LicenseStatusCard: React.FC<LicenseStatusCardProps> = ({ licenseStatus }) => {
-  const [showActivation, setShowActivation] = useState(false);
+const [showActivation, setShowActivation] = useState(licenseStatus.type === 'trial_expired');
+
   const [licenseKey, setLicenseKey] = useState('');
   const [activating, setActivating] = useState(false);
   const [error, setError] = useState('');
   const { t, language } = useLanguage();
   const { toast } = useToast();
-
+useEffect(() => {
+  if (licenseStatus?.type === 'trial_expired') {
+    setShowActivation(true);
+  }
+}, [licenseStatus]);
   // Don't show in browser mode or if no license info
   if (!licenseStatus || !window.electron || licenseStatus.type === 'browser') {
     return null;
@@ -108,7 +113,21 @@ export const LicenseStatusCard: React.FC<LicenseStatusCardProps> = ({ licenseSta
           progressValue: progressPercentage,
           showActivateButton: true
         };
-        
+          case 'trial_expired':
+      return {
+        icon: AlertTriangle,
+        title: 'Trial Expired',
+        status: 'expired',
+        color: 'red',
+        bgColor: 'from-red-50 to-rose-50',
+        details: [
+          { label: 'Trial Ended', value: licenseStatus.endDate || 'Unknown', icon: Calendar },
+          { label: 'Used Time', value: licenseStatus.usageHours ? formatTime(licenseStatus.usageHours) : 'Unknown', icon: Clock }
+        ],
+        showProgress: false,
+        progressValue: 100,
+        showActivateButton: true
+      };
       case 'full':
         return {
           icon: CheckCircle,

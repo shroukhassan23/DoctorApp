@@ -1467,6 +1467,8 @@ app.get('/debug/test-db', async (req, res) => {
 // Search Patients
 app.get('/Patients/search', async (req, res) => {
     try {
+     await logger.info("🔍search", req.query);
+await logger.info("🔍 Entered GET /Patients/search", req.query);
         const { q } = req.query;
         await logger.info('Patient search initiated', { searchTerm: q });
 
@@ -1476,6 +1478,8 @@ app.get('/Patients/search', async (req, res) => {
         }
 
         const searchTerm = `%${q.trim()}%`;
+          await logger.info('Patient search initiated', searchTerm);
+
         const query = `SELECT * FROM patients 
                        WHERE deleted_at IS NULL 
                        AND (name LIKE ? OR phone LIKE ? OR address LIKE ?)
@@ -1537,7 +1541,9 @@ app.post('/Patients', async (req, res) => {
 
 // Update Patient
 app.put('/Patients/:id', async (req, res) => {
+     await logger.info(" PUT /Patients/:id",);
     try {
+          await logger.info("✏️ Entered PUT /Patients/:id", req.params.id);
         const { id } = req.params;
         const patient = req.body;
 
@@ -1560,6 +1566,7 @@ app.put('/Patients/:id', async (req, res) => {
         const [result] = await db.query(query, params);
 
         if (result.affectedRows === 0) {
+            await logger.info('error in update ',);
             await logger.warn('Patient not found for update', { patientId: id });
             return res.status(404).json({ error: "Patient not found" });
         }

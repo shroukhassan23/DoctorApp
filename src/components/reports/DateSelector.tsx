@@ -169,6 +169,7 @@ export const DateSelector = ({
                 maxDate={toDateObj || undefined}
                 popperClassName="date-picker-popper"
                 popperPlacement="bottom-start"
+                withPortal
                 portalId="date-picker-portal"
               />
             </div>
@@ -195,7 +196,8 @@ export const DateSelector = ({
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#2463EB] focus:border-transparent"
                 minDate={fromDateObj || undefined}
                 popperClassName="date-picker-popper"
-                popperPlacement="bottom-start"
+                popperPlacement="top-start"
+                 withPortal
                 portalId="date-picker-portal"
               />
             </div>

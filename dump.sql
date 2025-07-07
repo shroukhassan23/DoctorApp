@@ -6,19 +6,20 @@ DROP TABLE IF EXISTS `imaging_studies`;
 CREATE TABLE `imaging_studies` (
   `id` INTEGER PRIMARY KEY AUTOINCREMENT,
   `name` TEXT DEFAULT NULL,
+  `description` TEXT DEFAULT NULL,
   `name_ar` TEXT DEFAULT NULL,
   `created_at` TEXT DEFAULT (datetime('now'))
 );
 
 INSERT INTO `imaging_studies` VALUES 
-(1,'CT Scan Abdomen',NULL,datetime('now')),
-(2,'CT Scan Head',NULL,datetime('now')),
-(3,'Echocardiogram',NULL,datetime('now')),
-(4,'Mammography',NULL,datetime('now')),
-(5,'MRI Brain',NULL,datetime('now')),
-(6,'Ultrasound Abdomen',NULL,datetime('now')),
-(7,'X-Ray Chest',NULL,datetime('now')),
-(8,'X-Ray Spine',NULL,datetime('now'));
+(1,'CT Scan Abdomen',NULL,NULL,datetime('now')),
+(2,'CT Scan Head',NULL,NULL,datetime('now')),
+(3,'Echocardiogram',NULL,NULL,datetime('now')),
+(4,'Mammography',NULL,NULL,datetime('now')),
+(5,'MRI Brain',NULL,NULL,datetime('now')),
+(6,'Ultrasound Abdomen',NULL,NULL,datetime('now')),
+(7,'X-Ray Chest',NULL,NULL,datetime('now')),
+(8,'X-Ray Spine',NULL,NULL,datetime('now'));
 
 -- Table structure for table `lab_tests`
 DROP TABLE IF EXISTS `lab_tests`;

@@ -228,17 +228,24 @@ class LicenseManager {
   }
 
   // Get license information for display
-  async getLicenseInfo() {
-    const licenseStatus = await this.checkLicense();
-    const licenseData = await this.loadLicenseData();
+async getLicenseInfo() {
+  const licenseStatus = await this.checkLicense();
+  const licenseData = await this.loadLicenseData();
 
-    return {
-      ...licenseStatus,
-      startDate: licenseData?.startTime ? new Date(licenseData.startTime).toLocaleDateString() : null,
-      activatedDate: licenseData?.activatedAt ? new Date(licenseData.activatedAt).toLocaleDateString() : null,
-      machineId: this.machineId
-    };
-  }
+  return {
+    ...licenseStatus,
+    startDate: licenseData?.startTime
+      ? new Date(licenseData.startTime).toLocaleDateString()
+      : null,
+    endDate: licenseData?.startTime
+      ? new Date(licenseData.startTime + this.trialDurationHours * 60 * 60 * 1000).toLocaleDateString()
+      : null,
+    activatedDate: licenseData?.activatedAt
+      ? new Date(licenseData.activatedAt).toLocaleDateString()
+      : null,
+    machineId: this.machineId
+  };
+}
 
   // Start usage tracking (call when app becomes active)
   startUsageTracking() {

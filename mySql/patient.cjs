@@ -249,6 +249,7 @@ let sqliteManagerInstance = null;
         const [result] = await db.query(query, params);
 
         if (result.affectedRows === 0) {
+           await logger.info('error in update ',);
           await logger.warn('Patient not found for update', { patientId: id });
           return res.status(404).json({ error: "Patient not found" });
         }
