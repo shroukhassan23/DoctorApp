@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import { searchText } from '@/lib/arabicUtils';
 import { SectionLoading, CardLoading } from '@/components/ui/loading-spinner';
 import { reportBaseUrl } from '@/components/constants.js';
+import { reportsVisitStatsUrl, reportsVisitsAllUrl, reportsVisitsUrl } from '@/components/constants.js';
 
 
 export const ReportsPage = () => {
@@ -39,7 +40,7 @@ export const ReportsPage = () => {
   const { data: visitStats, isLoading, refetch } = useQuery({
     queryKey: ['visit-stats', fromDate, toDate],
     queryFn: async () => {
-      const response = await fetch(`http://localhost:3003/reports/visit-stats?from=${fromDate}&to=${toDate}`);
+      const response = await fetch(`${reportsVisitStatsUrl}?from=${fromDate}&to=${toDate}`);
       if (!response.ok) throw new Error('Failed to fetch visit stats');
       return await response.json();
     }
@@ -53,8 +54,8 @@ export const ReportsPage = () => {
     queryKey: ['visit-details', fromDate, toDate, searchAllVisits],
     queryFn: async () => {
       const url = searchAllVisits
-        ? `http://localhost:3003/reports/visits/all`
-        : `http://localhost:3003/reports/visits?from=${fromDate}&to=${toDate}`;
+        ? reportsVisitsAllUrl
+        : `${reportsVisitsUrl}?from=${fromDate}&to=${toDate}`;
 
       const response = await fetch(url);
       if (!response.ok) throw new Error('Failed to fetch visit details');
@@ -88,7 +89,7 @@ export const ReportsPage = () => {
 
     return result;
   })
-  || [];
+    || [];
 
   const handleEditVisit = (visit: any) => {
     setEditingVisit(visit);
@@ -146,7 +147,7 @@ export const ReportsPage = () => {
         }}
       />
 
-   {/*  <div className="mb-8">
+      {/*  <div className="mb-8">
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {Array.from({ length: 4 }).map((_, i) => (
@@ -160,24 +161,24 @@ export const ReportsPage = () => {
 
       {isLoading ? (
         <div className="mb-6">
-          <CardLoading lines={4}  />
+          <CardLoading lines={4} />
         </div>
       ) : (
         <div className="mb-6">
-        <ReportsFilters
-          searchMode={searchMode}
-          setSearchMode={setSearchMode}
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          searchAllVisits={searchAllVisits}
-       setSearchAllVisits={(value) => {
-    setSearchAllVisits(value);
-  }}
-          statusFilter={statusFilter}
-          setStatusFilter={setStatusFilter}
-          onPatientSelected={handlePatientSelected}
-          onAddNewPatient={handleAddNewPatient}
-        />
+          <ReportsFilters
+            searchMode={searchMode}
+            setSearchMode={setSearchMode}
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            searchAllVisits={searchAllVisits}
+            setSearchAllVisits={(value) => {
+              setSearchAllVisits(value);
+            }}
+            statusFilter={statusFilter}
+            setStatusFilter={setStatusFilter}
+            onPatientSelected={handlePatientSelected}
+            onAddNewPatient={handleAddNewPatient}
+          />
         </div>
       )}
 

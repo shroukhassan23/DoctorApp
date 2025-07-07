@@ -22,64 +22,77 @@ class SQLiteManager {
       this.dataPath = fallbackPath;
       this.dbPath = path.join(fallbackPath, 'doctor-app.db');
     }
-    
+
     console.log('SQLite Database Path:', this.dbPath);
     console.log('SQLite Data Directory:', this.dataPath);
   }
 
+  async saveDatabase() {
+    try {
+      if (this.db && this.SQL) {
+        // Add file locking mechanism
+        const lockFile = this.dbPath + '.lock';
+
+        // Check if another process is writing
+        try {
+          await fs.access(lockFile);
+          console.log('Database is being written by another process, skipping save');
+          return;
+        } catch (error) {
+          // Lock file doesn't exist, we can proceed
+        }
+
+        // Create lock file
+        await fs.writeFile(lockFile, process.pid.toString());
+
+        try {
+          const data = this.db.export();
+          await fs.writeFile(this.dbPath, Buffer.from(data));
+          console.log('💾 Database saved successfully');
+        } finally {
+          // Always remove lock file
+          try {
+            await fs.unlink(lockFile);
+          } catch (error) {
+            // Ignore errors when removing lock file
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error saving database:', error);
+    }
+  }
+
   async initializeDatabase() {
     try {
-      console.log('Initializing SQLite database with better-sqlite3...');
-      
+      console.log('Initializing SQLite database with sql.js...');
+
+      // Initialize sql.js
+      const initSqlJs = require('sql.js');
+      this.SQL = await initSqlJs();
+
       // Ensure directory exists
       const dbDir = path.dirname(this.dbPath);
       await fs.mkdir(dbDir, { recursive: true });
 
-      // Try to load better-sqlite3 from bundled location first
-      let Database;
+      // Try to load existing database
+      let filebuffer;
       try {
-        // In production, try the bundled version first
-        const bundledPath = path.join(process.resourcesPath || __dirname, 'better-sqlite3');
-        
-        // Check if bindings module exists in the bundled location
-        const bindingsPath = path.join(process.resourcesPath || __dirname, 'bindings');
-        if (require('fs').existsSync(bindingsPath)) {
-          // Add the bundled bindings to the module path
-          const Module = require('module');
-          const originalResolveFilename = Module._resolveFilename;
-          Module._resolveFilename = function (request, parent, isMain, options) {
-            if (request === 'bindings') {
-              return path.join(bindingsPath, 'bindings.js');
-            }
-            return originalResolveFilename.call(this, request, parent, isMain, options);
-          };
-        }
-        
-        Database = require(bundledPath);
-        console.log('✅ Using bundled better-sqlite3');
+        filebuffer = await fs.readFile(this.dbPath);
+        this.db = new this.SQL.Database(filebuffer);
+        console.log('✅ Loaded existing SQLite database');
       } catch (error) {
-        console.log('⚠️ Bundled better-sqlite3 failed, trying system version:', error.message);
-        // Fallback to regular require
-        Database = require('better-sqlite3');
-        console.log('✅ Using system better-sqlite3');
+        // Create new database
+        this.db = new this.SQL.Database();
+        console.log('✅ Created new SQLite database');
       }
 
-      // Create database connection
-      this.db = new Database(this.dbPath, {
-        verbose: console.log, // Remove in production
-        fileMustExist: false
-      });
-      
-      // Configure for optimal performance and reliability
-      this.db.pragma('journal_mode = WAL');
-      this.db.pragma('foreign_keys = ON');
-      this.db.pragma('synchronous = NORMAL');
-      this.db.pragma('cache_size = 10000');
-      this.db.pragma('temp_store = memory');
-      
-      console.log('SQLite database initialized successfully with better-sqlite3');
+      // Enable foreign keys
+      this.db.run('PRAGMA foreign_keys = ON');
+
+      console.log('SQLite database initialized successfully with sql.js');
       this.isInitialized = true;
-      
+
       return true;
     } catch (error) {
       console.error('Error initializing SQLite database:', error);
@@ -101,7 +114,7 @@ class SQLiteManager {
           process.resourcesPath ? path.join(process.resourcesPath, 'dump.sql') : null,
           path.join(path.dirname(process.execPath), 'dump.sql')
         ].filter(Boolean);
-        
+
         for (const testPath of possiblePaths) {
           try {
             await fs.access(testPath);
@@ -112,15 +125,15 @@ class SQLiteManager {
             console.log(`❌ Schema not found at: ${testPath}`);
           }
         }
-        
+
         if (!actualSchemaPath) {
           throw new Error(`dump.sql not found in any expected location`);
         }
       }
-      
+
       console.log('📄 Reading schema from:', actualSchemaPath);
       const sqlContent = await fs.readFile(actualSchemaPath, 'utf8');
-      
+
       // Split by semicolon and execute each statement
       const statements = sqlContent
         .split(';')
@@ -131,26 +144,25 @@ class SQLiteManager {
       let successCount = 0;
       let skipCount = 0;
 
-      // Use transaction for better performance and consistency
-      const transaction = this.db.transaction((statements) => {
-        for (const statement of statements) {
-          if (statement.trim()) {
-            try {
-              this.db.exec(statement);
-              successCount++;
-            } catch (error) {
-              if (error.message.includes('already exists')) {
-                skipCount++;
-              } else {
-                console.warn('Schema statement warning:', error.message);
-              }
+      // Use individual statements for sql.js (no transactions)
+      for (const statement of statements) {
+        if (statement.trim()) {
+          try {
+            this.db.run(statement);
+            successCount++;
+          } catch (error) {
+            if (error.message.includes('already exists')) {
+              skipCount++;
+            } else {
+              console.warn('Schema statement warning:', error.message);
             }
           }
         }
-      });
+      }
 
-      transaction(statements);
-      
+      // Save after schema import
+      await this.saveDatabase();
+
       console.log(`✅ SQLite schema imported successfully: ${successCount} executed, ${skipCount} skipped`);
       return true;
 
@@ -167,8 +179,9 @@ class SQLiteManager {
       }
 
       // Check if tables exist
-      const tables = this.db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all();
-      
+      const result = this.db.exec("SELECT name FROM sqlite_master WHERE type='table'");
+      const tables = result.length > 0 ? result[0].values : [];
+
       if (tables.length === 0) {
         console.log('No tables found, importing schema...');
         await this.importSchema();
@@ -188,7 +201,7 @@ class SQLiteManager {
   async stopDatabase() {
     try {
       if (this.db) {
-        // better-sqlite3 saves automatically, just close
+        await this.saveDatabase();
         this.db.close();
         this.db = null;
         console.log('SQLite database closed');
@@ -207,27 +220,46 @@ class SQLiteManager {
     return this.db;
   }
 
-  // MySQL-compatible interface
   async query(sql, params = []) {
     try {
       const db = this.getDatabase();
-      
+
       // Handle SELECT queries
       if (sql.trim().toUpperCase().startsWith('SELECT')) {
         const stmt = db.prepare(sql);
-        const rows = stmt.all(params);
+        const rows = [];
+
+        stmt.bind(params);
+        while (stmt.step()) {
+          const row = stmt.getAsObject();
+          rows.push(row);
+        }
+        stmt.free();
+
+        // Auto-save after any query that might modify data
+        await this.saveDatabase();
+
         return [rows]; // Return in MySQL format [rows, fields]
       }
-      
+
       // Handle INSERT/UPDATE/DELETE queries
       const stmt = db.prepare(sql);
-      const result = stmt.run(params);
-      
+      stmt.bind(params);
+      stmt.step();
+
+      const changes = db.getRowsModified();
+      const lastInsertId = db.exec("SELECT last_insert_rowid() as id")[0]?.values[0]?.[0] || 0;
+
+      stmt.free();
+
+      // Auto-save after modifications
+      await this.saveDatabase();
+
       return [{
-        affectedRows: result.changes,
-        insertId: result.lastInsertRowid
+        affectedRows: changes,
+        insertId: lastInsertId
       }];
-      
+
     } catch (error) {
       console.error('Database query error:', error);
       console.error('SQL:', sql);
@@ -249,12 +281,12 @@ class SQLiteManager {
       // Check if database file exists
       await fs.access(this.dbPath);
       diagnostics.databaseFile = true;
-      
+
       // Get file stats
       const stats = await fs.stat(this.dbPath);
       diagnostics.fileSize = stats.size;
       diagnostics.lastModified = stats.mtime;
-      
+
     } catch (error) {
       console.log('Database file does not exist yet');
     }
@@ -282,7 +314,7 @@ class SQLiteManager {
       const tables = this.db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='patients'").all();
       if (tables.length > 0) {
         diagnostics.schemaLoaded = true;
-        
+
         // Get row counts
         const patientCount = this.db.prepare("SELECT COUNT(*) as count FROM patients").get();
         const visitCount = this.db.prepare("SELECT COUNT(*) as count FROM visits").get();

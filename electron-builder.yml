@@ -45,14 +45,6 @@ win:
       arch: ["x64"]
   icon: "build/icon.ico"
   extraResources:
-    # Service files for Windows services (separate from Electron app)
-    - from: "mySql/patient.cjs"
-      to: "patient.cjs"
-    - from: "mySql/visit.cjs"
-      to: "visit.cjs"
-    - from: "mySql/reports.cjs"
-      to: "reports.cjs"
-    
     # Database and initialization
     - from: "initDb.cjs"          
       to: "initDb.cjs"            
@@ -60,6 +52,17 @@ win:
       to: "app/src/utils/dump.sql"
     - from: "dump.sql"
       to: "dump.sql"
+    - from: "src/utils/backendManager.cjs"
+      to: "backendManager.cjs"
+    - from: "src/utils/configManager.cjs"
+      to: "configManager.cjs"
+    - from: "src/utils/licenseManager.cjs"
+      to: "licenseManager.cjs"
+    - from: "src/utils/logger.cjs"
+      to: "logger.cjs"
+    
+    - from: "mySql/combined-service.cjs"
+      to: "combined-service.cjs"
     
     # Utility files for services
     - from: "src/utils/sqliteManager.cjs"
@@ -75,20 +78,12 @@ win:
     - from: "scripts/uninstall-services.cjs"
       to: "uninstall-services.cjs"
     
-    # Node.js executable - Use the bundled one
+    # Node.js executable
     - from: "C:/Program Files/nodejs/node.exe"
       to: "node.exe"
       filter: ["node.exe"]
     
-    # CRITICAL: Properly rebuilt better-sqlite3
-    - from: "dist-native/better-sqlite3"
-      to: "better-sqlite3"
-      filter: ["**/*"]
-    
-    # Required dependencies for better-sqlite3
-    - from: "node_modules/bindings"
-      to: "bindings"
-      filter: ["**/*"]
+    # REMOVED: All better-sqlite3 and bindings references
 
 # macOS configuration  
 mac:
@@ -102,9 +97,6 @@ mac:
   extraResources:
     - from: "dump.sql"
       to: "dump.sql"
-    - from: "dist-native/better-sqlite3"
-      to: "better-sqlite3"
-      filter: ["**/*"]
 
 asar: false
 compression: "normal"

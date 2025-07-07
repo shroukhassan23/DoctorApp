@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -24,7 +25,7 @@
         .installer-container {
             background: white;
             border-radius: 16px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
             width: 90%;
             max-width: 800px;
             min-height: 600px;
@@ -54,8 +55,15 @@
         }
 
         @keyframes float {
-            0%, 100% { transform: translate(-50%, -50%) rotate(0deg); }
-            50% { transform: translate(-50%, -50%) rotate(180deg); }
+
+            0%,
+            100% {
+                transform: translate(-50%, -50%) rotate(0deg);
+            }
+
+            50% {
+                transform: translate(-50%, -50%) rotate(180deg);
+            }
         }
 
         .header h1 {
@@ -110,7 +118,8 @@
             font-size: 0.95rem;
         }
 
-        .form-group input, .form-group select {
+        .form-group input,
+        .form-group select {
             padding: 12px 16px;
             border: 2px solid #e1e8ed;
             border-radius: 8px;
@@ -118,7 +127,8 @@
             transition: all 0.3s ease;
         }
 
-        .form-group input:focus, .form-group select:focus {
+        .form-group input:focus,
+        .form-group select:focus {
             outline: none;
             border-color: #4CAF50;
             box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
@@ -281,8 +291,13 @@
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
 
         .log-container {
@@ -397,21 +412,22 @@
                 width: 95%;
                 min-height: 500px;
             }
-            
+
             .content {
                 padding: 20px;
             }
-            
+
             .header {
                 padding: 20px;
             }
-            
+
             .header h1 {
                 font-size: 2rem;
             }
         }
     </style>
 </head>
+
 <body>
     <div class="installer-container">
         <div class="header">
@@ -431,7 +447,7 @@
                     <p>This wizard will guide you through the installation of DoctorApp.</p>
                     <p>Please ensure you have administrator privileges before proceeding.</p>
                 </div>
-                
+
                 <div class="docker-requirements">
                     <h4>🐳 Docker Requirements</h4>
                     <div class="requirement-item">Docker Desktop must be installed and running</div>
@@ -474,13 +490,15 @@
                 <div class="form-group">
                     <label for="installPath">Installation Path:</label>
                     <div class="path-input-group">
-                        <input type="text" id="installPath" value="C:\Program Files\DoctorApp" placeholder="Enter installation path">
+                        <input type="text" id="installPath" value="C:\Program Files\DoctorApp"
+                            placeholder="Enter installation path">
                         <button type="button" class="btn-browse" onclick="browseDirectory()">Browse</button>
                     </div>
                     <div id="pathStatus"></div>
                 </div>
                 <div class="help-text">
-                    💡 <strong>Tip:</strong> Choose a directory where you have write permissions. The default location requires administrator privileges.
+                    💡 <strong>Tip:</strong> Choose a directory where you have write permissions. The default location
+                    requires administrator privileges.
                 </div>
             </div>
 
@@ -492,13 +510,10 @@
                         <label for="serverPort">Server Port:</label>
                         <input type="number" id="serverPort" value="3001" min="1024" max="65535">
                     </div>
+
                     <div class="form-group">
-                        <label for="patientServicePort">Patient Service Port:</label>
-                        <input type="number" id="patientServicePort" value="3001" min="1024" max="65535">
-                    </div>
-                    <div class="form-group">
-                        <label for="visitServicePort">Visit Service Port:</label>
-                        <input type="number" id="visitServicePort" value="3002" min="1024" max="65535">
+                        <label for="combinedServicePort">Service Port:</label>
+                        <input type="number" id="combinedServicePort" value="3001" min="1024" max="65535">
                     </div>
                 </div>
                 <div id="clientConfig" style="display: none;">
@@ -510,7 +525,8 @@
                         <label for="clientServerPort">Server Port:</label>
                         <input type="number" id="clientServerPort" value="3001" min="1024" max="65535">
                     </div>
-                    <button type="button" class="btn btn-secondary" onclick="testConnection()" style="margin-top: 10px;">Test Connection</button>
+                    <button type="button" class="btn btn-secondary" onclick="testConnection()"
+                        style="margin-top: 10px;">Test Connection</button>
                     <div id="connectionStatus"></div>
                 </div>
             </div>
@@ -527,7 +543,8 @@
                     <input type="password" id="dbRootPassword" placeholder="Leave blank for auto-generated password">
                 </div>
                 <div class="help-text">
-                    🔐 <strong>Security:</strong> If you leave passwords blank, secure random passwords will be generated automatically.
+                    🔐 <strong>Security:</strong> If you leave passwords blank, secure random passwords will be
+                    generated automatically.
                 </div>
             </div>
 
@@ -559,7 +576,8 @@
                     </div>
                 </div>
                 <div class="help-text">
-                    ✅ Please review your configuration above. Click "Start Installation" to begin the installation process.
+                    ✅ Please review your configuration above. Click "Start Installation" to begin the installation
+                    process.
                 </div>
             </div>
 
@@ -610,23 +628,21 @@
             mode: 'standalone',
             installPath: 'C:\\Program Files\\DoctorApp',
             serverPort: 3001,
-            patientServicePort: 3001,
-            visitServicePort: 3002,
             serverHost: 'localhost',
             dbPassword: '',
             dbRootPassword: ''
         };
 
         // Initialize the app when DOM is loaded
-        document.addEventListener('DOMContentLoaded', async function() {
+        document.addEventListener('DOMContentLoaded', async function () {
             // Check if we're in Electron environment
             if (typeof window.electronAPI !== 'undefined') {
                 await initializeElectronFeatures();
             }
-            
+
             // Set up event listeners
             setupEventListeners();
-            
+
             // Initialize first step
             showStep(currentStep);
         });
@@ -662,7 +678,7 @@
         function setupEventListeners() {
             // Mode selection
             document.querySelectorAll('.mode-card').forEach(card => {
-                card.addEventListener('click', function() {
+                card.addEventListener('click', function () {
                     document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('selected'));
                     this.classList.add('selected');
                 });
@@ -675,16 +691,16 @@
         function displaySystemInfo(info) {
             const systemCheck = document.getElementById('systemCheck');
             const systemInfoElement = document.getElementById('systemInfo');
-            
+
             const memoryGB = (info.totalMemory / (1024 * 1024 * 1024)).toFixed(1);
             const freeMemoryGB = (info.freeMemory / (1024 * 1024 * 1024)).toFixed(1);
-            
+
             systemInfoElement.innerHTML = `
                 Platform: ${info.platform} (${info.arch})<br>
                 Memory: ${freeMemoryGB}GB free of ${memoryGB}GB total<br>
                 CPU Cores: ${info.cpus}
             `;
-            
+
             systemCheck.style.display = 'block';
         }
 
@@ -794,20 +810,21 @@
         function showStep(step) {
             // Hide all steps
             document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
-            
+
             // Show current step
             document.getElementById(`step${step}`).classList.add('active');
-            
+
             // Update buttons
             const backBtn = document.getElementById('backBtn');
             const nextBtn = document.getElementById('nextBtn');
-            
+
             backBtn.style.display = step === 1 ? 'none' : 'inline-block';
-            
+
             if (step === totalSteps) {
                 nextBtn.textContent = 'Finish';
             } else if (step === totalSteps - 1) {
                 nextBtn.textContent = 'Install';
             } else if (step === 6) {
                 nextBtn.textContent = 'Start Installation';
-            } }
+            }
+        }

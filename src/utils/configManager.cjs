@@ -47,12 +47,10 @@ class ConfigManager {
                 database: 'doctor'
             },
             services: {
-                patientPort: 3001,
-                visitPort: 3002,
-                reportsPort: 3003
+                port: 3001
             },
             sharedFolderPath: config.sharedFolderPath,
-            installAsServices: true,
+            installAsServices: config.installAsServices || true,
             createdAt: new Date().toISOString()
         };
         await this.saveConfig(fullConfig);
@@ -62,15 +60,11 @@ class ConfigManager {
         const fullConfig = {
             installationType: 'client',
             setupComplete: true,
-            // Client configuration - connect to master services
             masterHost: config.masterHost,
-            patientServicePort: config.patientServicePort || '3001',
-            visitServicePort: config.visitServicePort || '3002', 
-            reportsServicePort: config.reportsServicePort || '3003',
-            // No local database configuration for clients
+            servicePort: config.servicePort || 3001,
             database: null,
             services: null,
-            sharedFolderPath: null, // Clients don't have local shared folders
+            sharedFolderPath: null,
             createdAt: new Date().toISOString()
         };
         await this.saveConfig(fullConfig);
@@ -78,9 +72,7 @@ class ConfigManager {
 
     getServicePorts() {
         return {
-            patientPort: 3001,
-            visitPort: 3002,
-            reportsPort: 3003
+            port: 3001
         };
     }
 
@@ -111,20 +103,17 @@ class ConfigManager {
     // Get service URLs for the current configuration
     async getServiceUrls() {
         const config = await this.loadConfig();
-        
+
         if (config.installationType === 'client') {
-            // Client connects to remote master services
+            // Client connects to remote master combined service
+            const port = config.servicePort || 3001;
             return {
-                patient: `http://${config.masterHost}:${config.patientServicePort}`,
-                visit: `http://${config.masterHost}:${config.visitServicePort}`,
-                reports: `http://${config.masterHost}:${config.reportsServicePort}`
+                base: `http://${config.masterHost}:${port}`
             };
         } else {
-            // Master uses local services
+            // Master uses local combined service
             return {
-                patient: `http://localhost:${config.services?.patientPort || 3001}`,
-                visit: `http://localhost:${config.services?.visitPort || 3002}`,
-                reports: `http://localhost:${config.services?.reportsPort || 3003}`
+                base: `http://localhost:${config.services?.port || 3001}`
             };
         }
     }
@@ -132,18 +121,18 @@ class ConfigManager {
     // Validate client configuration
     async validateClientConfig() {
         const config = await this.loadConfig();
-        
+
         if (config.installationType !== 'client') {
             return { valid: true, message: 'Not a client installation' };
         }
 
-        const required = ['masterHost', 'patientServicePort', 'visitServicePort', 'reportsServicePort'];
+        const required = ['masterHost', 'servicePort'];
         const missing = required.filter(field => !config[field]);
 
         if (missing.length > 0) {
-            return { 
-                valid: false, 
-                message: `Missing client configuration: ${missing.join(', ')}` 
+            return {
+                valid: false,
+                message: `Missing client configuration: ${missing.join(', ')}`
             };
         }
 
@@ -153,14 +142,14 @@ class ConfigManager {
     // Update master host for client configurations
     async updateMasterHost(newHost) {
         const config = await this.loadConfig();
-        
+
         if (config.installationType === 'client') {
             config.masterHost = newHost;
             config.updatedAt = new Date().toISOString();
             await this.saveConfig(config);
             return true;
         }
-        
+
         return false;
     }
 
@@ -168,7 +157,7 @@ class ConfigManager {
     async getConfigSummary() {
         try {
             const config = await this.loadConfig();
-            
+
             return {
                 installationType: config.installationType,
                 setupComplete: config.setupComplete,
@@ -177,15 +166,12 @@ class ConfigManager {
                 ...(config.installationType === 'master' && {
                     hasDatabase: !!config.database,
                     hasServices: !!config.services,
-                    sharedFolderPath: config.sharedFolderPath
+                    sharedFolderPath: config.sharedFolderPath,
+                    installAsServices: config.installAsServices
                 }),
                 ...(config.installationType === 'client' && {
                     masterHost: config.masterHost,
-                    servicesPorts: {
-                        patient: config.patientServicePort,
-                        visit: config.visitServicePort,
-                        reports: config.reportsServicePort
-                    }
+                    servicePort: config.servicePort
                 })
             };
         } catch (error) {

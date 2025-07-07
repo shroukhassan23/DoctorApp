@@ -72,9 +72,7 @@ async function installServices() {
 
 
     const services = [
-      { name: 'DoctorApp-Patient', file: 'patient.cjs', port: 3001, displayName: 'DoctorApp Patient Service' },
-      { name: 'DoctorApp-Visit', file: 'visit.cjs', port: 3002, displayName: 'DoctorApp Visit Service' },
-      { name: 'DoctorApp-Reports', file: 'reports.cjs', port: 3003, displayName: 'DoctorApp Reports Service' }
+      { name: 'DoctorApp-Combined', file: 'combined-service.cjs', port: 3001, displayName: 'DoctorApp Combined Service' }
     ];
 
     debug(`Found ${services.length} services to install`);

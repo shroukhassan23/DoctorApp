@@ -54,10 +54,8 @@ async function uninstallServices() {
     debug('✅ NSSM found successfully');
     
     const services = [
-      { name: 'DoctorApp-Patient', displayName: 'DoctorApp Patient Service' },
-      { name: 'DoctorApp-Visit', displayName: 'DoctorApp Visit Service' },
-      { name: 'DoctorApp-Reports', displayName: 'DoctorApp Reports Service' }
-    ];
+    { name: 'DoctorApp-Combined', displayName: 'DoctorApp Combined Service' }
+];
 
     console.log('Stopping and uninstalling services...\n');
 
@@ -138,10 +136,8 @@ async function uninstallServices() {
 // Fallback uninstallation using just sc command
 async function uninstallWithSc() {
   const services = [
-    'DoctorApp-Patient',
-    'DoctorApp-Visit', 
-    'DoctorApp-Reports'
-  ];
+    'DoctorApp-Combined'
+];
   
   console.log('Using system sc command to uninstall services...\n');
   

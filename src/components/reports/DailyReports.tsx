@@ -12,6 +12,8 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import { searchText } from '@/lib/arabicUtils';
 import { SectionLoading, CardLoading } from '@/components/ui/loading-spinner';
+import { reportsTestUrl, reportsVisitStatsUrl, reportsVisitsUrl } from '@/components/constants.js';
+
 
 const API_BASE_URL = 'http://localhost:3003';
 
@@ -40,7 +42,7 @@ export const DailyReportsPage = () => {
   useEffect(() => {
     const testConnection = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/reports/test`);
+        const response = await fetch(reportsTestUrl);
         const data = await response.json();
         console.log('✅ Service connection test:', data);
       } catch (error) {
@@ -53,7 +55,7 @@ export const DailyReportsPage = () => {
   const { data: visitStats, isLoading: statsLoading, refetch, error: statsError } = useQuery({
     queryKey: ['visit-stats', fromDate, toDate],
     queryFn: async () => {
-      const url = `${API_BASE_URL}/reports/visit-stats?from=${fromDate}&to=${toDate}`;
+      const url = `${reportsVisitStatsUrl}?from=${fromDate}&to=${toDate}`;
       console.log('📊 Fetching visit stats from:', url);
       
       const response = await fetch(url);
@@ -71,7 +73,7 @@ export const DailyReportsPage = () => {
   const { data: visitDetails, isLoading: visitsLoading, refetch: refetchVisits, error: visitsError } = useQuery({
     queryKey: ['visit-details', fromDate, toDate, searchAllVisits],
     queryFn: async () => {
-      const url = `http://localhost:3003/reports/visits?from=${fromDate}&to=${toDate}`;
+      const url = `${reportsVisitsUrl}?from=${fromDate}&to=${toDate}`;
       console.log('📋 Fetching visit details from:', url);
 
       const response = await fetch(url);

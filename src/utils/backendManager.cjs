@@ -13,10 +13,8 @@ class BackendManager {
         // IMPORTANT: Only start services for MASTER installations
         if (installationType === 'client') {
             console.log('Client installation detected - not starting local services');
-            console.log('Client will connect to master services at:', {
-                patientService: `http://${config.masterHost}:${config.patientServicePort}`,
-                visitService: `http://${config.masterHost}:${config.visitServicePort}`,
-                reportsService: `http://${config.masterHost}:${config.reportsServicePort}`
+            console.log('Client will connect to master service at:', {
+                combinedService: `http://${config.masterHost}:${config.servicePort || 3001}`
             });
             return; // Clients don't run their own services!
         }
@@ -29,14 +27,9 @@ class BackendManager {
 
         console.log('Master installation detected - starting local services as regular processes');
 
-        const patientPort = config.services?.patientPort || 3001;
-        const visitPort = config.services?.visitPort || 3002;
-        const reportsPort = config.services?.reportsPort || 3003;
 
         const services = [
-            { name: 'patient', file: 'patient.cjs', port: patientPort },
-            { name: 'visit', file: 'visit.cjs', port: visitPort },
-            { name: 'reports', file: 'reports.cjs', port: reportsPort }
+            { name: 'combined', file: 'combined-service.cjs', port: 3001 }
         ];
 
         for (const service of services) {
@@ -344,9 +337,7 @@ class BackendManager {
         }
 
         const services = [
-            { name: 'patient', file: 'patient.cjs', port: 3001 },
-            { name: 'visit', file: 'visit.cjs', port: 3002 },
-            { name: 'reports', file: 'reports.cjs', port: 3003 }
+            { name: 'combined', file: 'combined-service.cjs', port: 3001 }
         ];
 
         const service = services.find(s => s.name === serviceName);
