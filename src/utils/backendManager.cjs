@@ -79,17 +79,20 @@ class BackendManager {
 
             console.log(`Found service file at: ${servicePath}`);
 
-            // FIXED: Set explicit database path for consistent location
-            const dbPath = this.getServiceDatabasePath(config);
-            const logDir = path.join(path.dirname(dbPath), 'logs');
+
+            const installPath = process.env.INSTALL_PATH || this.appPath || 'C:\\Program Files\\DoctorApp';
+            const dbPath = path.join(installPath, 'data', 'doctor-app.db');
+            const logDir = path.join(installPath, 'logs');
 
             const env = {
                 ...process.env,
                 DB_TYPE: 'sqlite',
-                DB_NAME: 'doctor',
-                DB_PATH: dbPath, // FIXED: Explicit path instead of using os.homedir()
-                LOG_DIR: logDir, // FIXED: Explicit log directory
-                SHARED_FOLDER_PATH: config.sharedFolderPath || '',
+                DB_PATH: dbPath,
+                LOG_DIR: logDir,
+                INSTALL_PATH: installPath,
+                CONFIG_DIR: path.join(installPath, 'config'),
+                UPLOAD_DIR: path.join(installPath, 'uploads'),
+                SHARED_FOLDER_PATH: config.sharedFolderPath || path.join(installPath, 'uploads'),
                 NODE_ENV: isDev ? 'development' : 'production',
                 PORT: service.port.toString(),
                 ELECTRON_DEV: process.env.ELECTRON_DEV || 'false'
@@ -233,12 +236,17 @@ class BackendManager {
             return process.env.DB_PATH;
         }
 
-        // Priority 2: Use application path
+        // Priority 2: Use installation path from config
+        if (config && config.installPath) {
+            return path.join(config.installPath, 'data', 'doctor-app.db');
+        }
+
+        // Priority 3: Use application path
         if (this.appPath) {
             return path.join(this.appPath, 'data', 'doctor-app.db');
         }
 
-        // Priority 3: Use executable directory
+        // Priority 4: Use executable directory
         const execDir = path.dirname(process.execPath);
         return path.join(execDir, 'data', 'doctor-app.db');
     }

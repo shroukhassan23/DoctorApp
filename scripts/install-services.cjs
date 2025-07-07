@@ -140,16 +140,18 @@ async function installServices() {
         // Set restart policy (restart on failure)
         execSync(`"${nssmPath}" set "${service.name}" AppRestartDelay 5000`, { encoding: 'utf8' });
 
-        // Set environment variables
+        const installPath = 'C:\\Program Files\\DoctorApp';
         const envVars = [
           'DB_TYPE=sqlite',
-          'DB_NAME=doctor',
-          `DB_PATH=${path.join(require('os').homedir(), 'AppData', 'Roaming', 'doctor-app-desktop', 'doctor-app.db')}`,
+          `DB_PATH=${path.join(installPath, 'data', 'doctor-app.db')}`,
+          `LOG_DIR=${path.join(installPath, 'logs')}`,
+          `INSTALL_PATH=${installPath}`,
+          `CONFIG_DIR=${path.join(installPath, 'config')}`,
+          `UPLOAD_DIR=${path.join(installPath, 'uploads')}`,
           'NODE_ENV=production',
           `PORT=${service.port}`,
           'ELECTRON_DEV=false'
         ];
-
         for (let i = 0; i < envVars.length; i++) {
           execSync(`"${nssmPath}" set "${service.name}" AppEnvironmentExtra "${envVars[i]}"`, { encoding: 'utf8' });
         }

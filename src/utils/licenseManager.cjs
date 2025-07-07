@@ -14,9 +14,14 @@ class LicenseManager {
     this.registryPath = 'HKCU\\Software\\DoctorApp';
   }
 
-  async initialize(appDataPath) {
-    this.configPath = path.join(appDataPath, 'license.dat');
+  async initialize(installPath) {
+    // Use installation directory config folder
+    this.configPath = path.join(installPath, 'config', 'license.dat');
     this.machineId = await getMachineId();
+    
+    // Ensure config directory exists
+    const configDir = path.dirname(this.configPath);
+    require('fs').mkdirSync(configDir, { recursive: true });
     
     // Initialize registry access for Windows
     if (this.isWindows) {

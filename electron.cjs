@@ -84,40 +84,54 @@ class DoctorApp {
 
   async initialize() {
     try {
-      // Set up app data directory - FIXED: Use explicit path for services
-      this.appDataPath = path.join(app.getPath('userData'));
-      await fs.mkdir(this.appDataPath, { recursive: true });
+      // Use installation directory instead of AppData
+      this.installPath = process.env.INSTALL_PATH || 'C:\\Program Files\\DoctorApp';
+      app.setPath('userData', this.installPath);
+      app.setPath('logs', path.join(this.installPath, 'logs'));
+      app.setPath('temp', path.join(this.installPath, 'temp'));
+      await fs.mkdir(this.installPath, { recursive: true });
 
-      // FIXED: Set database path in environment for consistency across all processes
-      const databasePath = path.join(this.appDataPath, 'doctor-app.db');
-      const logDir = path.join(this.appDataPath, 'logs');
+      // Create centralized directory structure
+      const directories = ['app', 'data', 'config', 'logs', 'uploads', 'backups', 'temp', 'services'];
+      for (const dir of directories) {
+        await fs.mkdir(path.join(this.installPath, dir), { recursive: true });
+      }
+
+      // Set paths in environment for consistency across all processes
+      const databasePath = path.join(this.installPath, 'data', 'doctor-app.db');
+      const logDir = path.join(this.installPath, 'logs');
+      const configDir = path.join(this.installPath, 'config');
 
       process.env.DB_PATH = databasePath;
       process.env.LOG_DIR = logDir;
+      process.env.INSTALL_PATH = this.installPath;
+      process.env.CONFIG_DIR = configDir;
 
       console.log('Set database path:', databasePath);
       console.log('Set log directory:', logDir);
+      console.log('Set loconfigg directory:', configDir);
 
       // Initialize logger with explicit log directory
-      this.logger = new Logger(this.appDataPath);
+      this.logger = new Logger(this.installPath);
       await this.logger.initialize();
 
       await this.logger.logSystemEvent('App initialization started');
 
       // Initialize license manager
-      await this.licenseManager.initialize(this.appDataPath);
+      await this.licenseManager.initialize(this.installPath);
       await this.logger.logSystemEvent('License manager initialized');
 
       // Initialize SQLite paths with explicit app data path
-      this.sqliteManager.initializePaths(this.appDataPath);
+      this.sqliteManager.initializePaths(this.installPath);
       await this.logger.logSystemEvent('SQLite paths initialized', {
         appPath: this.appDataPath,
         dbPath: databasePath
       });
 
       // Initialize other managers
-      this.configManager = new ConfigManager(this.appDataPath);
-      this.backendManager = new BackendManager(this.appDataPath); // Pass appDataPath instead of __dirname
+      this.configManager = new ConfigManager(this.installPath);
+      this.backendManager = new BackendManager(this.installPath);
+      this.logger = new Logger(this.installPath);
       await this.logger.logSystemEvent('Managers initialized');
 
       // Check if setup is complete

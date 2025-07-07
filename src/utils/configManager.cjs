@@ -2,8 +2,12 @@ const fs = require('fs');
 const path = require('path');
 
 class ConfigManager {
-    constructor(appDataPath) {
-        this.configPath = path.join(appDataPath, 'config.json');
+    constructor(installPath) {
+        // Use installation directory instead of AppData
+        this.configPath = path.join(installPath, 'config', 'app-config.json');
+        // Ensure config directory exists
+        const configDir = path.dirname(this.configPath);
+        require('fs').mkdirSync(configDir, { recursive: true });
     }
 
     async clearConfig() {

@@ -10,14 +10,15 @@ class SQLiteManager {
     this.logger = new SimpleFileLogger('sqlite-manager');
   }
 
-  initializePaths(appPath) {
+  initializePaths(installPath) {
     if (process.env.DB_PATH) {
       this.dbPath = process.env.DB_PATH;
       this.dataPath = path.dirname(this.dbPath);
-    } else if (appPath) {
-      this.dataPath = path.join(appPath, 'data');
+    } else if (installPath) {
+      this.dataPath = path.join(installPath, 'data');
       this.dbPath = path.join(this.dataPath, 'doctor-app.db');
     } else {
+      // Fallback: use executable directory
       const fallbackPath = path.join(path.dirname(process.execPath), 'data');
       this.dataPath = fallbackPath;
       this.dbPath = path.join(fallbackPath, 'doctor-app.db');

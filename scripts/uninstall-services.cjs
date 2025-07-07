@@ -23,18 +23,18 @@ function findProjectRoot(startPath) {
 async function uninstallServices() {
   try {
     const projectRoot = findProjectRoot(__dirname);
-    
+
     // Find NSSM executable
     const nssmPath = path.resolve(projectRoot, 'dist-installers', 'win-unpacked', 'resources', 'nssm.exe');
     debug(`Looking for NSSM at: ${nssmPath}`);
-    
+
     if (!fs.existsSync(nssmPath)) {
       // Try alternative paths if not found
       const altPaths = [
         path.resolve(process.cwd(), 'resources', 'nssm.exe'),
         path.resolve(__dirname, '..', 'resources', 'nssm.exe')
       ];
-      
+
       let found = false;
       for (const altPath of altPaths) {
         if (fs.existsSync(altPath)) {
@@ -43,58 +43,58 @@ async function uninstallServices() {
           break;
         }
       }
-      
+
       if (!found) {
         console.warn('⚠️ NSSM not found, trying to use system sc command instead...');
         await uninstallWithSc();
         return;
       }
     }
-    
+
     debug('✅ NSSM found successfully');
-    
+
     const services = [
-    { name: 'DoctorApp-Combined', displayName: 'DoctorApp Combined Service' }
-];
+      { name: 'DoctorApp-Combined', displayName: 'DoctorApp Combined Service' }
+    ];
 
     console.log('Stopping and uninstalling services...\n');
 
     for (const service of services) {
       debug(`\n=== Uninstalling ${service.displayName} ===`);
-      
+
       try {
         // Check if service exists
         debug(`Checking if service ${service.name} exists...`);
-        
+
         try {
           execSync(`sc.exe query "${service.name}"`, { encoding: 'utf8', stdio: 'pipe' });
           debug(`Service ${service.name} exists`);
-          
+
           // Stop the service first
           debug(`Stopping service: ${service.name}`);
           try {
             execSync(`"${nssmPath}" stop "${service.name}"`, { encoding: 'utf8', stdio: 'pipe' });
             debug(`✅ Service ${service.name} stopped`);
-            
+
             // Wait for service to fully stop
             await new Promise(resolve => setTimeout(resolve, 3000));
-            
+
           } catch (stopError) {
             debug(`Service ${service.name} was not running or already stopped`);
           }
-          
+
           // Remove the service
           debug(`Removing service: ${service.name}`);
           execSync(`"${nssmPath}" remove "${service.name}" confirm`, { encoding: 'utf8', stdio: 'pipe' });
           debug(`✅ Service ${service.name} removed successfully`);
-          
+
           console.log(`✅ ${service.displayName} uninstalled`);
-          
+
         } catch (queryError) {
           debug(`Service ${service.name} does not exist`);
           console.log(`ℹ️ ${service.displayName} was not installed`);
         }
-        
+
       } catch (error) {
         debug(`❌ Failed to uninstall ${service.name}: ${error.message}`);
         console.error(`❌ Failed to uninstall ${service.displayName}: ${error.message}`);
@@ -102,11 +102,11 @@ async function uninstallServices() {
     }
 
     console.log('\n=== Uninstallation Summary ===');
-    
+
     // Final verification - check if any services still exist
     debug('\nFinal verification...');
     let anyRemaining = false;
-    
+
     services.forEach(service => {
       try {
         execSync(`sc.exe query "${service.name}"`, { encoding: 'utf8', stdio: 'pipe' });
@@ -116,7 +116,7 @@ async function uninstallServices() {
         console.log(`✅ ${service.displayName}: Successfully removed`);
       }
     });
-    
+
     if (anyRemaining) {
       console.log('\n⚠️ Some services may still exist. You can manually remove them using:');
       console.log('1. Open Services (services.msc)');
@@ -126,7 +126,7 @@ async function uninstallServices() {
       console.log('\n✅ All services successfully uninstalled!');
       console.log('You can now run the app in regular process mode.');
     }
-    
+
   } catch (error) {
     debug(`Uninstallation failed: ${error.message}`);
     console.error('❌ Error uninstalling services:', error.message);
@@ -137,10 +137,10 @@ async function uninstallServices() {
 async function uninstallWithSc() {
   const services = [
     'DoctorApp-Combined'
-];
-  
+  ];
+
   console.log('Using system sc command to uninstall services...\n');
-  
+
   for (const serviceName of services) {
     try {
       // Stop service
@@ -151,16 +151,16 @@ async function uninstallWithSc() {
       } catch (stopError) {
         console.log(`${serviceName} was not running`);
       }
-      
+
       // Delete service
       execSync(`sc.exe delete "${serviceName}"`, { encoding: 'utf8', stdio: 'pipe' });
       console.log(`✅ Removed ${serviceName}`);
-      
+
     } catch (error) {
       console.log(`ℹ️ ${serviceName} was not installed or already removed`);
     }
   }
-  
+
   console.log('\n✅ Uninstallation completed using sc command');
 }
 

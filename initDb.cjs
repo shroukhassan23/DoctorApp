@@ -38,14 +38,29 @@ async function initDatabase(config = {}) {
     let appPath;
     let dbPath;
 
-    if (process.env.DB_PATH) {
+    if (process.env.INSTALL_PATH) {
+      // Priority 1: Installation directory
+      appPath = process.env.INSTALL_PATH;
+      dbPath = path.join(appPath, 'data', 'doctor-app.db');
+    } else if (process.env.DB_PATH) {
+      // Priority 2: Explicit DB path
       dbPath = process.env.DB_PATH;
-      appPath = path.dirname(dbPath);
+      appPath = path.dirname(path.dirname(dbPath)); // Go up to installation root
     } else if (process.env.ELECTRON_DEV === 'true') {
+      // Priority 3: Development mode
       appPath = process.cwd();
+      dbPath = path.join(appPath, 'data', 'doctor-app.db');
     } else {
-      appPath = process.resourcesPath || path.dirname(process.execPath);
+      // Priority 4: Fallback
+      appPath = 'C:\\Program Files\\DoctorApp';
+      dbPath = path.join(appPath, 'data', 'doctor-app.db');
     }
+
+    const dataDir = path.dirname(dbPath);
+    if (!require('fs').existsSync(dataDir)) {
+        require('fs').mkdirSync(dataDir, { recursive: true });
+    }
+
 
     console.log('initDb: Using app path:', appPath);
     console.log('initDb: Database path:', dbPath || 'Will be determined by SQLiteManager');

@@ -2,9 +2,9 @@ const fs = require('fs').promises;
 const path = require('path');
 
 class Logger {
-  constructor(appDataPath) {
-    this.appDataPath = appDataPath;
-    this.logFilePath = path.join(appDataPath, 'logs');
+  constructor(installPath) {
+    this.installPath = installPath;
+    this.logFilePath = path.join(installPath, 'logs');
     this.currentLogFile = null;
     this.maxLogSize = 10 * 1024 * 1024; // 10MB
     this.maxLogFiles = 5; // Keep last 5 log files

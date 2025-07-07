@@ -10,22 +10,21 @@ class SimpleFileLogger {
   }
 
   getDefaultLogDir() {
-    // FIXED: Use environment variable or explicit path instead of os.homedir()
+    // Use environment variable if set
     if (process.env.LOG_DIR) {
       return process.env.LOG_DIR;
     }
     
-    if (process.env.DB_PATH) {
-      // Use same directory as database but in a logs subfolder
-      const dbDir = path.dirname(process.env.DB_PATH);
-      return path.join(dbDir, 'logs');
+    // Use installation directory logs folder
+    if (process.env.INSTALL_PATH) {
+      return path.join(process.env.INSTALL_PATH, 'logs');
     }
     
     // Fallback: use executable directory
     const execDir = path.dirname(process.execPath);
     return path.join(execDir, 'logs');
   }
-
+  
   async initialize() {
     if (this.initialized) return;
     

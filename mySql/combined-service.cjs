@@ -51,13 +51,9 @@ const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         const { patientId } = req.params;
 
-        // Use data directory from environment or fallback
-        const baseDir = process.env.DB_PATH ?
-            path.dirname(process.env.DB_PATH) :
-            path.join(process.execPath ? path.dirname(process.execPath) : __dirname, 'data');
-
-        const uploadPath = path.join(baseDir, 'uploads', 'patients', patientId);
-
+        // Use installation directory uploads folder
+        const installPath = process.env.INSTALL_PATH || 'C:\\Program Files\\DoctorApp';
+        const uploadPath = path.join(installPath, 'uploads', 'patients', patientId);
         // Create directory if it doesn't exist
         fs.mkdirSync(uploadPath, { recursive: true });
         cb(null, uploadPath);
@@ -142,10 +138,8 @@ app.use((error, req, res, next) => {
 });
 
 
-const baseDir = process.env.DB_PATH ?
-    path.dirname(process.env.DB_PATH) :
-    path.join(process.execPath ? path.dirname(process.execPath) : __dirname, 'data');
-app.use('/uploads', express.static(path.join(baseDir, 'uploads')));
+const installPath = process.env.INSTALL_PATH || 'C:\\Program Files\\DoctorApp';
+app.use('/uploads', express.static(path.join(installPath, 'uploads')));
 
 
 // Add this debug endpoint to visit.cjs
