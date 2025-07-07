@@ -24,7 +24,16 @@ export interface LicenseStatus {
     mysqlPort: number;
     sharedFolderPath: string;
   }
-  
+  export interface ElectronAPI {
+  getLicenseInfo: () => Promise<LicenseStatus>;
+  activateLicense: (licenseKey: string) => Promise<void>;
+  ipcRenderer: {
+    on: (channel: string, listener: (...args: any[]) => void) => void;
+    once: (channel: string, listener: (...args: any[]) => void) => void;
+    removeAllListeners: (channel: string) => void;
+    invoke: (channel: string, ...args: any[]) => Promise<any>;
+  };
+}
   export interface ClientInstallationConfig extends DatabaseConfig {
     sharedFolderPath: string;
   }
@@ -41,7 +50,7 @@ export interface LicenseStatus {
         getLicenseInfo(): Promise<LicenseStatus>;
         activateLicense(licenseKey: string): Promise<void>;
         checkLicense(): Promise<LicenseStatus>;
-  
+  electron?: ElectronAPI;
         // Setup Management
         isSetupComplete(): Promise<boolean>;
         setupMasterInstallation(config: MasterInstallationConfig): Promise<{ success: boolean }>;

@@ -30,9 +30,6 @@ let logger;
 
         console.log("✅ Combined service database initialized.");
 
-        // Import all your existing routes from patient.cjs, visit.cjs, and reports.cjs here
-        // Just copy-paste the route definitions (app.get, app.post, etc.) from each file
-
         const PORT = process.env.PORT || 3001;
         app.listen(PORT, () => {
             console.log(`🚀 Combined service running at http://localhost:${PORT}`);
@@ -1190,6 +1187,7 @@ app.get('/patients/:patientId/files/:fileId/preview', async (req, res) => {
     const { patientId, fileId } = req.params;
 
     try {
+         await logger.info("try to file preview ");
         const [rows] = await db.query(
             'SELECT * FROM patient_files WHERE id = ? AND patient_id = ?',
             [fileId, patientId]
@@ -1201,7 +1199,7 @@ app.get('/patients/:patientId/files/:fileId/preview', async (req, res) => {
 
         const fileRecord = rows[0];
         const filePath = path.join(__dirname, 'uploads', fileRecord.file_path);
-
+  console.log("file path is "+filePath);
         // Check if file exists on disk
         if (!fs.existsSync(filePath)) {
             return res.status(404).json({ error: 'File not found on disk' });
@@ -1465,13 +1463,14 @@ app.get('/debug/test-db', async (req, res) => {
 });
 
 // Search Patients
-app.get('/Patients/search', async (req, res) => {
+app.get('/search/Patients/search', async (req, res) => {
     try {
+        console.log("🔍 Entered GET /Patients/search");
      await logger.info("🔍search", req.query);
 await logger.info("🔍 Entered GET /Patients/search", req.query);
         const { q } = req.query;
         await logger.info('Patient search initiated', { searchTerm: q });
-
+console.log('Patient search initiated');
         if (!q || q.trim().length === 0) {
             await logger.warn('Empty search query provided');
             return res.json([]);

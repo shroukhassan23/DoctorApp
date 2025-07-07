@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Search, Plus, User } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
-import { patientUrl } from '@/components/constants.js';
+import { searchPatientUrl } from '@/components/constants.js';
 
 interface PatientSearchBarProps {
   onPatientSelected: (patient: any) => void;
@@ -23,7 +23,7 @@ export const PatientSearchBar = ({ onPatientSelected, onAddNewPatient }: Patient
     queryFn: async () => {
       if (!searchTerm.trim()) return [];
       
-      const response = await fetch(`${patientUrl}/search?q=${encodeURIComponent(searchTerm)}`);
+      const response = await fetch(`${searchPatientUrl}?q=${encodeURIComponent(searchTerm)}`);
       if (!response.ok) throw new Error('Failed to search patients');
       return await response.json();
     },

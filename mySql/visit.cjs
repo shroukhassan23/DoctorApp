@@ -1216,22 +1216,27 @@ app.delete('/prescriptions/:id/imagingstudies', async (req, res) => {
 // File preview endpoint (serves file inline for preview)
 app.get('/patients/:patientId/files/:fileId/preview', async (req, res) => {
   const { patientId, fileId } = req.params;
-  
+  await logger.info("file prieview clicked");
   try {
+    await logger.info("try to file preview ");
+     console.log("try to file preview  ")
     const [rows] = await db.query(
       'SELECT * FROM patient_files WHERE id = ? AND patient_id = ?',
       [fileId, patientId]
     );
     
     if (rows.length === 0) {
+      await logger.info("filenot found ");
       return res.status(404).json({ error: 'File not found' });
     }
     
     const fileRecord = rows[0];
     const filePath = path.join(__dirname, 'uploads', fileRecord.file_path);
-    
+    console.log("file path is "+filePath)
     // Check if file exists on disk
     if (!fs.existsSync(filePath)) {
+       await logger.info("File not found on disk ");
+       console.log("File not found on disk ");
       return res.status(404).json({ error: 'File not found on disk' });
     }
     

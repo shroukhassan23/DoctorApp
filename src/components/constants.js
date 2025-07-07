@@ -35,6 +35,7 @@ const urls = getUrlsSync();
 // Patient Management APIs
 export const patientUrl = `${urls.base}/Patients`;
 export const editPatientUrl = (patientId) => `${urls.base}/Patients/${patientId}`;
+export const searchPatientUrl =`${urls.base}/search/Patients/search`;
 
 // Visit Management APIs 
 export const visitBaseUrl=`${urls.base}/Visits`; 
