@@ -15,12 +15,10 @@ const SetupWizard = ({ onSetupComplete }) => {
     // Master configuration
     sharedFolderPath: '',
     installAsServices: true,
-    
+
     // Client configuration (only needs master IP)
     masterHost: '192.168.1.100',
-    patientServicePort: '3001',
-    visitServicePort: '3002', 
-    reportsServicePort: '3003'
+    servicePort: '3001'
   });
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState(null);
@@ -38,7 +36,7 @@ const SetupWizard = ({ onSetupComplete }) => {
           return 'C:/DoctorApp/SharedFiles';
         }
       };
-    
+
       getDefaultPath().then(defaultPath => {
         setConfig(prev => ({
           ...prev,
@@ -57,20 +55,18 @@ const SetupWizard = ({ onSetupComplete }) => {
         // Test HTTP connection to master services
         const testResult = await window.electron.testMasterServices({
           masterHost: config.masterHost,
-          patientServicePort: config.patientServicePort,
-          visitServicePort: config.visitServicePort,
-          reportsServicePort: config.reportsServicePort
+          servicePort: config.servicePort || 3001
         });
 
         if (testResult.success) {
-          setTestResult({ 
-            success: true, 
-            message: `Successfully connected to master at ${config.masterHost}` 
+          setTestResult({
+            success: true,
+            message: `Successfully connected to master at ${config.masterHost}`
           });
         } else {
-          setTestResult({ 
-            success: false, 
-            message: `Connection failed: ${testResult.error}` 
+          setTestResult({
+            success: false,
+            message: `Connection failed: ${testResult.error}`
           });
         }
       } else {
@@ -90,10 +86,10 @@ const SetupWizard = ({ onSetupComplete }) => {
 
   const performInstallation = async () => {
     setInstalling(true);
-    
+
     try {
       console.log('DEBUG: About to install with config:', config);
-      
+
       if (installationType === 'master') {
         // Setup master with SQLite + services
         await window.electron.setupMasterInstallation({
@@ -104,9 +100,7 @@ const SetupWizard = ({ onSetupComplete }) => {
         // Setup client with master connection info
         await window.electron.setupClientConfiguration({
           masterHost: config.masterHost,
-          patientServicePort: config.patientServicePort,
-          visitServicePort: config.visitServicePort,
-          reportsServicePort: config.reportsServicePort
+          servicePort: config.servicePort || 3001
         });
       }
 
@@ -148,9 +142,9 @@ const SetupWizard = ({ onSetupComplete }) => {
             </Label>
           </div>
         </RadioGroup>
-        
-        <Button 
-          onClick={() => setStep(2)} 
+
+        <Button
+          onClick={() => setStep(2)}
           disabled={!installationType}
           className="w-full"
         >
@@ -168,48 +162,48 @@ const SetupWizard = ({ onSetupComplete }) => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-      {installationType === 'master' ? (
-  <>
-    <div className="space-y-2">
-      <Label htmlFor="sharedFolder">Shared Folder Path</Label>
-      <Input
-        id="sharedFolder"
-        value={config.sharedFolderPath}
-        onChange={(e) => setConfig(prev => ({ ...prev, sharedFolderPath: e.target.value }))}
-        placeholder="C:/DoctorApp/SharedFiles"
-      />
-      <div className="text-sm text-gray-500">
-        This folder will store uploaded files and backups
-      </div>
-    </div>
+        {installationType === 'master' ? (
+          <>
+            <div className="space-y-2">
+              <Label htmlFor="sharedFolder">Shared Folder Path</Label>
+              <Input
+                id="sharedFolder"
+                value={config.sharedFolderPath}
+                onChange={(e) => setConfig(prev => ({ ...prev, sharedFolderPath: e.target.value }))}
+                placeholder="C:/DoctorApp/SharedFiles"
+              />
+              <div className="text-sm text-gray-500">
+                This folder will store uploaded files and backups
+              </div>
+            </div>
 
-    <div className="flex items-center space-x-2">
-      <input
-        type="checkbox"
-        id="installAsServices"
-        checked={config.installAsServices || false}
-        onChange={(e) => setConfig(prev => ({ ...prev, installAsServices: e.target.checked }))}
-        className="rounded border-gray-300"
-      />
-      <Label htmlFor="installAsServices" className="text-sm">
-        Install as Windows Services (recommended for production)
-      </Label>
-    </div>
-    <div className="text-xs text-gray-500">
-      Services will start automatically with Windows and run in the background
-    </div>
-    
-    <Alert>
-      <AlertDescription>
-        Master installation will:
-        <ul className="list-disc list-inside mt-2 space-y-1">
-          <li>Setup SQLite database</li>
-          <li>Install 3 API services (ports 3001-3003)</li>
-          <li>Create shared storage folder</li>
-          {config.installAsServices && <li>Install services to run automatically with Windows</li>}
-        </ul>
-      </AlertDescription>
-    </Alert>
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="installAsServices"
+                checked={config.installAsServices || false}
+                onChange={(e) => setConfig(prev => ({ ...prev, installAsServices: e.target.checked }))}
+                className="rounded border-gray-300"
+              />
+              <Label htmlFor="installAsServices" className="text-sm">
+                Install as Windows Services (recommended for production)
+              </Label>
+            </div>
+            <div className="text-xs text-gray-500">
+              Services will start automatically with Windows and run in the background
+            </div>
+
+            <Alert>
+              <AlertDescription>
+                Master installation will:
+                <ul className="list-disc list-inside mt-2 space-y-1">
+                  <li>Setup SQLite database</li>
+                  <li>Install combined API service (port 3001)</li>
+                  <li>Create shared storage folder</li>
+                  {config.installAsServices && <li>Install services to run automatically with Windows</li>}
+                </ul>
+              </AlertDescription>
+            </Alert>
           </>
         ) : (
           <>
@@ -226,39 +220,22 @@ const SetupWizard = ({ onSetupComplete }) => {
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-2">
-              <div className="space-y-2">
-                <Label htmlFor="patientServicePort">Patient Port</Label>
-                <Input
-                  id="patientServicePort"
-                  value={config.patientServicePort}
-                  onChange={(e) => setConfig(prev => ({ ...prev, patientServicePort: e.target.value }))}
-                  placeholder="3001"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="visitServicePort">Visit Port</Label>
-                <Input
-                  id="visitServicePort"
-                  value={config.visitServicePort}
-                  onChange={(e) => setConfig(prev => ({ ...prev, visitServicePort: e.target.value }))}
-                  placeholder="3002"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="reportsServicePort">Reports Port</Label>
-                <Input
-                  id="reportsServicePort"
-                  value={config.reportsServicePort}
-                  onChange={(e) => setConfig(prev => ({ ...prev, reportsServicePort: e.target.value }))}
-                  placeholder="3003"
-                />
+            <div className="space-y-2">
+              <Label htmlFor="servicePort">Service Port</Label>
+              <Input
+                id="servicePort"
+                value={config.servicePort}
+                onChange={(e) => setConfig(prev => ({ ...prev, servicePort: e.target.value }))}
+                placeholder="3001"
+              />
+              <div className="text-sm text-gray-500">
+                Port number for the combined API service on master server
               </div>
             </div>
 
             <Alert>
               <AlertDescription>
-                Client installation will only setup the user interface. 
+                Client installation will only setup the user interface.
                 All data will be accessed from the master server.
               </AlertDescription>
             </Alert>
@@ -284,8 +261,8 @@ const SetupWizard = ({ onSetupComplete }) => {
           <Button variant="outline" onClick={() => setStep(1)} className="flex-1">
             Back
           </Button>
-          <Button 
-            onClick={testConnection} 
+          <Button
+            onClick={testConnection}
             disabled={testing}
             variant="outline"
             className="flex-1"
@@ -299,8 +276,8 @@ const SetupWizard = ({ onSetupComplete }) => {
               'Test Connection'
             )}
           </Button>
-          <Button 
-            onClick={() => setStep(3)} 
+          <Button
+            onClick={() => setStep(3)}
             disabled={!testResult?.success}
             className="flex-1"
           >
@@ -322,21 +299,19 @@ const SetupWizard = ({ onSetupComplete }) => {
           {installationType === 'master' ? (
             <>
               <p><strong>Shared Folder:</strong> {config.sharedFolderPath}</p>
-              <p><strong>Services:</strong> Will run on ports 3001, 3002, 3003</p>
+              <p><strong>Services:</strong> Will run on port 3001</p>
             </>
           ) : (
             <>
               <p><strong>Master Server:</strong> {config.masterHost}</p>
-              <p><strong>Patient Service:</strong> {config.masterHost}:{config.patientServicePort}</p>
-              <p><strong>Visit Service:</strong> {config.masterHost}:{config.visitServicePort}</p>
-              <p><strong>Reports Service:</strong> {config.masterHost}:{config.reportsServicePort}</p>
+              <p><strong>Service:</strong> {config.masterHost}:{config.servicePort || 3001}</p>
             </>
           )}
         </div>
 
         <Alert>
           <AlertDescription>
-            {installationType === 'master' 
+            {installationType === 'master'
               ? 'This will install SQLite database and API services on this machine.'
               : 'This will configure the application to connect to the master server.'
             }
@@ -347,8 +322,8 @@ const SetupWizard = ({ onSetupComplete }) => {
           <Button variant="outline" onClick={() => setStep(2)} className="flex-1">
             Back
           </Button>
-          <Button 
-            onClick={performInstallation} 
+          <Button
+            onClick={performInstallation}
             disabled={installing}
             className="flex-1"
           >

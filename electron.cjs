@@ -84,48 +84,62 @@ class DoctorApp {
 
   async initialize() {
     try {
-      // Set up app data directory - FIXED: Use explicit path for services
-      this.appDataPath = path.join(app.getPath('userData'));
-      await fs.mkdir(this.appDataPath, { recursive: true });
-  
-      // FIXED: Set database path in environment for consistency across all processes
-      const databasePath = path.join(this.appDataPath, 'doctor-app.db');
-      const logDir = path.join(this.appDataPath, 'logs');
-      
+      // Use installation directory instead of AppData
+      this.installPath = process.env.INSTALL_PATH || 'C:\\Program Files\\DoctorApp';
+      app.setPath('userData', this.installPath);
+      app.setPath('logs', path.join(this.installPath, 'logs'));
+      app.setPath('temp', path.join(this.installPath, 'temp'));
+      await fs.mkdir(this.installPath, { recursive: true });
+
+      // Create centralized directory structure
+      const directories = ['app', 'data', 'config', 'logs', 'uploads', 'backups', 'temp', 'services'];
+      for (const dir of directories) {
+        await fs.mkdir(path.join(this.installPath, dir), { recursive: true });
+      }
+
+      // Set paths in environment for consistency across all processes
+      const databasePath = path.join(this.installPath, 'data', 'doctor-app.db');
+      const logDir = path.join(this.installPath, 'logs');
+      const configDir = path.join(this.installPath, 'config');
+
       process.env.DB_PATH = databasePath;
       process.env.LOG_DIR = logDir;
-      
+      process.env.INSTALL_PATH = this.installPath;
+      process.env.CONFIG_DIR = configDir;
+
       console.log('Set database path:', databasePath);
       console.log('Set log directory:', logDir);
-  
+      console.log('Set loconfigg directory:', configDir);
+
       // Initialize logger with explicit log directory
-      this.logger = new Logger(this.appDataPath);
+      this.logger = new Logger(this.installPath);
       await this.logger.initialize();
-  
+
       await this.logger.logSystemEvent('App initialization started');
-  
+
       // Initialize license manager
-      await this.licenseManager.initialize(this.appDataPath);
+      await this.licenseManager.initialize(this.installPath);
       await this.logger.logSystemEvent('License manager initialized');
-  
+
       // Initialize SQLite paths with explicit app data path
-      this.sqliteManager.initializePaths(this.appDataPath);
-      await this.logger.logSystemEvent('SQLite paths initialized', { 
+      this.sqliteManager.initializePaths(this.installPath);
+      await this.logger.logSystemEvent('SQLite paths initialized', {
         appPath: this.appDataPath,
-        dbPath: databasePath 
+        dbPath: databasePath
       });
-  
+
       // Initialize other managers
-      this.configManager = new ConfigManager(this.appDataPath);
-      this.backendManager = new BackendManager(this.appDataPath); // Pass appDataPath instead of __dirname
+      this.configManager = new ConfigManager(this.installPath);
+      this.backendManager = new BackendManager(this.installPath);
+      this.logger = new Logger(this.installPath);
       await this.logger.logSystemEvent('Managers initialized');
-  
+
       // Check if setup is complete
       await this.checkSetupStatus();
-  
+
       // Set up IPC handlers
       this.setupIPCHandlers();
-  
+
       await this.logger.logSystemEvent('App initialization completed');
     } catch (error) {
       if (this.logger) {
@@ -135,7 +149,7 @@ class DoctorApp {
       throw error;
     }
   }
-  
+
 
   async checkSetupStatus() {
     try {
@@ -285,26 +299,26 @@ class DoctorApp {
     ipcMain.handle('setup-master-installation', async (event, config) => {
       try {
         await this.logger.logUserAction('Master installation setup started', { config });
-    
+
         console.log('DEBUG: Received config:', config);
         console.log('DEBUG: installAsServices value:', config.installAsServices);
         console.log('DEBUG: Platform:', process.platform);
-    
+
         // FIXED: Initialize SQLite with explicit path
         const databasePath = process.env.DB_PATH || path.join(this.appDataPath, 'doctor-app.db');
         this.sqliteManager.initializePaths(this.appDataPath);
-        
+
         // Start SQLite database
         await this.sqliteManager.startDatabase();
         await this.logger.logDatabaseOperation('SQLite database started', { dbPath: databasePath });
-    
+
         // Create shared folder
         await fs.mkdir(config.sharedFolderPath, { recursive: true });
         await this.logger.logSystemEvent('Shared folder created', { path: config.sharedFolderPath });
-    
+
         // Save configuration FIRST
         await this.saveSetupConfig('master', config);
-    
+
         // NEW: Install Windows services if requested
         if (config.installAsServices && process.platform === 'win32') {
           console.log('DEBUG: About to install Windows services');
@@ -325,7 +339,7 @@ class DoctorApp {
           await this.backendManager.startServices('master', fullConfig);
           await this.logger.logSystemEvent('Backend services started as regular processes');
         }
-    
+
         await this.logger.logUserAction('Master installation completed successfully');
         return { success: true };
       } catch (error) {
@@ -359,12 +373,7 @@ class DoctorApp {
         }
 
         // Save client configuration (no database needed)
-        await this.saveSetupConfig('client', {
-          masterHost: config.masterHost,
-          patientServicePort: config.patientServicePort,
-          visitServicePort: config.visitServicePort,
-          reportsServicePort: config.reportsServicePort
-        });
+        await this.saveSetupConfig('client', config);
 
         // DO NOT start backend services for clients!
         // Clients will use the master's services directly
@@ -501,15 +510,11 @@ class DoctorApp {
       try {
         await this.logger.logUserAction('Testing master services connection', config);
 
-        const { masterHost, patientServicePort, visitServicePort, reportsServicePort } = config;
+        const { masterHost } = config;
 
-        // Test each service endpoint
         const testUrls = [
-          `http://${masterHost}:${patientServicePort}/Patients`,
-          `http://${masterHost}:${visitServicePort}/Visittypes`,
-          `http://${masterHost}:${reportsServicePort}/reports/today`
+          `http://${masterHost}:${config.servicePort || 3001}/Patients`
         ];
-
         const testResults = [];
 
         for (let i = 0; i < testUrls.length; i++) {
@@ -574,13 +579,11 @@ class DoctorApp {
 
   async testMasterServices(config) {
     try {
-      const { masterHost, patientServicePort, visitServicePort, reportsServicePort } = config;
+      const { masterHost, servicePort = 3001 } = config;
 
       // Simple HTTP requests to test connectivity
       const testUrls = [
-        `http://${masterHost}:${patientServicePort}/Patients`,
-        `http://${masterHost}:${visitServicePort}/Visittypes`,
-        `http://${masterHost}:${reportsServicePort}/reports/today`
+        `http://${masterHost}:${config.servicePort || 3001}/Patients`
       ];
 
       for (const url of testUrls) {

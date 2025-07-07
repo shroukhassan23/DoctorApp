@@ -72,9 +72,7 @@ async function installServices() {
 
 
     const services = [
-      { name: 'DoctorApp-Patient', file: 'patient.cjs', port: 3001, displayName: 'DoctorApp Patient Service' },
-      { name: 'DoctorApp-Visit', file: 'visit.cjs', port: 3002, displayName: 'DoctorApp Visit Service' },
-      { name: 'DoctorApp-Reports', file: 'reports.cjs', port: 3003, displayName: 'DoctorApp Reports Service' }
+      { name: 'DoctorApp-Combined', file: 'combined-service.cjs', port: 3001, displayName: 'DoctorApp Combined Service' }
     ];
 
     debug(`Found ${services.length} services to install`);
@@ -142,16 +140,18 @@ async function installServices() {
         // Set restart policy (restart on failure)
         execSync(`"${nssmPath}" set "${service.name}" AppRestartDelay 5000`, { encoding: 'utf8' });
 
-        // Set environment variables
+        const installPath = 'C:\\Program Files\\DoctorApp';
         const envVars = [
           'DB_TYPE=sqlite',
-          'DB_NAME=doctor',
-          `DB_PATH=${path.join(require('os').homedir(), 'AppData', 'Roaming', 'doctor-app-desktop', 'doctor-app.db')}`,
+          `DB_PATH=${path.join(installPath, 'data', 'doctor-app.db')}`,
+          `LOG_DIR=${path.join(installPath, 'logs')}`,
+          `INSTALL_PATH=${installPath}`,
+          `CONFIG_DIR=${path.join(installPath, 'config')}`,
+          `UPLOAD_DIR=${path.join(installPath, 'uploads')}`,
           'NODE_ENV=production',
           `PORT=${service.port}`,
           'ELECTRON_DEV=false'
         ];
-
         for (let i = 0; i < envVars.length; i++) {
           execSync(`"${nssmPath}" set "${service.name}" AppEnvironmentExtra "${envVars[i]}"`, { encoding: 'utf8' });
         }

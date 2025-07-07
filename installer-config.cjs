@@ -1,67 +1,57 @@
-// installer-config.js
+// installer-config.cjs - Centralized SQLite Version (No Docker)
 const path = require('path');
 const fs = require('fs');
 const { execSync, spawn } = require('child_process');
 const os = require('os');
+
 class DoctorAppInstaller {
   constructor() {
     this.appName = 'DoctorApp';
     this.serviceName = 'DoctorAppService';
     this.installPath = process.env.PROGRAMFILES || 'C:\\Program Files';
     this.appPath = path.join(this.installPath, this.appName);
-    this.configPath = path.join(this.appPath, 'config');
-    this.logsPath = path.join(this.appPath, 'logs');
-    this.dockerPath = path.join(this.appPath, 'docker');
     
+    // Centralized directory structure
+    this.directories = {
+    app: path.join(this.appPath, 'app'),           // C:\Program Files\DoctorApp\app
+    data: path.join(this.appPath, 'data'),         // C:\Program Files\DoctorApp\data
+    config: path.join(this.appPath, 'config'),     // C:\Program Files\DoctorApp\config
+    logs: path.join(this.appPath, 'logs'),         // C:\Program Files\DoctorApp\logs
+    uploads: path.join(this.appPath, 'uploads'),   // C:\Program Files\DoctorApp\uploads
+    backups: path.join(this.appPath, 'backups'),   // C:\Program Files\DoctorApp\backups
+    temp: path.join(this.appPath, 'temp'),         // C:\Program Files\DoctorApp\temp
+    services: path.join(this.appPath, 'services')  // C:\Program Files\DoctorApp\services
+  };
+
     // Installation modes
     this.MODES = {
       SERVER: 'server',
       CLIENT: 'client',
       STANDALONE: 'standalone'
     };
-    
+
     this.config = {
       mode: this.MODES.STANDALONE,
       database: {
-        host: 'localhost',
-        port: 3307,
-        username: 'root',
-        password: this.generatePassword(),
-        database: 'doctor2',
-        rootPassword: this.generatePassword()
+        type: 'sqlite',
+        path: path.join(this.directories.data, 'doctor-app.db')
       },
       server: {
-        port: 3001,
-        patientServicePort: 3001,
-        visitServicePort: 3002
-      },
-      docker: {
-        containerName: 'doctorapp-mysql',
-        imageName: 'mysql:8.0',
-        volumeName: 'doctorapp-mysql-data',
-        networkName: 'doctorapp-network'
+        port: 3001
       }
     };
   }
 
-  generatePassword() {
-    return Math.random().toString(36).substring(2, 15) + 
-           Math.random().toString(36).substring(2, 15);
-  }
-
   async install(options = {}) {
     try {
-      console.log('🚀 Starting DoctorApp Installation...');
-      
+      console.log('🚀 Starting DoctorApp Installation (SQLite Edition)...');
+
       // Parse installation options
       this.parseOptions(options);
-      
-      // Check Docker availability
-      await this.checkOrInstallDockerSilently();
-      
-      // Create directory structure
+
+      // Create centralized directory structure
       await this.createDirectories();
-      
+
       // Install based on mode
       switch (this.config.mode) {
         case this.MODES.SERVER:
@@ -74,16 +64,16 @@ class DoctorAppInstaller {
           await this.installStandalone();
           break;
       }
-      
+
       // Create configuration files
       await this.createConfigFiles();
-      
+
       // Install and start services
       await this.installServices();
-      
+
       console.log('✅ Installation completed successfully!');
       await this.showInstallationSummary();
-      
+
     } catch (error) {
       console.error('❌ Installation failed:', error.message);
       await this.rollback();
@@ -95,357 +85,98 @@ class DoctorAppInstaller {
     if (options.mode) {
       this.config.mode = options.mode;
     }
-    
-    if (options.serverHost) {
-      this.config.database.host = options.serverHost;
-    }
-    
     if (options.serverPort) {
       this.config.server.port = options.serverPort;
     }
-    
-    if (options.dbPassword) {
-      this.config.database.password = options.dbPassword;
-    }
-    
-    if (options.dbRootPassword) {
-      this.config.database.rootPassword = options.dbRootPassword;
-    }
-    
     if (options.installPath) {
       this.installPath = options.installPath;
       this.appPath = path.join(this.installPath, this.appName);
+      this.updateDirectoryPaths();
     }
   }
 
-async  checkOrInstallDockerSilently() {
-  try {
-  
-    execSync('docker --version', { stdio: 'ignore' });
-    console.log('✅ Docker is already installed.');
-    return true;
-  } catch {
-    console.log('🚧 Docker not found. Installing silently...');
-
-    const dockerInstallerPath = path.resolve(__dirname, 'DockerInstaller.exe');
-
-    if (!fs.existsSync(dockerInstallerPath)) {
-      throw new Error('❌ Docker installer not found: ' + dockerInstallerPath);
-    }
-
-    // تثبيت Docker بصمت
-    await new Promise((resolve, reject) => {
-      const installer = spawn(dockerInstallerPath, ['install', '--quiet', '--accept-license'], {
-        detached: true,
-        stdio: 'ignore',
-        shell: true
-      });
-
-      installer.on('error', reject);
-      installer.on('exit', (code) => {
-        if (code === 0) {
-          console.log('✅ Docker installed successfully.');
-          resolve();
-        } else {
-          reject(new Error(`❌ Docker installation failed with code ${code}`));
-        }
-      });
+  updateDirectoryPaths() {
+    Object.keys(this.directories).forEach(key => {
+      this.directories[key] = path.join(this.appPath, key);
     });
+    this.config.database.path = path.join(this.directories.data, 'doctor-app.db');
+  }
 
-    // ننتظر Docker Desktop يفتح
-    console.log('🚀 Launching Docker Desktop...');
-    execSync('"C:\\Program Files\\Docker\\Docker\\Docker Desktop.exe"', { stdio: 'ignore' });
+  async createDirectories() {
+    console.log('📁 Creating centralized directory structure...');
 
-    // ننتظر Docker Daemon لحد ما يشتغل
-    let retries = 15;
-    while (retries-- > 0) {
+    // Create all directories
+    for (const [name, dirPath] of Object.entries(this.directories)) {
       try {
-        execSync('docker info', { stdio: 'ignore' });
-        console.log('✅ Docker is now running.');
-        return true;
-      } catch {
-        process.stdout.write('.');
-        await new Promise(res => setTimeout(res, 4000));
+        fs.mkdirSync(dirPath, { recursive: true });
+        console.log(`📁 Created: ${name} -> ${dirPath}`);
+      } catch (err) {
+        if (err.code === 'EPERM') {
+          throw new Error(`Permission denied creating directory: ${dirPath}. Please run as administrator.`);
+        }
+        throw err;
       }
     }
-
-    throw new Error('❌ Docker did not start in time.');
   }
-}
-
-async createDirectories() {
-  console.log('📁 Creating directory structure...');
-
-  // Default: C:\Program Files\DoctorApp
-  let basePath = this.appPath;
-
-  try {
-    // Try to make the base directory
-    fs.mkdirSync(basePath, { recursive: true });
-  } catch (err) {
-    if (err.code === 'EPERM') {
-      // Fallback to user directory
-      const fallbackPath = path.join(basePath, 'DoctorApp');
-      console.warn(`⚠️ Permission denied to "${basePath}". Falling back to: "${fallbackPath}"`);
-      basePath = fallbackPath;
-      this.appPath = basePath;
-      this.configPath = path.join(basePath, 'config');
-      this.logsPath = path.join(basePath, 'logs');
-      this.dockerPath = path.join(basePath, 'docker');
-    } else {
-      throw err;
-    }
-  }
-
-  // Create the rest of the directories
-  const directories = [
-    this.appPath,
-    this.configPath,
-    this.logsPath,
-    this.dockerPath,
-    path.join(this.appPath, 'services'),
-    path.join(this.appPath, 'app'),
-    path.join(this.appPath, 'temp')
-  ];
-
-  for (const dir of directories) {
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-      console.log(`📁 Created: ${dir}`);
-    }
-  }
-}
-
 
   async installServer() {
-    console.log('🗄️ Installing Server Configuration...');
-    
-    // Setup Docker MySQL
-    await this.setupDockerMySQL();
-    
-    // Copy application files
+    console.log('🗄️ Installing Server Configuration (SQLite)...');
     await this.copyApplicationFiles();
-    
-    // Install Node.js services
     await this.installNodeServices();
-    
-    // Setup database
-    await this.setupDatabase();
+    await this.setupSQLiteDatabase();
   }
 
   async installClient() {
     console.log('💻 Installing Client Configuration...');
-    
-    // Copy application files (client only)
     await this.copyApplicationFiles();
-    
-    // Create client configuration
     await this.createClientConfig();
   }
 
   async installStandalone() {
-    console.log('🖥️ Installing Standalone Configuration...');
-    
-    // Setup Docker MySQL
-    await this.setupDockerMySQL();
-    
-    // Copy application files
+    console.log('🖥️ Installing Standalone Configuration (SQLite)...');
     await this.copyApplicationFiles();
-    
-    // Install Node.js services
     await this.installNodeServices();
-    
-    // Setup database
-    await this.setupDatabase();
+    await this.setupSQLiteDatabase();
   }
 
-  async setupDockerMySQL() {
-    console.log('🐳 Setting up MySQL with Docker...');
+  async setupSQLiteDatabase() {
+    console.log('🗄️ Setting up SQLite database...');
     
     try {
-      // Create Docker network
-      await this.createDockerNetwork();
+      // Copy schema file to data directory
+      const sourceSqlPath = path.join(process.cwd(), 'dump.sql');
+      const targetSqlPath = path.join(this.directories.data, 'schema.sql');
       
-      // Create Docker volume for data persistence
-      await this.createDockerVolume();
-      
-      // Create Docker Compose file
-      await this.createDockerComposeFile();
-      
-      // Start MySQL container
-      await this.startMySQLContainer();
-      
-      console.log('✅ Docker MySQL setup completed');
-      
+      if (fs.existsSync(sourceSqlPath)) {
+        fs.copyFileSync(sourceSqlPath, targetSqlPath);
+        console.log('✅ Database schema prepared');
+      } else {
+        console.warn('⚠️ No schema file found - database will be created when first accessed');
+      }
+
     } catch (error) {
-      console.error('Docker MySQL setup failed:', error);
+      console.error('SQLite setup failed:', error);
       throw error;
     }
   }
 
-  async createDockerNetwork() {
-    console.log('Creating Docker network...');
-    
-    try {
-      // Check if network already exists
-      execSync(`docker network inspect ${this.config.docker.networkName}`, { stdio: 'ignore' });
-      console.log('Docker network already exists');
-    } catch {
-      // Create network if it doesn't exist
-      execSync(`docker network create ${this.config.docker.networkName}`, { stdio: 'pipe' });
-      console.log('✅ Docker network created');
-    }
-  }
-
-  async createDockerVolume() {
-    console.log('Creating Docker volume...');
-    
-    try {
-      // Check if volume already exists
-      execSync(`docker volume inspect ${this.config.docker.volumeName}`, { stdio: 'ignore' });
-      console.log('Docker volume already exists');
-    } catch {
-      // Create volume if it doesn't exist
-      execSync(`docker volume create ${this.config.docker.volumeName}`, { stdio: 'pipe' });
-      console.log('✅ Docker volume created');
-    }
-  }
-
-  async createDockerComposeFile() {
-    console.log('Creating Docker Compose file...');
-    
-    const dockerComposeContent = `
-version: '3.8'
-
-services:
-  mysql:
-    image: ${this.config.docker.imageName}
-    container_name: ${this.config.docker.containerName}
-    restart: unless-stopped
-    environment:
-      MYSQL_ROOT_PASSWORD: ${this.config.database.rootPassword}
-      MYSQL_DATABASE: ${this.config.database.database}
-      MYSQL_USER: ${this.config.database.username}
-      MYSQL_PASSWORD: ${this.config.database.password}
-      MYSQL_ROOT_HOST: '%'
-    ports:
-      - "${this.config.database.port}:3306"
-    volumes:
-      - ${this.config.docker.volumeName}:/var/lib/mysql
-      - ./mysql-init:/docker-entrypoint-initdb.d
-    networks:
-      - ${this.config.docker.networkName}
-    command: --default-authentication-plugin=mysql_native_password
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${this.config.database.rootPassword}"]
-      timeout: 20s
-      retries: 10
-
-networks:
-  ${this.config.docker.networkName}:
-    external: true
-
-volumes:
-  ${this.config.docker.volumeName}:
-    external: true
-    `;
-    
-    fs.writeFileSync(
-      path.join(this.dockerPath, 'docker-compose.yml'),
-      dockerComposeContent.trim()
-    );
-    
-    // Create MySQL initialization directory
-    const mysqlInitDir = path.join(this.dockerPath, 'mysql-init');
-    if (!fs.existsSync(mysqlInitDir)) {
-      fs.mkdirSync(mysqlInitDir, { recursive: true });
-    }
-    
-    // Create init script for additional setup
-    const initScript = `
--- Additional MySQL initialization if needed
--- This script runs when the container is first created
-FLUSH PRIVILEGES;
-    `;
-    
-    fs.writeFileSync(
-      path.join(mysqlInitDir, '01-init.sql'),
-      initScript.trim()
-    );
-    
-    console.log('✅ Docker Compose file created');
-  }
-
-  async startMySQLContainer() {
-    console.log('Starting MySQL container...');
-    
-    try {
-      // Stop existing container if running
-      try {
-        execSync(`docker stop ${this.config.docker.containerName}`, { stdio: 'ignore' });
-        execSync(`docker rm ${this.config.docker.containerName}`, { stdio: 'ignore' });
-      } catch {
-        // Container doesn't exist, continue
-      }
-      
-      // Start container using docker-compose
-      execSync('docker-compose up -d', {
-        cwd: this.dockerPath,
-        stdio: 'pipe'
-      });
-      
-      console.log('✅ MySQL container started');
-      
-      // Wait for MySQL to be ready
-      await this.waitForMySQLContainer();
-      
-    } catch (error) {
-      throw new Error(`Failed to start MySQL container: ${error.message}`);
-    }
-  }
-
-  async waitForMySQLContainer(maxRetries = 30) {
-    console.log('Waiting for MySQL container to be ready...');
-    
-    for (let i = 0; i < maxRetries; i++) {
-      try {
-        // Check container health
-        const healthCheck = execSync(
-          `docker exec ${this.config.docker.containerName} mysqladmin ping -h localhost -u root -p${this.config.database.rootPassword}`,
-          { stdio: 'pipe' }
-        );
-        
-        if (healthCheck.toString().includes('mysqld is alive')) {
-          console.log('✅ MySQL container is ready!');
-          return;
-        }
-      } catch {
-        console.log(`Waiting for MySQL container... (${i + 1}/${maxRetries})`);
-        await new Promise(resolve => setTimeout(resolve, 3000));
-      }
-    }
-    
-    throw new Error('MySQL container failed to start within timeout period');
-  }
-
   async copyApplicationFiles() {
     console.log('📋 Copying application files...');
-    
-    const sourceDir = process.cwd(); // Assuming installer runs from app directory
-    const targetDir = path.join(this.appPath, 'app');
-    
-    // Copy built application files
+
+    const sourceDir = process.cwd();
+    const targetDir = this.directories.app;
+
     const filesToCopy = [
       'dist-electron',
       'app_dist',
       'package.json',
       'dump.sql'
     ];
-    
+
     for (const file of filesToCopy) {
       const sourcePath = path.join(sourceDir, file);
       const targetPath = path.join(targetDir, file);
-      
+
       if (fs.existsSync(sourcePath)) {
         await this.copyRecursive(sourcePath, targetPath);
         console.log(`Copied: ${file}`);
@@ -455,12 +186,12 @@ FLUSH PRIVILEGES;
 
   async copyRecursive(src, dest) {
     const stat = fs.statSync(src);
-    
+
     if (stat.isDirectory()) {
       if (!fs.existsSync(dest)) {
         fs.mkdirSync(dest, { recursive: true });
       }
-      
+
       const files = fs.readdirSync(src);
       for (const file of files) {
         await this.copyRecursive(
@@ -475,348 +206,192 @@ FLUSH PRIVILEGES;
 
   async installNodeServices() {
     console.log('⚙️ Installing Node.js services...');
-    
-    // Create service wrapper scripts
     await this.createServiceWrappers();
-    
-    // Install services using NSSM (Non-Sucking Service Manager) or similar
     await this.installWindowsServices();
   }
 
   async createServiceWrappers() {
-    const serviceDir = path.join(this.appPath, 'services');
-    
-    // Patient service wrapper
-    const patientServiceScript = `
+    const serviceDir = this.directories.services;
+
+    const combinedServiceScript = `
 const path = require('path');
 const { spawn } = require('child_process');
 
-const appPath = '${this.appPath.replace(/\\/g, '\\\\')}';
-const servicePath = path.join(appPath, 'app', 'patient.cjs');
+const installPath = '${this.appPath.replace(/\\/g, '\\\\')}';
+const servicePath = path.join(installPath, 'app', 'combined-service.cjs');
 
-console.log('Starting Patient Service...');
+console.log('Starting DoctorApp Combined Service...');
 console.log('Service path:', servicePath);
 
 const service = spawn('node', [servicePath], {
-  cwd: path.join(appPath, 'app'),
+  cwd: path.join(installPath, 'app'),
   stdio: ['pipe', 'pipe', 'pipe'],
   env: {
     ...process.env,
     NODE_ENV: 'production',
-    DB_HOST: '${this.config.database.host}',
-    DB_PORT: '${this.config.database.port}',
-    DB_USER: '${this.config.database.username}',
-    DB_PASSWORD: '${this.config.database.password}',
-    DB_NAME: '${this.config.database.database}'
+    DB_TYPE: 'sqlite',
+    DB_PATH: path.join(installPath, 'data', 'doctor-app.db'),
+    LOG_DIR: path.join(installPath, 'logs'),
+    INSTALL_PATH: installPath,
+    PORT: '${this.config.server.port}'
   }
 });
 
 service.stdout.on('data', (data) => {
-  console.log('STDOUT:', data.toString());
+  console.log('SERVICE:', data.toString());
 });
 
 service.stderr.on('data', (data) => {
-  console.error('STDERR:', data.toString());
+  console.error('SERVICE ERROR:', data.toString());
 });
 
 service.on('close', (code) => {
-  console.log('Patient Service exited with code:', code);
+  console.log('Service exited with code:', code);
   if (code !== 0) {
     setTimeout(() => {
-      console.log('Restarting Patient Service...');
-      // Restart logic here
+      console.log('Restarting service...');
     }, 5000);
   }
 });
 
 process.on('SIGTERM', () => {
-  console.log('Stopping Patient Service...');
+  console.log('Stopping service...');
   service.kill('SIGTERM');
 });
     `;
-    
+
     fs.writeFileSync(
-      path.join(serviceDir, 'patient-service.js'),
-      patientServiceScript
-    );
-    
-    // Similar for visit service (port 3002)
-    const visitServiceScript = patientServiceScript.replace(/Patient/g, 'Visit')
-      .replace(/patient\.cjs/g, 'visit.cjs')
-      .replace(/3001/g, '3002');
-    
-    fs.writeFileSync(
-      path.join(serviceDir, 'visit-service.js'),
-      visitServiceScript
+      path.join(serviceDir, 'combined-service.js'),
+      combinedServiceScript
     );
   }
 
   async installWindowsServices() {
-    console.log('Installing Windows services...');
+    console.log('Installing Windows service...');
     
-    const serviceConfigs = [
-      {
-        name: 'DoctorApp-Patient',
-        displayName: 'Doctor App - Patient Service',
-        script: path.join(this.appPath, 'services', 'patient-service.js'),
-        port: this.config.server.patientServicePort
-      },
-      {
-        name: 'DoctorApp-Visit',
-        displayName: 'Doctor App - Visit Service',
-        script: path.join(this.appPath, 'services', 'visit-service.js'),
-        port: this.config.server.visitServicePort
-      }
-    ];
+    const serviceConfig = {
+      name: 'DoctorApp-Combined',
+      displayName: 'Doctor App - Combined Service',
+      script: path.join(this.directories.services, 'combined-service.js'),
+      port: this.config.server.port
+    };
     
-    for (const service of serviceConfigs) {
-      const batchScript = `
+    const batchScript = `
 @echo off
 cd /d "${this.appPath}"
-node "${service.script}"
-      `;
-      
-      const batchPath = path.join(this.appPath, 'services', `${service.name}.bat`);
-      fs.writeFileSync(batchPath, batchScript);
-      
-      try {
-        // Create Windows service using sc command
-        const createServiceCmd = `sc create "${service.name}" binPath= "${batchPath}" DisplayName= "${service.displayName}" start= auto`;
-        execSync(createServiceCmd, { stdio: 'pipe' });
-        
-        // Start the service
-        execSync(`sc start "${service.name}"`, { stdio: 'pipe' });
-        
-        console.log(`✅ Service ${service.name} installed and started`);
-      } catch (error) {
-        console.warn(`⚠️ Failed to install service ${service.name}:`, error.message);
-      }
-    }
-  }
-
-  async setupDatabase() {
-    console.log('🗄️ Setting up database...');
+node "${serviceConfig.script}"
+    `;
+    
+    const batchPath = path.join(this.directories.services, `${serviceConfig.name}.bat`);
+    fs.writeFileSync(batchPath, batchScript);
     
     try {
-      // Import schema using Docker
-      await this.importDatabaseSchema();
+      const createServiceCmd = `sc create "${serviceConfig.name}" binPath= "${batchPath}" DisplayName= "${serviceConfig.displayName}" start= auto`;
+      execSync(createServiceCmd, { stdio: 'pipe' });
       
-      console.log('✅ Database setup completed');
+      execSync(`sc start "${serviceConfig.name}"`, { stdio: 'pipe' });
+      
+      console.log(`✅ Service ${serviceConfig.name} installed and started`);
     } catch (error) {
-      console.error('Database setup failed:', error);
+      console.warn(`⚠️ Failed to install service ${serviceConfig.name}:`, error.message);
       throw error;
-    }
-  }
-
-  async importDatabaseSchema() {
-    console.log('Importing database schema...');
-    
-    const dumpPath = path.join(this.appPath, 'app', 'dump.sql');
-    
-    if (fs.existsSync(dumpPath)) {
-      try {
-        // Copy dump file to container and import
-        const containerDumpPath = '/tmp/dump.sql';
-        
-        // Copy file to container
-        execSync(`docker cp "${dumpPath}" ${this.config.docker.containerName}:${containerDumpPath}`, 
-                { stdio: 'pipe' });
-        
-        // Import database schema
-        const importCmd = `docker exec ${this.config.docker.containerName} mysql -u${this.config.database.username} -p${this.config.database.password} ${this.config.database.database} < ${containerDumpPath}`;
-        execSync(importCmd, { stdio: 'pipe' });
-        
-        console.log('✅ Database schema imported successfully');
-      } catch (error) {
-        throw new Error(`Failed to import database schema: ${error.message}`);
-      }
-    } else {
-      throw new Error(`Database dump file not found: ${dumpPath}`);
     }
   }
 
   async createConfigFiles() {
     console.log('📝 Creating configuration files...');
-    
+
     // Main application config
     const appConfig = {
       mode: this.config.mode,
       database: {
-        ...this.config.database,
-        // Don't expose root password in app config
-        rootPassword: undefined
+        type: 'sqlite',
+        path: this.config.database.path
       },
       server: this.config.server,
-      docker: this.config.docker,
-      paths: {
-        app: this.appPath,
-        config: this.configPath,
-        logs: this.logsPath,
-        docker: this.dockerPath
-      },
+      paths: this.directories,
       version: '1.0.0',
       installDate: new Date().toISOString()
     };
-    
+
     fs.writeFileSync(
-      path.join(this.configPath, 'app-config.json'),
+      path.join(this.directories.config, 'app-config.json'),
       JSON.stringify(appConfig, null, 2)
     );
-    
-    // Database configuration for Node.js services
-    const dbConfig = {
-      host: this.config.database.host,
-      port: this.config.database.port,
-      user: this.config.database.username,
-      password: this.config.database.password,
-      database: this.config.database.database,
-      charset: 'utf8mb4',
-      timezone: 'local'
-    };
-    
-    fs.writeFileSync(
-      path.join(this.configPath, 'database.json'),
-      JSON.stringify(dbConfig, null, 2)
-    );
-    
-    // Create environment file
+
+    // Environment file
     const envConfig = `
 NODE_ENV=production
-DB_HOST=${this.config.database.host}
-DB_PORT=${this.config.database.port}
-DB_USER=${this.config.database.username}
-DB_PASSWORD=${this.config.database.password}
-DB_NAME=${this.config.database.database}
+DB_TYPE=sqlite
+DB_PATH=${this.config.database.path}
+LOG_DIR=${this.directories.logs}
+INSTALL_PATH=${this.appPath}
 SERVER_PORT=${this.config.server.port}
-PATIENT_SERVICE_PORT=${this.config.server.patientServicePort}
-VISIT_SERVICE_PORT=${this.config.server.visitServicePort}
-APP_PATH=${this.appPath}
-DOCKER_CONTAINER_NAME=${this.config.docker.containerName}
     `;
-    
-    fs.writeFileSync(path.join(this.configPath, '.env'), envConfig.trim());
-    
-    // Create Docker management scripts
-    await this.createDockerManagementScripts();
+
+    fs.writeFileSync(path.join(this.directories.config, '.env'), envConfig.trim());
+
+    // Create management scripts
+    await this.createManagementScripts();
   }
 
-  async createDockerManagementScripts() {
-    console.log('Creating Docker management scripts...');
-    
-    // Start script
-    const startScript = `
-@echo off
-echo Starting DoctorApp MySQL Database...
-cd /d "${this.dockerPath}"
-docker-compose up -d
-echo MySQL database started successfully!
-pause
-    `;
-    
-    fs.writeFileSync(
-      path.join(this.appPath, 'start-database.bat'),
-      startScript
-    );
-    
-    // Stop script
-    const stopScript = `
-@echo off
-echo Stopping DoctorApp MySQL Database...
-cd /d "${this.dockerPath}"
-docker-compose down
-echo MySQL database stopped successfully!
-pause
-    `;
-    
-    fs.writeFileSync(
-      path.join(this.appPath, 'stop-database.bat'),
-      stopScript
-    );
-    
-    // Restart script
-    const restartScript = `
-@echo off
-echo Restarting DoctorApp MySQL Database...
-cd /d "${this.dockerPath}"
-docker-compose down
-docker-compose up -d
-echo MySQL database restarted successfully!
-pause
-    `;
-    
-    fs.writeFileSync(
-      path.join(this.appPath, 'restart-database.bat'),
-      restartScript
-    );
-    
+  async createManagementScripts() {
+    console.log('Creating management scripts...');
+
     // Backup script
     const backupScript = `
 @echo off
-set BACKUP_DIR="${this.appPath}\\backups"
-set BACKUP_FILE=%BACKUP_DIR%\\backup_%date:~-4,4%%date:~-10,2%%date:~-7,2%_%time:~0,2%%time:~3,2%%time:~6,2%.sql
+set BACKUP_DIR="${this.directories.backups}"
+set BACKUP_FILE=%BACKUP_DIR%\\backup_%date:~-4,4%%date:~-10,2%%date:~-7,2%_%time:~0,2%%time:~3,2%%time:~6,2%.db
 if not exist "%BACKUP_DIR%" mkdir "%BACKUP_DIR%"
 echo Creating database backup...
-docker exec ${this.config.docker.containerName} mysqldump -u${this.config.database.username} -p${this.config.database.password} ${this.config.database.database} > "%BACKUP_FILE%"
+copy "${this.config.database.path}" "%BACKUP_FILE%"
 echo Backup created: %BACKUP_FILE%
 pause
     `;
-    
+
     fs.writeFileSync(
       path.join(this.appPath, 'backup-database.bat'),
       backupScript
     );
-    
-    console.log('✅ Docker management scripts created');
+
+    console.log('✅ Management scripts created');
   }
 
   async createClientConfig() {
     console.log('📝 Creating client configuration...');
-    
+
     const clientConfig = {
       mode: 'client',
-      serverUrl: `http://${this.config.database.host}:${this.config.server.patientServicePort}`,
-      visitServiceUrl: `http://${this.config.database.host}:${this.config.server.visitServicePort}`,
+      serverUrl: `http://localhost:${this.config.server.port}`,
       version: '1.0.0',
       installDate: new Date().toISOString()
     };
-    
+
     fs.writeFileSync(
-      path.join(this.configPath, 'client-config.json'),
+      path.join(this.directories.config, 'client-config.json'),
       JSON.stringify(clientConfig, null, 2)
     );
   }
 
   async installServices() {
     console.log('⚙️ Installing application services...');
-    
-    // Create desktop shortcut
     await this.createDesktopShortcut();
-    
-    // Create start menu entry
     await this.createStartMenuEntry();
-    
-    // Set up auto-start if needed
-    if (this.config.mode === 'server' || this.config.mode === 'standalone') {
-      await this.setupAutoStart();
-    }
   }
 
   async createDesktopShortcut() {
     const desktopPath = path.join(os.homedir(), 'Desktop');
-    const shortcutPath = path.join(desktopPath, 'DoctorApp.lnk');
-    const exePath = path.join(this.appPath, 'app', 'dist-electron', 'DoctorApp.exe');
-    
-    // Create a simple batch file to launch the app
     const launcherPath = path.join(this.appPath, 'DoctorApp-Launcher.bat');
+    const exePath = path.join(this.directories.app, 'dist-electron', 'DoctorApp.exe');
+
     const launcherScript = `
 @echo off
-cd /d "${this.appPath}\\app"
+cd /d "${this.directories.app}"
 start "" "${exePath}"
     `;
-    
+
     fs.writeFileSync(launcherPath, launcherScript);
-    
-    // Note: In a real implementation, you'd use a proper shortcut creation method
     console.log('✅ Desktop shortcut created');
   }
 
@@ -829,40 +404,12 @@ start "" "${exePath}"
       'Programs',
       'DoctorApp'
     );
-    
+
     if (!fs.existsSync(startMenuPath)) {
       fs.mkdirSync(startMenuPath, { recursive: true });
     }
-    
-    console.log('✅ Start menu entry created');
-  }
 
-  async setupAutoStart() {
-    console.log('Setting up auto-start...');
-    
-    // Add to Windows startup (registry or startup folder)
-    const startupPath = path.join(
-      process.env.APPDATA,
-      'Microsoft',
-      'Windows',
-      'Start Menu',
-      'Programs',
-      'Startup'
-    );
-    
-    const startupScript = path.join(startupPath, 'DoctorApp.bat');
-    const scriptContent = `
-@echo off
-timeout /t 10 /nobreak > nul
-cd /d "${this.dockerPath}"
-docker-compose up -d
-timeout /t 15 /nobreak > nul
-cd /d "${this.appPath}"
-start "" "${this.appPath}\\DoctorApp-Launcher.bat"
-    `;
-    
-    fs.writeFileSync(startupScript, scriptContent);
-    console.log('✅ Auto-start configured');
+    console.log('✅ Start menu entry created');
   }
 
   async showInstallationSummary() {
@@ -871,67 +418,30 @@ start "" "${this.appPath}\\DoctorApp-Launcher.bat"
     console.log('='.repeat(50));
     console.log(`Installation Mode: ${this.config.mode.toUpperCase()}`);
     console.log(`Installation Path: ${this.appPath}`);
-    
-    if (this.config.mode !== 'client') {
-      console.log(`Database Host: ${this.config.database.host}:${this.config.database.port}`);
-      console.log(`Database Name: ${this.config.database.database}`);
-      console.log(`Database User: ${this.config.database.username}`);
-      console.log(`Docker Container: ${this.config.docker.containerName}`);
-      console.log(`Patient Service: http://localhost:${this.config.server.patientServicePort}`);
-      console.log(`Visit Service: http://localhost:${this.config.server.visitServicePort}`);
-    }
-    
+    console.log(`Database: SQLite at ${this.config.database.path}`);
+    console.log(`Service Port: ${this.config.server.port}`);
+
     console.log('\n📋 Next Steps:');
     console.log('1. Launch DoctorApp from Desktop shortcut');
-    console.log('2. Configure any additional settings in the application');
-    
-    if (this.config.mode === 'server') {
-      console.log('3. Share server details with client installations');
-      console.log(`   Server IP: ${await this.getLocalIP()}`);
-      console.log(`   Patient Service Port: ${this.config.server.patientServicePort}`);
-      console.log(`   Visit Service Port: ${this.config.server.visitServicePort}`);
-    }
-    
-    console.log('\n🐳 Docker Management:');
-    console.log(`- Start Database: ${path.join(this.appPath, 'start-database.bat')}`);
-    console.log(`- Stop Database: ${path.join(this.appPath, 'stop-database.bat')}`);
-    console.log(`- Restart Database: ${path.join(this.appPath, 'restart-database.bat')}`);
-    console.log(`- Backup Database: ${path.join(this.appPath, 'backup-database.bat')}`);
-    
-    console.log('\n📁 Important Files:');
-    console.log(`Configuration: ${path.join(this.configPath, 'app-config.json')}`);
-    console.log(`Docker Compose: ${path.join(this.dockerPath, 'docker-compose.yml')}`);
-    console.log(`Logs: ${this.logsPath}`);
-    console.log(`Database Config: ${path.join(this.configPath, 'database.json')}`);
-    
-    console.log('\n🔧 Troubleshooting:');
-    console.log('- Check logs in the logs directory');
-    console.log('- Verify services are running in Windows Services');
-    console.log('- Check Docker container status: docker ps');
-    console.log('- Check firewall settings for server installations');
-    console.log('- Ensure Docker Desktop is running');
-    
-    console.log('='.repeat(50));
-  }
+    console.log('2. Configure settings in the application');
 
-  async getLocalIP() {
-    const interfaces = os.networkInterfaces();
-    for (const name of Object.keys(interfaces)) {
-      for (const iface of interfaces[name]) {
-        if (iface.family === 'IPv4' && !iface.internal) {
-          return iface.address;
-        }
-      }
-    }
-    return 'localhost';
+    console.log('\n📁 Important Directories:');
+    Object.entries(this.directories).forEach(([name, path]) => {
+      console.log(`${name}: ${path}`);
+    });
+
+    console.log('\n🔧 Management:');
+    console.log(`- Backup Database: ${path.join(this.appPath, 'backup-database.bat')}`);
+
+    console.log('='.repeat(50));
   }
 
   async rollback() {
     console.log('🔄 Rolling back installation...');
-    
+
     try {
       // Stop and remove services
-      const services = ['DoctorApp-Patient', 'DoctorApp-Visit'];
+      const services = ['DoctorApp-Combined'];
       for (const service of services) {
         try {
           execSync(`sc stop "${service}"`, { stdio: 'ignore' });
@@ -940,214 +450,17 @@ start "" "${this.appPath}\\DoctorApp-Launcher.bat"
           // Ignore errors during rollback
         }
       }
-      
-      // Stop and remove Docker containers
-      try {
-        execSync(`docker-compose down -v`, { cwd: this.dockerPath, stdio: 'ignore' });
-        execSync(`docker volume rm ${this.config.docker.volumeName}`, { stdio: 'ignore' });
-        execSync(`docker network rm ${this.config.docker.networkName}`, { stdio: 'ignore' });
-      } catch {
-        // Ignore errors during rollback
-      }
-      
+
       // Remove installation directory
       if (fs.existsSync(this.appPath)) {
         fs.rmSync(this.appPath, { recursive: true, force: true });
       }
-      
+
       console.log('✅ Rollback completed');
     } catch (error) {
       console.error('Rollback failed:', error.message);
     }
   }
-
-  // Utility method to manage Docker MySQL container
-  async manageDockerMySQL(action) {
-    const validActions = ['start', 'stop', 'restart', 'status', 'logs'];
-    
-    if (!validActions.includes(action)) {
-      throw new Error(`Invalid action: ${action}. Valid actions: ${validActions.join(', ')}`);
-    }
-    
-    try {
-      switch (action) {
-        case 'start':
-          execSync('docker-compose up -d', { cwd: this.dockerPath, stdio: 'inherit' });
-          break;
-          
-        case 'stop':
-          execSync('docker-compose down', { cwd: this.dockerPath, stdio: 'inherit' });
-          break;
-          
-        case 'restart':
-          execSync('docker-compose restart', { cwd: this.dockerPath, stdio: 'inherit' });
-          break;
-          
-        case 'status':
-          execSync(`docker ps --filter name=${this.config.docker.containerName}`, { stdio: 'inherit' });
-          break;
-          
-        case 'logs':
-          execSync(`docker logs ${this.config.docker.containerName} --tail 50 -f`, { stdio: 'inherit' });
-          break;
-      }
-    } catch (error) {
-      throw new Error(`Failed to ${action} Docker MySQL: ${error.message}`);
-    }
-  }
-
-  // Method to create database backup
-  async createDatabaseBackup(backupPath = null) {
-    if (!backupPath) {
-      const backupDir = path.join(this.appPath, 'backups');
-      if (!fs.existsSync(backupDir)) {
-        fs.mkdirSync(backupDir, { recursive: true });
-      }
-      
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      backupPath = path.join(backupDir, `backup_${timestamp}.sql`);
-    }
-    
-    try {
-      console.log('Creating database backup...');
-      
-      const backupCmd = `docker exec ${this.config.docker.containerName} mysqldump -u${this.config.database.username} -p${this.config.database.password} ${this.config.database.database}`;
-      const backupData = execSync(backupCmd, { encoding: 'utf8' });
-      
-      fs.writeFileSync(backupPath, backupData);
-      console.log(`✅ Backup created: ${backupPath}`);
-      
-      return backupPath;
-    } catch (error) {
-      throw new Error(`Failed to create database backup: ${error.message}`);
-    }
-  }
-
-  // Method to restore database from backup
-  async restoreDatabaseBackup(backupPath) {
-    if (!fs.existsSync(backupPath)) {
-      throw new Error(`Backup file not found: ${backupPath}`);
-    }
-    
-    try {
-      console.log('Restoring database from backup...');
-      
-      // Copy backup file to container
-      const containerBackupPath = '/tmp/restore.sql';
-      execSync(`docker cp "${backupPath}" ${this.config.docker.containerName}:${containerBackupPath}`);
-      
-      // Restore database
-      const restoreCmd = `docker exec ${this.config.docker.containerName} mysql -u${this.config.database.username} -p${this.config.database.password} ${this.config.database.database} < ${containerBackupPath}`;
-      execSync(restoreCmd);
-      
-      console.log('✅ Database restored successfully');
-    } catch (error) {
-      throw new Error(`Failed to restore database: ${error.message}`);
-    }
-  }
-
-  // Method to check Docker MySQL health
-  async checkDockerMySQLHealth() {
-    try {
-      const healthCmd = `docker exec ${this.config.docker.containerName} mysqladmin ping -h localhost -u ${this.config.database.username} -p${this.config.database.password}`;
-      const result = execSync(healthCmd, { encoding: 'utf8' });
-      
-      return result.includes('mysqld is alive');
-    } catch (error) {
-      return false;
-    }
-  }
-
-  // Method to update Docker MySQL configuration
-  async updateDockerMySQLConfig(newConfig) {
-    console.log('Updating Docker MySQL configuration...');
-    
-    // Update internal config
-    Object.assign(this.config.database, newConfig);
-    
-    // Regenerate docker-compose file
-    await this.createDockerComposeFile();
-    
-    // Restart container with new configuration
-    try {
-      execSync('docker-compose down', { cwd: this.dockerPath, stdio: 'pipe' });
-      execSync('docker-compose up -d', { cwd: this.dockerPath, stdio: 'pipe' });
-      
-      console.log('✅ Docker MySQL configuration updated');
-    } catch (error) {
-      throw new Error(`Failed to update Docker MySQL configuration: ${error.message}`);
-    }
-  }
-}
-
-// Usage example and CLI interface
-if (require.main === module) {
-  const installer = new DoctorAppInstaller();
-  
-  // Parse command line arguments
-  const args = process.argv.slice(2);
-  const options = {};
-  
-  for (let i = 0; i < args.length; i++) {
-    const arg = args[i];
-    
-    if (arg === '--mode' && i + 1 < args.length) {
-      options.mode = args[i + 1];
-      i++;
-    } else if (arg === '--server-host' && i + 1 < args.length) {
-      options.serverHost = args[i + 1];
-      i++;
-    } else if (arg === '--server-port' && i + 1 < args.length) {
-      options.serverPort = parseInt(args[i + 1]);
-      i++;
-    } else if (arg === '--db-password' && i + 1 < args.length) {
-      options.dbPassword = args[i + 1];
-      i++;
-    } else if (arg === '--db-root-password' && i + 1 < args.length) {
-      options.dbRootPassword = args[i + 1];
-      i++;
-    } else if (arg === '--install-path' && i + 1 < args.length) {
-      options.installPath = args[i + 1];
-      i++;
-    } else if (arg === '--help') {
-      console.log(`
-DoctorApp Installer with Docker MySQL
-
-Usage: node installer-config.js [options]
-
-Options:
-  --mode <mode>                Installation mode: server, client, or standalone (default: standalone)
-  --server-host <host>         Server host for client mode (default: localhost)
-  --server-port <port>         Server port (default: 3001)
-  --db-password <password>     Database user password (auto-generated if not provided)
-  --db-root-password <password> Database root password (auto-generated if not provided)
-  --install-path <path>        Installation path (default: Program Files)
-  --help                       Show this help message
-
-Examples:
-  node installer-config.js --mode standalone
-  node installer-config.js --mode server --server-port 3001
-  node installer-config.js --mode client --server-host 192.168.1.100
-
-Docker Requirements:
-  - Docker Desktop must be installed and running
-  - Minimum 2GB RAM available for Docker
-  - Port 3306 must be available for MySQL container
-      `);
-      process.exit(0);
-    }
-  }
-  
-  // Run installation
-  installer.install(options)
-    .then(() => {
-      console.log('\n🎉 Installation completed successfully!');
-      process.exit(0);
-    })
-    .catch((error) => {
-      console.error('\n❌ Installation failed:', error.message);
-      process.exit(1);
-    });
 }
 
 module.exports = DoctorAppInstaller;

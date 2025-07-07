@@ -13,10 +13,8 @@ class BackendManager {
         // IMPORTANT: Only start services for MASTER installations
         if (installationType === 'client') {
             console.log('Client installation detected - not starting local services');
-            console.log('Client will connect to master services at:', {
-                patientService: `http://${config.masterHost}:${config.patientServicePort}`,
-                visitService: `http://${config.masterHost}:${config.visitServicePort}`,
-                reportsService: `http://${config.masterHost}:${config.reportsServicePort}`
+            console.log('Client will connect to master service at:', {
+                combinedService: `http://${config.masterHost}:${config.servicePort || 3001}`
             });
             return; // Clients don't run their own services!
         }
@@ -29,14 +27,9 @@ class BackendManager {
 
         console.log('Master installation detected - starting local services as regular processes');
 
-        const patientPort = config.services?.patientPort || 3001;
-        const visitPort = config.services?.visitPort || 3002;
-        const reportsPort = config.services?.reportsPort || 3003;
 
         const services = [
-            { name: 'patient', file: 'patient.cjs', port: patientPort },
-            { name: 'visit', file: 'visit.cjs', port: visitPort },
-            { name: 'reports', file: 'reports.cjs', port: reportsPort }
+            { name: 'combined', file: 'combined-service.cjs', port: 3001 }
         ];
 
         for (const service of services) {
@@ -86,17 +79,20 @@ class BackendManager {
 
             console.log(`Found service file at: ${servicePath}`);
 
-            // FIXED: Set explicit database path for consistent location
-            const dbPath = this.getServiceDatabasePath(config);
-            const logDir = path.join(path.dirname(dbPath), 'logs');
+
+            const installPath = process.env.INSTALL_PATH || this.appPath || 'C:\\Program Files\\DoctorApp';
+            const dbPath = path.join(installPath, 'data', 'doctor-app.db');
+            const logDir = path.join(installPath, 'logs');
 
             const env = {
                 ...process.env,
                 DB_TYPE: 'sqlite',
-                DB_NAME: 'doctor',
-                DB_PATH: dbPath, // FIXED: Explicit path instead of using os.homedir()
-                LOG_DIR: logDir, // FIXED: Explicit log directory
-                SHARED_FOLDER_PATH: config.sharedFolderPath || '',
+                DB_PATH: dbPath,
+                LOG_DIR: logDir,
+                INSTALL_PATH: installPath,
+                CONFIG_DIR: path.join(installPath, 'config'),
+                UPLOAD_DIR: path.join(installPath, 'uploads'),
+                SHARED_FOLDER_PATH: config.sharedFolderPath || path.join(installPath, 'uploads'),
                 NODE_ENV: isDev ? 'development' : 'production',
                 PORT: service.port.toString(),
                 ELECTRON_DEV: process.env.ELECTRON_DEV || 'false'
@@ -240,12 +236,17 @@ class BackendManager {
             return process.env.DB_PATH;
         }
 
-        // Priority 2: Use application path
+        // Priority 2: Use installation path from config
+        if (config && config.installPath) {
+            return path.join(config.installPath, 'data', 'doctor-app.db');
+        }
+
+        // Priority 3: Use application path
         if (this.appPath) {
             return path.join(this.appPath, 'data', 'doctor-app.db');
         }
 
-        // Priority 3: Use executable directory
+        // Priority 4: Use executable directory
         const execDir = path.dirname(process.execPath);
         return path.join(execDir, 'data', 'doctor-app.db');
     }
@@ -344,9 +345,7 @@ class BackendManager {
         }
 
         const services = [
-            { name: 'patient', file: 'patient.cjs', port: 3001 },
-            { name: 'visit', file: 'visit.cjs', port: 3002 },
-            { name: 'reports', file: 'reports.cjs', port: 3003 }
+            { name: 'combined', file: 'combined-service.cjs', port: 3001 }
         ];
 
         const service = services.find(s => s.name === serviceName);
