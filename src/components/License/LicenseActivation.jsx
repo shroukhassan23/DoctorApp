@@ -38,26 +38,42 @@ const LicenseActivation = ({ onLicenseActivated }) => {
     }
   };
 
-  const handleActivation = async () => {
-    if (!licenseKey.trim()) {
-      setError('Please enter a license key');
-      return;
-    }
+  // في LicenseActivation component - عدل الـ handleActivation function
 
-    setActivating(true);
-    setError('');
+const handleActivation = async () => {
+  if (!licenseKey.trim()) {
+    setError('Please enter a license key');
+    return;
+  }
 
-    try {
-      await window.electron.activateLicense(licenseKey);
-      await loadLicenseInfo();
-      setShowActivation(false);
-      onLicenseActivated?.();
-    } catch (error) {
-      setError(error.message || 'Invalid license key');
-    } finally {
-      setActivating(false);
+  setActivating(true);
+  setError('');
+
+  try {
+    // Activate license
+    await window.electron.activateLicense(licenseKey);
+    
+    // Clear form
+    setLicenseKey('');
+    
+    // Show success message
+    toast({
+      title: "License Activated",
+      description: "Your license has been activated successfully.",
+    });
+
+    // IMPORTANT: Call the parent callback to update state
+    if (onLicenseActivated) {
+      await onLicenseActivated();
     }
-  };
+    
+  } catch (error) {
+    setError(error.message || 'Invalid license key');
+    console.error('License activation error:', error);
+  } finally {
+    setActivating(false);
+  }
+};
 
   const formatTime = (hours) => {
     if (hours < 1) {

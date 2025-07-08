@@ -22,11 +22,27 @@ const AppCore = () => {
   const [licenseStatus, setLicenseStatus] = useState(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const [forceRefresh, setForceRefresh] = useState(0);
 
   useEffect(() => {
     initializeApp();
   }, []);
+useEffect(() => {
+    if (setupComplete && window.electron) {
+      const checkLicenseStatus = async () => {
+        try {
+          const license = await window.electron.checkLicense();
+          setLicenseStatus(license);
+        } catch (error) {
+          console.error('Error checking license:', error);
+        }
+      };
 
+      // Check every 30 seconds
+      const interval = setInterval(checkLicenseStatus, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [setupComplete, forceRefresh]);
   const initializeApp = async () => {
     try {
       // Check if we're in Electron environment
@@ -98,12 +114,12 @@ const AppCore = () => {
       });
     }
   };
-
-  const handleLicenseActivated = async () => {
+const handleLicenseActivated = async () => {
     try {
-      // Refresh license status
+      // Force refresh license status
       const license = await window.electron.checkLicense();
       setLicenseStatus(license);
+      setForceRefresh(prev => prev + 1); // Force re-check
 
       toast({
         title: "License Activated",
@@ -112,6 +128,15 @@ const AppCore = () => {
 
     } catch (error) {
       console.error('License activation error:', error);
+      // حتى لو في error، جرب تحديث الـ license status
+      setTimeout(async () => {
+        try {
+          const license = await window.electron.checkLicense();
+          setLicenseStatus(license);
+        } catch (e) {
+          console.error('Failed to refresh license after error:', e);
+        }
+      }, 1000);
     }
   };
 
@@ -135,14 +160,20 @@ const AppCore = () => {
 
   // License expired - force activation
   if (licenseStatus && !licenseStatus.isValid) {
-    return <LicenseActivation onLicenseActivated={handleLicenseActivated} />;
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <LicenseActivation 
+          onLicenseActivated={handleLicenseActivated} 
+          licenseStatus={licenseStatus}
+        />
+      </div>
+    );
   }
-
   // Main application - return your existing Dashboard structure
 return (
   <HashRouter>
-    {/* License status bar for trial users */}
-    {licenseStatus?.type === 'trial' && (
+    {/* License status bar for trial users    */}
+ {licenseStatus?.type === 'trial' && (
       <LicenseActivation onLicenseActivated={handleLicenseActivated} />
     )}
 
