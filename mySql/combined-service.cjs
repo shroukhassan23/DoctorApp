@@ -519,7 +519,7 @@ app.get('/patients/:patientId/files/:fileId/download', async (req, res) => {
         }
 
         const fileRecord = rows[0];
-        const filePath = path.join(__dirname, 'uploads', fileRecord.file_path);
+        const filePath = path.join(installPath, 'uploads', fileRecord.file_path);
 
         // Check if file exists on disk
         if (!fs.existsSync(filePath)) {
@@ -536,8 +536,87 @@ app.get('/patients/:patientId/files/:fileId/download', async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+app.get('/patients/:patientId/visits/:visitId/files', async (req, res) => {
+ const { patientId, visitId, fileId } = req.params;
+
+  try {
+    const [rows] = await db.query(
+      'SELECT * FROM patient_files WHERE id = ? AND visit_id = ?',
+      [fileId, patientId, visitId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+
+    const fileRecord = rows[0];
+    const absolutePath = path.join(installPath, 'uploads', fileRecord.file_path);
+
+    if (!fs.existsSync(absolutePath)) {
+      return res.status(404).json({ error: 'File not found on disk' });
+    }
+
+    res.setHeader('Content-Disposition', `attachment; filename="${fileRecord.file_name}"`);
+    res.setHeader('Content-Type', fileRecord.file_type);
+    res.sendFile(absolutePath);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 
+app.post('/patients/:patientId/visits/:visitId/files', upload.single('file'), async (req, res) => {
+  const { patientId, visitId } = req.params;
+  const { description } = req.body;
+
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    // مسار التخزين داخل uploads
+    const relativePath = path.join('patients', patientId, req.file.filename);
+    const absolutePath = path.join(installPath, 'uploads', relativePath);
+
+    // تأكد إن المجلد موجود
+    fs.mkdirSync(path.dirname(absolutePath), { recursive: true });
+
+    // انقل الملف لمكانه النهائي
+    fs.renameSync(req.file.path, absolutePath);
+
+    const [result] = await db.query(
+      `INSERT INTO patient_files 
+        (patient_id, visit_id, file_name, file_type, file_size, file_path, description, uploaded_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, datetime("now"))`,
+      [
+        patientId,
+        visitId,
+        req.file.originalname,
+        req.file.mimetype,
+        req.file.size,
+        relativePath,
+        description || ''
+      ]
+    );
+
+    res.status(201).json({
+      message: 'File uploaded successfully',
+      fileId: result.insertId,
+      file: {
+        id: result.insertId,
+        filename: req.file.originalname,
+        path: relativePath,
+        size: req.file.size,
+        type: req.file.mimetype
+      }
+    });
+  } catch (err) {
+    if (req.file) {
+      fs.unlink(req.file.path, () => {});
+    }
+    res.status(500).json({ error: err.message });
+  }
+});
 app.delete('/patients/:patientId/files/:fileId', async (req, res) => {
     const { patientId, fileId } = req.params;
 
@@ -552,7 +631,7 @@ app.delete('/patients/:patientId/files/:fileId', async (req, res) => {
         }
 
         const fileRecord = rows[0];
-        const filePath = path.join(__dirname, 'uploads', fileRecord.file_path);
+        const filePath = path.join(installPath, 'uploads', fileRecord.file_path);
 
         // Delete from database
         await db.query('DELETE FROM patient_files WHERE id = ?', [fileId]);
@@ -743,6 +822,34 @@ app.get('/prescriptions/:id', async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
+});
+//get visit files
+app.get('Visits/visits/:visitId/files', async (req, res) => {
+ const { patientId, visitId} = req.params;
+
+  try {
+    const [rows] = await db.query(
+      'SELECT * FROM patient_files WHERE id = ? AND visit_id = ?',
+      [ patientId, visitId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+
+    const fileRecord = rows[0];
+    const absolutePath = path.join(installPath, 'uploads', fileRecord.file_path);
+
+    if (!fs.existsSync(absolutePath)) {
+      return res.status(404).json({ error: 'File not found on disk' });
+    }
+
+    res.setHeader('Content-Disposition', `attachment; filename="${fileRecord.file_name}"`);
+    res.setHeader('Content-Type', fileRecord.file_type);
+    res.sendFile(absolutePath);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Get visit prescription
@@ -1198,7 +1305,7 @@ app.get('/patients/:patientId/files/:fileId/preview', async (req, res) => {
         }
 
         const fileRecord = rows[0];
-        const filePath = path.join(__dirname, 'uploads', fileRecord.file_path);
+        const filePath = path.join(installPath, 'uploads', fileRecord.file_path);
   console.log("file path is "+filePath);
         // Check if file exists on disk
         if (!fs.existsSync(filePath)) {
@@ -1247,7 +1354,7 @@ app.get('/patients/:patientId/files/:fileId/download', async (req, res) => {
         }
 
         const fileRecord = rows[0];
-        const filePath = path.join(__dirname, 'uploads', fileRecord.file_path);
+        const filePath = path.join(installPath, 'uploads', fileRecord.file_path);
 
         // Check if file exists on disk
         if (!fs.existsSync(filePath)) {

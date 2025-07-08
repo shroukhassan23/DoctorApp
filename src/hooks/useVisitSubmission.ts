@@ -123,10 +123,12 @@ export const useVisitSubmission = () => {
         formData.append('description', fileData.description || '');
         formData.append('visitId', visitId);
 
-        const response = await fetch(`${visitBaseUrl}/patients/${patientId}/files`, {
-          method: 'POST',
-          body: formData
-        });
+       const response = await fetch(`
+http://localhost:3001/patients/${patientId}/visits/${visitId}/files`, {
+  method: 'POST',
+  body: formData
+});
+
 
         if (!response.ok) {
           const errorData = await response.json();
