@@ -39,7 +39,7 @@ useEffect(() => {
       };
 
       // Check every 30 seconds
-      const interval = setInterval(checkLicenseStatus, 30000);
+      const interval = setInterval(checkLicenseStatus, 60000);
       return () => clearInterval(interval);
     }
   }, [setupComplete, forceRefresh]);
@@ -196,7 +196,7 @@ const App = () => (
         initialProps={{
           mode: 'single',
           fromYear: 1900,
-          toYear: 2030
+          toYear: 2040,
         }}
       >
         <TooltipProvider>

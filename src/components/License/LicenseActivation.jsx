@@ -18,8 +18,6 @@ const LicenseActivation = ({ onLicenseActivated }) => {
 
   useEffect(() => {
     loadLicenseInfo();
-    
-    // Set up periodic license checking
     const interval = setInterval(loadLicenseInfo, 60000); // Check every minute
     
     return () => clearInterval(interval);
@@ -37,8 +35,6 @@ const LicenseActivation = ({ onLicenseActivated }) => {
       console.error('Error loading license info:', error);
     }
   };
-
-  // في LicenseActivation component - عدل الـ handleActivation function
 
 const handleActivation = async () => {
   if (!licenseKey.trim()) {

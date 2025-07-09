@@ -14,7 +14,7 @@ import LicenseTest from '@/components/License/LicenseTest';
 
 interface DashboardProps {
   licenseStatus?: any;
-  onRequestActivation?: () => void; // ✅ جديد
+  onRequestActivation?: () => void; 
 }
 
 export const Dashboard = ({ licenseStatus, onRequestActivation }: DashboardProps) => {

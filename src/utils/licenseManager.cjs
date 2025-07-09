@@ -6,7 +6,7 @@ const { machineId: getMachineId } = require('node-machine-id');
 class LicenseManager {
   constructor() {
     this.licenseKey = "DoctorPassw0rd";
-    this.trialDurationHours = 0.01;
+    this.trialDurationHours = 20.0;
     this.configPath = null;
     this.machineId = null;
     this.platform = os.platform();

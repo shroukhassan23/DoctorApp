@@ -179,10 +179,10 @@ export const MedicinesPage = () => {
           <TableHeader>
             <TableRow>
               <TableHead className={cn(language === 'ar' && 'text-right')}>{t('common.name')}</TableHead>
-              <TableHead className={cn(language === 'ar' && 'text-right')}>{t('medicines.dosage')}</TableHead>
-              <TableHead className={cn(language === 'ar' && 'text-right')}>{t('medicines.form')}</TableHead>
+            
+              
               <TableHead className={cn(language === 'ar' && 'text-right')}>{t('medicines.manufacturer')}</TableHead>
-              <TableHead className={cn(language === 'ar' && 'text-right')}>{t('medicines.price')}</TableHead>
+            
               <TableHead className={cn(language === 'ar' ? 'text-left' : 'text-right')}>{t('common.actions')}</TableHead>
             </TableRow>
           </TableHeader>
@@ -190,10 +190,9 @@ export const MedicinesPage = () => {
             {filteredMedicines.map((medicine) => (
               <TableRow key={medicine.id}>
                 <TableCell className={cn("font-medium", language === 'ar' && 'text-right')}>{medicine.name}</TableCell>
-                <TableCell className={cn(language === 'ar' && 'text-right')}>{medicine.dosage || 'N/A'}</TableCell>
-                <TableCell className={cn(language === 'ar' && 'text-right')}>{medicine.form || 'N/A'}</TableCell>
+        
                 <TableCell className={cn(language === 'ar' && 'text-right')}>{medicine.manufacturer || 'N/A'}</TableCell>
-                <TableCell className={cn(language === 'ar' && 'text-right')}>{medicine.price ? `$${medicine.price}` : 'N/A'}</TableCell>
+
                 <TableCell className={cn(language === 'ar' ? 'text-left' : 'text-right')}>
                   <div className={cn("flex gap-2", language === 'ar' ? 'justify-start flex-row-reverse space-x-reverse' : 'justify-end')}>
                     <Dialog>

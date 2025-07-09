@@ -21,10 +21,8 @@ export const MedicineForm = ({ medicine, onSave, onCancel, isLoading }: Medicine
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
     defaultValues: medicine || {
       name: '',
-      dosage: '',
-      form: '',
       manufacturer: '',
-      price: ''
+
     }
   });
 
@@ -38,7 +36,7 @@ export const MedicineForm = ({ medicine, onSave, onCancel, isLoading }: Medicine
     try {
       const medicineData = {
         ...data,
-        price: data.price ? parseFloat(data.price) : null
+      
       };
 
       const url = medicine ? updateMedicineUrl(medicine.id) : managementMedicinesUrl;
