@@ -8,6 +8,9 @@ import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Key, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { useToast } from "@/components/ui/use-toast";
 
 const LicenseActivation = ({ onLicenseActivated }) => {
   const [licenseKey, setLicenseKey] = useState('');
@@ -15,10 +18,10 @@ const LicenseActivation = ({ onLicenseActivated }) => {
   const [activating, setActivating] = useState(false);
   const [error, setError] = useState('');
   const [showActivation, setShowActivation] = useState(false);
-
+  const { toast } = useToast();
   useEffect(() => {
     loadLicenseInfo();
-    const interval = setInterval(loadLicenseInfo, 60000); // Check every minute
+    const interval = setInterval(loadLicenseInfo, 60000); 
     
     return () => clearInterval(interval);
   }, []);

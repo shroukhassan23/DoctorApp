@@ -38,8 +38,8 @@ useEffect(() => {
         }
       };
 
-      // Check every 30 seconds
-      const interval = setInterval(checkLicenseStatus, 60000);
+     
+      const interval = setInterval(checkLicenseStatus,60000);
       return () => clearInterval(interval);
     }
   }, [setupComplete, forceRefresh]);
